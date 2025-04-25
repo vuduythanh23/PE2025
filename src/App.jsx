@@ -10,7 +10,7 @@ export default function App() {
     <Router>
       <div className="flex flex-col min-h-screen">
         <Routes>  
-          <Route path="/" element={<Navigate to="/home" />} />
+          <Route path="/" element={<Navigate to="/Home" />} />
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
