@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getCurrentUser, updateUser } from "../utils/api";
-import Header from "../components/layout/header";
+import Header from "../components/layout/Header";
 import Swal from "sweetalert2";
 
 const UserProfile = () => {

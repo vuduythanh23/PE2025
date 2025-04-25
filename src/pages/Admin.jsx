@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAllUsers, deleteUser } from "../utils/api"; // API functions
 import Swal from "sweetalert2";
-import Header from "../components/layout/header";
+import Header from "../components/layout/Header";
 
 export default function Admin() {
   const [users, setUsers] = useState([]);
@@ -56,36 +56,41 @@ export default function Admin() {
     <>
       <Header />
       <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Admin Panel - User Management</h1>
-      <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
-          <tr>
-            <th className="border border-gray-300 px-4 py-2">ID</th>
-            <th className="border border-gray-300 px-4 py-2">Username</th>
-            <th className="border border-gray-300 px-4 py-2">Email</th>
-            <th className="border border-gray-300 px-4 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user._id}>
-              <td className="border border-gray-300 px-4 py-2">{user._id}</td>
-              <td className="border border-gray-300 px-4 py-2">{user.username}</td>
-              <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <button
-                  onClick={() => handleDelete(user._id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded  hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </td>
+        <h1 className="text-2xl font-bold mb-6">
+          Admin Panel - User Management
+        </h1>
+        <table className="table-auto w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 px-4 py-2">ID</th>
+              <th className="border border-gray-300 px-4 py-2">Username</th>
+              <th className="border border-gray-300 px-4 py-2">Email</th>
+              <th className="border border-gray-300 px-4 py-2">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user._id}>
+                <td className="border border-gray-300 px-4 py-2">{user._id}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {user.username}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {user.email}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <button
+                    onClick={() => handleDelete(user._id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded  hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
-  
   );
 }

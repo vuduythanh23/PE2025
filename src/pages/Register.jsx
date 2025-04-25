@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Header from "../components/layout/header";
+import Header from "../components/layout/Header";
 import AuthCard from "../components/modules/AuthCard";
 import { registerUser } from "../utils/api"; // Import register API function
 import Swal from "sweetalert2";
