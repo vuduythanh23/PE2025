@@ -10,7 +10,9 @@ export default function Register() {
   const handleRegister = async (formData) => {
     setLoading(true);
     try {
-      const response = await registerUser(formData); // Call register API
+      // Remove confirmPassword before sending to API
+      const { confirmPassword, ...registrationData } = formData;
+      const response = await registerUser(registrationData); // Call register API
       Swal.fire({
         title: "Registration Successful!",
         text: `Welcome, ${response.user.username}!`,
@@ -18,9 +20,14 @@ export default function Register() {
         confirmButtonText: "OK",
       });
     } catch (error) {
+      let errorMsg = error.message;
+      try {
+        const parsed = JSON.parse(errorMsg);
+        errorMsg = parsed.message || errorMsg;
+      } catch {}
       Swal.fire({
         title: "Registration Failed",
-        text: error.message || "Please check your input and try again.",
+        text: errorMsg || "Please check your input and try again.",
         icon: "error",
         confirmButtonText: "Retry",
       });
@@ -40,6 +47,7 @@ export default function Register() {
           "username",
           "email",
           "password",
+          "confirmPassword",
           "firstName",
           "lastName",
           "address",

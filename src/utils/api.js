@@ -42,9 +42,11 @@ export const registerUser = async (formData) => {
     throw error;
   }
 };
+
 export const deleteUser = async (userId) => {
   const token = localStorage.getItem("token"); // Retrieve token from localStorage
-  const response = await fetch(`${BASE_URL}/${userId}`, { // Corrected URL
+  const response = await fetch(`${BASE_URL}/${userId}`, {
+    // Corrected URL
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -58,6 +60,7 @@ export const deleteUser = async (userId) => {
 
   return await response.json();
 };
+
 export const getAllUsers = async () => {
   const token = localStorage.getItem("token"); // Retrieve token from localStorage
   const response = await fetch(`${BASE_URL}/`, {
@@ -72,5 +75,39 @@ export const getAllUsers = async () => {
     throw new Error("Failed to fetch users");
   }
 
+  return await response.json();
+};
+
+// Get current user info
+export const getCurrentUser = async () => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${BASE_URL}/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch user info");
+  }
+  return await response.json();
+};
+
+// Update current user info
+export const updateUser = async (userData) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${BASE_URL}/${userData._id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(userData),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to update user");
+  }
   return await response.json();
 };

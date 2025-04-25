@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthCard from "../components/modules/AuthCard"; // Import AuthCard
 import { loginUser } from "../utils/api"; // Login API function
 import Swal from "sweetalert2";
+import Header from "../components/layout/header";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -47,11 +48,15 @@ export default function Login() {
   };
 
   return (
-    <AuthCard
+    <>
+      <Header />
+      <AuthCard
       type="login"
       onSubmit={handleLogin}
       loading={loading}
       fields={["email", "password"]}
     />
+    </>
+ 
   );
 }

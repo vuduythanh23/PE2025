@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAllUsers, deleteUser } from "../utils/api"; // API functions
 import Swal from "sweetalert2";
+import Header from "../components/layout/header";
 
 export default function Admin() {
   const [users, setUsers] = useState([]);
@@ -10,7 +11,8 @@ export default function Admin() {
     const getUsers = async () => {
       try {
         const data = await getAllUsers();
-        setUsers(data);
+        // Filter out admin user
+        setUsers(data.filter((user) => user.username !== "admin"));
       } catch (error) {
         Swal.fire({
           title: "Error",
@@ -51,7 +53,9 @@ export default function Admin() {
   }
 
   return (
-    <div className="p-8">
+    <>
+      <Header />
+      <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">Admin Panel - User Management</h1>
       <table className="table-auto w-full border-collapse border border-gray-300">
         <thead>
@@ -81,5 +85,7 @@ export default function Admin() {
         </tbody>
       </table>
     </div>
+    </>
+  
   );
 }

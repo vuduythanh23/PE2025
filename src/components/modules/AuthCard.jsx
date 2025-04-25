@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
   const [formData, setFormData] = useState(
@@ -6,13 +6,35 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
   );
   const [errors, setErrors] = useState({});
 
+  // Add real-time password validation
+  useEffect(() => {
+    if (type === "register" && formData.password && formData.confirmPassword) {
+      if (formData.password !== formData.confirmPassword) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: "Passwords do not match",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+      }
+    }
+  }, [formData.password, formData.confirmPassword, type]);
+
   const validate = () => {
     const newErrors = {};
     fields.forEach((field) => {
       if (!formData[field]) {
-        newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required.`;
+        newErrors[field] = `${
+          field.charAt(0).toUpperCase() + field.slice(1)
+        } is required.`;
       }
     });
+
+    // Add password matching validation for registration
+    if (type === "register" && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -20,13 +42,18 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData); // Pass only the required fields
+      onSubmit(formData);
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when user starts typing, except for confirm password
+    if (errors[name] && name !== "confirmPassword") {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   return (
@@ -42,16 +69,22 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                 htmlFor={field}
                 className="block text-gray-700 text-sm font-bold mb-2"
               >
-                {field.charAt(0).toUpperCase() + field.slice(1)}
+                {field === "confirmPassword"
+                  ? "Confirm Password"
+                  : field.charAt(0).toUpperCase() + field.slice(1)}
               </label>
               <input
-                type={field === "password" ? "password" : "text"}
+                type={field === "password" || field === "confirmPassword" ? "password" : "text"}
                 id={field}
                 name={field}
                 value={formData[field]}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder={`Enter your ${field}`}
+                className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-blue-200 ${
+                  errors[field] ? "border-red-500" : ""
+                }`}
+                placeholder={`Enter your ${
+                  field === "confirmPassword" ? "password again" : field
+                }`}
               />
               {errors[field] && (
                 <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
@@ -63,9 +96,15 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
             className={`w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
-            disabled={loading}
+            disabled={
+              loading || (type === "register" && errors.confirmPassword)
+            }
           >
-            {loading ? "Processing..." : type === "login" ? "Login" : "Register"}
+            {loading
+              ? "Processing..."
+              : type === "login"
+              ? "Login"
+              : "Register"}
           </button>
         </form>
       </div>
