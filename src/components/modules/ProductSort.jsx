@@ -7,15 +7,12 @@ export default function ProductSort({ sortBy, onSortChange }) {
   ];
 
   return (
-    <div className="flex items-center space-x-2">
-      <label htmlFor="sort" className="text-sm font-medium text-gray-700">
-        Sort by:
-      </label>
+    <div className="w-full">
       <select
         id="sort"
         value={sortBy}
         onChange={(e) => onSortChange(e.target.value)}
-        className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
       >
         {sortOptions.map((option) => (
           <option key={option.value} value={option.value}>

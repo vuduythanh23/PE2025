@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
 import { isAuthenticated, logout } from "../../utils/auth-utils";
 import { useCart } from "../../context/CartContext";
-import { getCart } from "../../utils/cart-utils";
 
 export default function Header() {
-  const { toggleCart } = useCart();
-  const cartItems = getCart();
+  const { toggleCart, isCartBouncing, cartItems, getTotalQuantity } = useCart();
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -21,41 +19,6 @@ export default function Header() {
         </Link>
         <nav>
           <ul className="flex items-center gap-6">
-            {/* Cart Icon */}
-            <li className="group relative">
-              <button
-                onClick={toggleCart}
-                className="hover:text-blue-600 flex flex-col items-center"
-              >
-                <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
-                  <span className="relative flex items-center justify-center w-6 h-6">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                    {cartItems.length > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                        {cartItems.length}
-                      </span>
-                    )}
-                  </span>
-                  <span className="absolute top-full mt-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                    Cart
-                  </span>
-                </div>
-              </button>
-            </li>
-
             {/* Home Icon */}
             <li className="group relative">
               <Link to="/home" className="hover:text-blue-600">
@@ -133,6 +96,46 @@ export default function Header() {
 
             {isAuthenticated() ? (
               <>
+                {/* Cart Icon */}
+                <li className="group relative">
+                  <button
+                    onClick={toggleCart}
+                    className="hover:text-blue-600 flex flex-col items-center"
+                  >
+                    <div
+                      className={`flex flex-col items-center transition-all duration-300 ${
+                        isCartBouncing
+                          ? "animate-bounce"
+                          : "transform group-hover:-translate-y-1"
+                      }`}
+                    >
+                      <span className="relative flex items-center justify-center w-6 h-6">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                        {cartItems.length > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs transition-transform duration-300 ease-out animate-scale-in">
+                            {getTotalQuantity()}
+                          </span>
+                        )}
+                      </span>
+                      <span className="absolute top-full mt-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        Cart
+                      </span>
+                    </div>
+                  </button>
+                </li>
                 {/* Profile Icon */}
                 <li className="group relative">
                   <Link to="/profile" className="hover:text-blue-600">
@@ -156,13 +159,12 @@ export default function Header() {
                       </span>
                     </div>
                   </Link>
-                </li>
-
+                </li>{" "}
                 {/* Logout Icon */}
                 <li className="group relative">
                   <button
                     onClick={handleLogout}
-                    className="hover:text-blue-600"
+                    className="hover:text-blue-600 flex flex-col items-center"
                   >
                     <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                       <svg

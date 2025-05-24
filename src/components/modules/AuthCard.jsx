@@ -19,7 +19,10 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
     switch (name) {
       case "email":
         if (!value) return "Email is required";
-        return validateEmail(value);
+        if (!value.includes("@")) return "Email should contain @";
+        if (!value.toLowerCase().endsWith("@gmail.com"))
+          return "Email should end with @gmail.com";
+        return "";
       case "password":
         if (!value) return "Password is required";
         return validatePassword(value);
@@ -31,8 +34,10 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         return validatePhone(value);
       default:
         if (!value.trim()) {
-          const fieldName = name.replace(/([A-Z])/g, ' $1').toLowerCase();
-          return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+          const fieldName = name.replace(/([A-Z])/g, " $1").toLowerCase();
+          return `${
+            fieldName.charAt(0).toUpperCase() + fieldName.slice(1)
+          } is required`;
         }
         return validateRequired(value, name);
     }
@@ -65,24 +70,26 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Clear any previous errors
     setErrors({});
-    
+
     // Trim whitespace from email
     if (formData.email) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        email: prev.email.trim()
+        email: prev.email.trim(),
       }));
     }
-    
+
     if (validate()) {
       onSubmit(formData);
     }
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -93,79 +100,44 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
     setErrors((prev) => ({
       ...prev,
       [name]: error,
-      // Update confirmPassword validation if password changes
       ...(name === "password" && formData.confirmPassword
-        ? { confirmPassword: validatePasswordMatch(value, formData.confirmPassword) }
+        ? {
+            confirmPassword: validatePasswordMatch(
+              value,
+              formData.confirmPassword
+            ),
+          }
         : {}),
     }));
   };
 
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    setTouched((prev) => ({ ...prev, [name]: true }));
-    const error = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">
-          {type === "login" ? "Login" : "Register"}
-        </h1>
-        <form onSubmit={handleSubmit}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">
+            {type === "login" ? "Login" : "Register"}
+          </h2>
+        </div>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {fields.map((field) => (
-            <div className="mb-4" key={field}>
+            <div key={field}>
               <label
                 htmlFor={field}
-                className="block text-gray-700 text-sm font-bold mb-2"
+                className="block text-sm font-medium text-gray-800 mb-2"
               >
-                {field === "confirmPassword"
-                  ? "Confirm Password"
-                  : field.charAt(0).toUpperCase() + field.slice(1)}
-              </label>              <input
-                type={
-                  field === "password" || field === "confirmPassword"
-                    ? "password"
-                    : field === "email"
-                    ? "email"
-                    : field === "phoneNumber"
-                    ? "tel"
-                    : "text"
-                }
+                {field.charAt(0).toUpperCase() + field.slice(1)}
+              </label>
+              <input
                 id={field}
                 name={field}
+                type={field.includes("password") ? "password" : "text"}
                 value={formData[field]}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={loading}
-                autoComplete={
-                  field === "password"
-                    ? "current-password"
-                    : field === "email"
-                    ? "email"
-                    : field === "phoneNumber"
-                    ? "tel"
-                    : "off"
-                }
-                className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 ${
-                  loading
-                    ? "bg-gray-100 cursor-not-allowed"
-                    : errors[field] && touched[field]
-                    ? "border-red-500 focus:ring-red-200"
-                    : touched[field] && !errors[field]
-                    ? "border-green-500 focus:ring-green-200"
-                    : "focus:ring-blue-200"
-                }`}
-                placeholder={`Enter your ${
-                  field === "confirmPassword"
-                    ? "password again"
-                    : field.replace(/([A-Z])/g, " $1").toLowerCase()
-                }`}
-                required
-              />
-              {errors[field] && (
-                <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />{" "}
+              {touched[field] && errors[field] && field !== "password" && (
+                <p className="mt-1 text-sm text-red-500">{errors[field]}</p>
               )}
             </div>
           ))}

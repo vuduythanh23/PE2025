@@ -19,7 +19,29 @@ export default function Home() {
           sortBy: "newest",
           limit: 6,
         });
-        setFeaturedProducts(data);
+
+        // Format the products data to ensure proper structure
+        const formattedProducts = data.map((product) => ({
+          _id: product._id || "",
+          name: product.name || "",
+          description: product.description || "",
+          price: product.price || 0,
+          images: Array.isArray(product.images) ? product.images : [],
+          category:
+            typeof product.category === "object"
+              ? product.category.name
+              : product.category || "",
+          brand:
+            typeof product.brand === "object"
+              ? product.brand.name
+              : product.brand || "",
+          colors: Array.isArray(product.colors) ? product.colors : [],
+          sizes: Array.isArray(product.sizes) ? product.sizes : [],
+          stock: product.stock || 0,
+          averageRating: product.averageRating || 0,
+        }));
+
+        setFeaturedProducts(formattedProducts);
       } catch (error) {
         Swal.fire({
           title: "Error",

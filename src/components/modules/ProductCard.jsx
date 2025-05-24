@@ -1,21 +1,25 @@
 import { formatCurrency } from "../../utils/format-utils";
 import { useState } from "react";
 import { addToCart } from "../../utils/cart-utils";
+import { useCart } from "../../context/CartContext";
 import Swal from "sweetalert2";
 
-export default function ProductCard({
-  _id,
-  name,
-  description,
-  price,
-  images,
-  category,
-  brand,
-  colors,
-  sizes,
-  stock,
-  averageRating,
-}) {
+export default function ProductCard(props) {
+  const {
+    _id = "",
+    name = "",
+    description = "",
+    price = 0,
+    images = [],
+    category = "",
+    brand = "",
+    colors = [],
+    sizes = [],
+    stock = 0,
+    averageRating = 0,
+  } = props;
+
+  const { animateCart, updateCartItems } = useCart();
   const [selectedColor, setSelectedColor] = useState(
     colors?.[0]?.color || null
   );
@@ -27,6 +31,10 @@ export default function ProductCard({
         title: "Please Select Size",
         text: "You need to select a size before adding to cart",
         icon: "warning",
+        backdrop: "rgba(0, 0, 0, 0.7)",
+        customClass: {
+          container: "sweetalert-dialog",
+        },
       });
       return;
     }
@@ -36,11 +44,24 @@ export default function ProductCard({
         title: "Please Select Color",
         text: "You need to select a color before adding to cart",
         icon: "warning",
+        backdrop: "rgba(0, 0, 0, 0.7)",
+        customClass: {
+          container: "sweetalert-dialog",
+        },
       });
       return;
     }
 
-    addToCart({ _id, name, price, images }, 1, selectedSize, selectedColor);
+    const productData = {
+      _id,
+      name,
+      price,
+      images: Array.isArray(images) ? images : [],
+    };
+
+    addToCart(productData, 1, selectedSize, selectedColor);
+    animateCart(); // Trigger cart animation
+    updateCartItems(); // Update cart items in context
 
     Swal.fire({
       title: "Added to Cart!",
@@ -48,15 +69,24 @@ export default function ProductCard({
       icon: "success",
       timer: 1500,
       showConfirmButton: false,
+      backdrop: "rgba(0, 0, 0, 0.7)",
+      customClass: {
+        container: "sweetalert-dialog",
+      },
     });
   };
+
+  const imageUrl =
+    Array.isArray(images) && images.length > 0
+      ? images[0]
+      : "https://via.placeholder.com/300";
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <img
-          src={images?.[0] || "https://via.placeholder.com/300"}
-          alt={name}
+          src={imageUrl}
+          alt={name || "Product image"}
           className="w-full h-64 object-cover"
         />
         {stock <= 5 && stock > 0 && (
@@ -89,7 +119,7 @@ export default function ProductCard({
 
         <p className="text-gray-600 text-sm mb-4">{description}</p>
 
-        {colors?.length > 0 && (
+        {Array.isArray(colors) && colors.length > 0 && (
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Colors:</p>
             <div className="flex gap-2">
@@ -97,9 +127,9 @@ export default function ProductCard({
                 <button
                   key={index}
                   onClick={() => setSelectedColor(c.color)}
-                  className={`w-6 h-6 rounded-full border-2 ${
+                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
                     selectedColor === c.color
-                      ? "border-blue-500"
+                      ? "border-blue-500 ring-2 ring-blue-200"
                       : "border-gray-300"
                   }`}
                   style={{ backgroundColor: c.hexCode }}
@@ -110,7 +140,7 @@ export default function ProductCard({
           </div>
         )}
 
-        {sizes?.length > 0 && (
+        {Array.isArray(sizes) && sizes.length > 0 && (
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Sizes:</p>
             <div className="flex gap-2 flex-wrap">
@@ -118,14 +148,14 @@ export default function ProductCard({
                 <button
                   key={index}
                   onClick={() => setSelectedSize(s.size)}
-                  className={`px-3 py-1 text-sm rounded ${
+                  className={`px-3 py-1 text-sm rounded transition-all duration-200 ${
                     selectedSize === s.size
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-800"
+                      ? "bg-blue-500 text-white ring-2 ring-blue-200"
+                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                   } ${
                     s.stock === 0
                       ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-blue-100"
+                      : "transform hover:scale-105"
                   }`}
                   disabled={s.stock === 0}
                 >
@@ -138,13 +168,13 @@ export default function ProductCard({
 
         <div className="flex justify-between items-center mt-4">
           <p className="text-blue-600 font-bold text-lg">
-            {formatCurrency(price)}
+            {formatCurrency(price || 0)}
           </p>
           <button
             onClick={handleAddToCart}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded transition-all duration-200 transform hover:scale-105 ${
               stock > 0
-                ? "bg-blue-500 text-white hover:bg-blue-600"
+                ? "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
             disabled={stock === 0}
