@@ -8,25 +8,27 @@ export default function ProfileForm({
   onSave,
   onCancel,
 }) {
-  return (
-    <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
+  return (    <div className="max-w-3xl mx-auto bg-white/80 backdrop-blur-sm shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-3xl font-serif text-luxury-dark">My Profile</h2>
+          <div className="w-16 h-0.5 bg-luxury-gold mt-4"></div>
+        </div>
         {!editing && (
           <button
             type="button"
             onClick={onEdit}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="px-6 py-3 border border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white transition-colors font-serif text-sm tracking-wider"
           >
             Edit Profile
           </button>
         )}
       </div>
 
-      <form onSubmit={onSave} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={onSave} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-serif text-luxury-dark/70 mb-2">
               Email
             </label>
             <input
@@ -35,18 +37,19 @@ export default function ProfileForm({
               value={user.email}
               onChange={onChange}
               disabled={!editing}
-              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 ${
-                errors.email ? "border-red-500" : ""
-              }`}
+              className={`w-full p-3 border-b bg-transparent font-serif
+                ${editing ? 'border-luxury-gold/30 focus:border-luxury-gold' : 'border-gray-200'} 
+                ${errors.email ? "border-red-500" : ""}
+                disabled:bg-gray-50 disabled:text-luxury-dark/50`}
               required
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              <p className="text-red-500 text-sm mt-1 font-serif">{errors.email}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-serif text-luxury-dark/70 mb-2">
               First Name
             </label>
             <input
@@ -55,13 +58,13 @@ export default function ProfileForm({
               value={user.firstName}
               onChange={onChange}
               disabled={!editing}
-              className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className="w-full p-3 border-b border-luxury-gold/30 bg-transparent font-serif disabled:border-gray-200 disabled:bg-gray-50 disabled:text-luxury-dark/50"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-serif text-luxury-dark/70 mb-2">
               Last Name
             </label>
             <input
@@ -70,28 +73,13 @@ export default function ProfileForm({
               value={user.lastName}
               onChange={onChange}
               disabled={!editing}
-              className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              required
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address
-            </label>
-            <textarea
-              name="address"
-              value={user.address}
-              onChange={onChange}
-              disabled={!editing}
-              rows="3"
-              className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className="w-full p-3 border-b border-luxury-gold/30 bg-transparent font-serif disabled:border-gray-200 disabled:bg-gray-50 disabled:text-luxury-dark/50"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-serif text-luxury-dark/70 mb-2">
               Phone Number
             </label>
             <input
@@ -100,19 +88,19 @@ export default function ProfileForm({
               value={user.phoneNumber}
               onChange={onChange}
               disabled={!editing}
-              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 ${
-                errors.phoneNumber ? "border-red-500" : ""
-              }`}
+              className={`w-full p-3 border-b border-luxury-gold/30 bg-transparent font-serif
+                ${errors.phoneNumber ? "border-red-500" : ""}
+                disabled:border-gray-200 disabled:bg-gray-50 disabled:text-luxury-dark/50`}
               required
             />
             {errors.phoneNumber && (
-              <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+              <p className="text-red-500 text-sm mt-1 font-serif">{errors.phoneNumber}</p>
             )}
           </div>
 
           {editing && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-serif text-luxury-dark/70 mb-2">
                 Password
               </label>
               <input
@@ -120,31 +108,31 @@ export default function ProfileForm({
                 name="password"
                 value={user.password}
                 onChange={onChange}
-                className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full p-3 border-b border-luxury-gold/30 bg-transparent font-serif ${
                   errors.password ? "border-red-500" : ""
                 }`}
                 placeholder="Leave blank to keep current password"
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                <p className="text-red-500 text-sm mt-1 font-serif">{errors.password}</p>
               )}
             </div>
           )}
         </div>
 
         {editing && (
-          <div className="flex justify-end space-x-4 mt-6">
+          <div className="flex justify-end space-x-4 mt-12">
             <button
               type="button"
               onClick={onCancel}
-              className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+              className="px-6 py-3 border border-luxury-gold/30 text-luxury-dark/70 hover:border-luxury-gold hover:text-luxury-dark transition-colors font-serif text-sm tracking-wider"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+              className="px-6 py-3 bg-luxury-gold text-white hover:bg-luxury-dark transition-colors font-serif text-sm tracking-wider"
               disabled={loading}
             >
               {loading ? "Saving..." : "Save Changes"}

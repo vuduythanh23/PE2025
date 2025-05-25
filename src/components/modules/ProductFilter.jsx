@@ -41,14 +41,14 @@ export default function ProductFilter({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Category Filter */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Category</h3>
+        <h3 className="text-lg font-serif text-luxury-dark mb-4">Category</h3>
         <select
           value={tempFilters.category}
           onChange={(e) => handleFilterChange({ category: e.target.value })}
-          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
@@ -61,11 +61,11 @@ export default function ProductFilter({
 
       {/* Brand Filter */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Brand</h3>
+        <h3 className="text-lg font-serif text-luxury-dark mb-4">Brand</h3>
         <select
           value={tempFilters.brand}
           onChange={(e) => handleFilterChange({ brand: e.target.value })}
-          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
         >
           <option value="">All Brands</option>
           {brands.map((brand) => (
@@ -78,9 +78,7 @@ export default function ProductFilter({
 
       {/* Price Range Filter */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Price Range
-        </h3>
+        <h3 className="text-lg font-serif text-luxury-dark mb-4">Price Range</h3>
         <select
           value={
             tempFilters.priceRange.min === null
@@ -91,23 +89,14 @@ export default function ProductFilter({
             const selected = priceRanges.find(
               (range) => range.id === e.target.value
             );
-            if (!selected) {
-              handleFilterChange({
-                priceRange: { min: null, max: null },
-              });
-              return;
-            }
-            if (selected.value === "all") {
-              handleFilterChange({
-                priceRange: { min: null, max: null },
-              });
-            } else {
-              handleFilterChange({
-                priceRange: { min: selected.min, max: selected.max },
-              });
-            }
+            handleFilterChange({
+              priceRange:
+                selected?.value === "all"
+                  ? { min: null, max: null }
+                  : { min: selected?.min, max: selected?.max },
+            });
           }}
-          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
         >
           {priceRanges.map((range) => (
             <option key={range.id} value={range.id}>
@@ -118,18 +107,18 @@ export default function ProductFilter({
       </div>
 
       {/* Filter Actions */}
-      <div className="flex gap-3 pt-4 border-t border-gray-200">
-        <button
-          onClick={onApplyFilters}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Apply Filters
-        </button>
+      <div className="flex justify-between gap-6 mt-12">
         <button
           onClick={onResetFilters}
-          className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors"
+          className="flex-1 px-6 py-3 border border-luxury-gold/30 text-luxury-dark/70 hover:border-luxury-gold hover:text-luxury-dark transition-colors font-serif text-sm tracking-wider"
         >
           Reset
+        </button>
+        <button
+          onClick={() => onApplyFilters(tempFilters)}
+          className="flex-1 px-6 py-3 bg-luxury-gold text-white hover:bg-luxury-dark transition-colors font-serif text-sm tracking-wider"
+        >
+          Apply
         </button>
       </div>
     </div>

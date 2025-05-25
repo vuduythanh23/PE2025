@@ -5,6 +5,7 @@ import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";
 import ProductFilter from "../components/modules/ProductFilter";
 import ProductSort from "../components/modules/ProductSort";
+import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 
 export default function Products() {
@@ -12,7 +13,7 @@ export default function Products() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { handleAsyncOperation } = useLoading();
   const [activeFilters, setActiveFilters] = useState({
     category: "",
     brand: "",
@@ -36,11 +37,14 @@ export default function Products() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [categoriesData, brandsData, productsData] = await Promise.all([
-          getCategories(),
-          getBrands(),
-          getProducts(),
-        ]);
+        const [categoriesData, brandsData, productsData] = await handleAsyncOperation(
+          async () => Promise.all([
+            getCategories(),
+            getBrands(),
+            getProducts(),
+          ]),
+          'Failed to load products data'
+        );
 
         setCategories(categoriesData);
         setBrands(brandsData);
@@ -75,20 +79,14 @@ export default function Products() {
         }));
 
         setAllProducts(formattedProducts);
+        setFilteredProducts(formattedProducts);
       } catch (error) {
-        console.error("Error fetching initial data:", error);
-        Swal.fire({
-          title: "Error",
-          text: "Failed to load products and filters",
-          icon: "error",
-        });
-      } finally {
-        setLoading(false);
+        // Error will be handled by handleAsyncOperation
       }
     };
 
     fetchInitialData();
-  }, []);
+  }, [handleAsyncOperation]);
 
   // Apply filters and sorting to products only when activeFilters change
   useEffect(() => {
@@ -207,75 +205,78 @@ export default function Products() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row gap-8 relative">
-            {/* Sticky Sidebar with Filters and Sort */}
-            <aside className="md:sticky md:top-4 w-full md:w-72 flex-shrink-0 self-start bg-white rounded-lg shadow-md p-6">
-              <div className="space-y-6">
-                {/* Sort Section */}
-                <div className="pb-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                    Sort By
-                  </h2>
-                  <ProductSort
-                    sortBy={tempFilters.sortBy}
-                    onSortChange={handleSortChange}
-                  />
-                </div>
+      <main className="bg-gradient-to-b from-luxury-forest/5 to-luxury-light/5 min-h-screen">
+        <div className="container mx-auto px-4 py-12">
+          {/* Page Title */}
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-serif text-luxury-gold mb-4">
+              Collection
+            </h1>
+            <div className="w-24 h-0.5 bg-luxury-gold mx-auto"></div>
+          </div>
 
-                {/* Filters Section */}
-                <ProductFilter
-                  categories={categories}
-                  brands={brands}
-                  selectedCategory={tempFilters.category}
-                  selectedBrand={tempFilters.brand}
-                  selectedPriceRange={tempFilters.priceRange}
-                  onFilterChange={handleTempFiltersChange}
-                  onApplyFilters={handleApplyFilters}
-                  onResetFilters={handleResetFilters}
-                />
-              </div>
+          <div className="flex flex-col lg:flex-row gap-12">
+            {/* Filters Sidebar */}
+            <aside className="lg:w-1/4 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] h-fit">
+              <h2 className="text-2xl font-serif text-luxury-dark mb-8">
+                Filters
+              </h2>
+              <ProductFilter
+                categories={categories}
+                brands={brands}
+                selectedCategory={tempFilters.category}
+                selectedBrand={tempFilters.brand}
+                selectedPriceRange={tempFilters.priceRange}
+                onFilterChange={handleTempFiltersChange}
+                onApplyFilters={handleApplyFilters}
+                onResetFilters={handleResetFilters}
+              />
             </aside>
 
-            {/* Main Content */}
-            <div className="flex-1">
-              <div className="mb-6 flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-800">Products</h1>
-                <span className="text-gray-600">
-                  {filteredProducts.length} Products
-                </span>
+            {/* Products Grid */}
+            <div className="lg:w-3/4">
+              {/* Sort and Results Count */}
+              <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                <div className="w-full sm:w-64">
+                  <ProductSort
+                    sortBy={tempFilters.sortBy}
+                    onSortChange={(value) =>
+                      handleTempFiltersChange({ sortBy: value })
+                    }
+                  />
+                </div>
+                <p className="text-luxury-dark/70 font-serif">
+                  {filteredProducts.length}{" "}
+                  {filteredProducts.length === 1 ? "Product" : "Products"}
+                </p>
               </div>
 
-              {loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="text-xl text-gray-600">Loading...</div>
+              <div className="flex justify-center items-center h-96">
+                <div className="text-xl text-luxury-gold/50 font-serif">
+                  Loading...
                 </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="text-xl text-gray-600">No products found</div>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredProducts.map((product) => (
-                      <ProductCard key={product._id} {...product} />
-                    ))}
-                  </div>
+              </div>
 
-                  {filteredProducts.length < allProducts.length &&
-                    filteredProducts.length >=
-                      activeFilters.limit * activeFilters.page && (
-                      <div className="mt-8 flex justify-center">
-                        <button
-                          onClick={handleLoadMore}
-                          className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
-                        >
-                          Load More
-                        </button>
-                      </div>
-                    )}
-                </>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredProducts.map((product) => (
+                  <div key={product._id} className="group">
+                    <ProductCard {...product} />
+                  </div>
+                ))}
+              </div>
+
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-16">
+                  <p className="text-xl text-luxury-dark/70 font-serif">
+                    No products found matching your criteria.
+                  </p>
+                  <button
+                    onClick={handleResetFilters}
+                    className="mt-4 px-6 py-3 border border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white transition-colors font-serif text-sm tracking-wider"
+                  >
+                    Reset Filters
+                  </button>
+                </div>
               )}
             </div>
           </div>

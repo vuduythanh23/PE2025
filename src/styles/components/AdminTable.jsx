@@ -11,137 +11,170 @@ export default function AdminTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
+      <table className="w-full border-collapse">
+        <thead className="bg-luxury-forest/5">
           <tr>
-            <th className="border border-gray-300 px-4 py-2">ID</th>
-            <th className="border border-gray-300 px-4 py-2">Username</th>
-            <th className="border border-gray-300 px-4 py-2">Email</th>
-            <th className="border border-gray-300 px-4 py-2">First Name</th>
-            <th className="border border-gray-300 px-4 py-2">Last Name</th>
-            <th className="border border-gray-300 px-4 py-2">Address</th>
-            <th className="border border-gray-300 px-4 py-2">Phone</th>
-            <th className="border border-gray-300 px-4 py-2">Actions</th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              ID
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              Username
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              Email
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              First Name
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              Last Name
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              Address
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              Phone
+            </th>
+            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
+              Actions
+            </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-luxury-gold/10">
           {users.map((user) => (
-            <tr key={user._id}>
-              <td className="border border-gray-300 px-4 py-2">{user._id}</td>
-              <td className="border border-gray-300 px-4 py-2">
+            <tr key={user._id} className="group">
+              <td className="px-6 py-4 text-sm text-luxury-dark/70 font-serif">
+                {user._id}
+              </td>
+              <td className="px-6 py-4">
                 {editingUser?._id === user._id ? (
                   <input
                     type="text"
                     name="username"
                     value={editingUser.username}
                     onChange={onChange}
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
-                  user.username
+                  <span className="text-sm text-luxury-dark font-serif">
+                    {user.username}
+                  </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-4 py-2">
+
+              <td className="px-6 py-4">
                 {editingUser?._id === user._id ? (
                   <input
                     type="email"
                     name="email"
                     value={editingUser.email}
                     onChange={onChange}
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
-                  user.email
+                  <span className="text-sm text-luxury-dark/70 font-serif">
+                    {user.email}
+                  </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-4 py-2">
+
+              <td className="px-6 py-4">
                 {editingUser?._id === user._id ? (
                   <input
                     type="text"
                     name="firstName"
                     value={editingUser.firstName}
                     onChange={onChange}
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
-                  user.firstName
+                  <span className="text-sm text-luxury-dark font-serif">
+                    {user.firstName}
+                  </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-4 py-2">
+
+              <td className="px-6 py-4">
                 {editingUser?._id === user._id ? (
                   <input
                     type="text"
                     name="lastName"
                     value={editingUser.lastName}
                     onChange={onChange}
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
-                  user.lastName
+                  <span className="text-sm text-luxury-dark font-serif">
+                    {user.lastName}
+                  </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-4 py-2">
+
+              <td className="px-6 py-4">
                 {editingUser?._id === user._id ? (
                   <input
                     type="text"
                     name="address"
                     value={editingUser.address}
                     onChange={onChange}
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
-                  user.address
+                  <span className="text-sm text-luxury-dark/70 font-serif">
+                    {user.address}
+                  </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-4 py-2">
+
+              <td className="px-6 py-4">
                 {editingUser?._id === user._id ? (
                   <input
                     type="tel"
                     name="phoneNumber"
                     value={editingUser.phoneNumber}
                     onChange={onChange}
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
-                  user.phoneNumber
+                  <span className="text-sm text-luxury-dark/70 font-serif">
+                    {user.phoneNumber}
+                  </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-4 py-2">
-                <div className="flex gap-2">
-                  {editingUser?._id === user._id ? (
-                    <>
-                      <button
-                        onClick={onSave}
-                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={onCancel}
-                        className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => onEdit(user)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                      {!user.isAdmin && (
-                        <button
-                          onClick={() => onDelete(user._id)}
-                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+
+              <td className="px-6 py-4">
+                {editingUser?._id === user._id ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onSave(editingUser)}
+                      className="px-4 py-2 bg-luxury-gold text-white text-sm font-serif tracking-wider hover:bg-luxury-dark transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={onCancel}
+                      className="px-4 py-2 border border-luxury-gold/30 text-luxury-dark/70 text-sm font-serif tracking-wider hover:border-luxury-gold hover:text-luxury-dark transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => onEdit(user)}
+                      className="text-luxury-gold hover:text-luxury-dark transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(user._id)}
+                      className="text-red-500 hover:text-red-600 transition-colors"
+                      disabled={user.isAdmin}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </td>
             </tr>
           ))}

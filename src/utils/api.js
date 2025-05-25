@@ -16,7 +16,8 @@ const baseHeaders = {
 };
 
 // Base fetch utility with timeout and retry logic
-async function fetchWithRetry(url, options, retries = 3) {    let lastError;
+async function fetchWithRetry(url, options, retries = 3) {
+    let lastError;
     let lastResponse;
 
     for (let i = 0; i < retries; i++) {
@@ -24,10 +25,20 @@ async function fetchWithRetry(url, options, retries = 3) {    let lastError;
         const response = await fetchWithTimeout(url, options);
         lastResponse = response;
         
-        // Don't retry auth failures - they won't succeed on retry
-        if (response.status === 401) {
+        if (!response.ok) {
           const error = await response.text();
-          throw new Error("Invalid credentials");
+          
+          // Don't retry auth failures
+          if (response.status === 401) {
+            throw new Error("Invalid credentials");
+          }
+          
+          // Handle server errors
+          if (response.status >= 500) {
+            throw new Error(`Server error: ${error}`);
+          }
+          
+          throw new Error(error || `HTTP error! status: ${response.status}`);
         }
         
         if (response.ok) return response;

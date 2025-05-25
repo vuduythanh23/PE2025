@@ -7,6 +7,7 @@ import {
 } from "../utils/validation-utils";
 import Header from "../components/layout/Header";
 import ProfileForm from "../styles/components/ProfileForm";
+import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 
 const UserProfile = () => {
@@ -21,28 +22,24 @@ const UserProfile = () => {
     password: "",
   });
   const [editing, setEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
+  const { handleAsyncOperation } = useLoading();
 
   useEffect(() => {
     const fetchUser = async () => {
-      setLoading(true);
       try {
-        const data = await getCurrentUser();
+        const data = await handleAsyncOperation(
+          () => getCurrentUser(),
+          "Failed to load user information"
+        );
         setUser({ ...data, password: "" });
-      } catch (err) {
-        Swal.fire({
-          title: "Error",
-          text: "Failed to load user information",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        // Error will be handled by handleAsyncOperation
       }
     };
+
     fetchUser();
-  }, []);
+  }, [handleAsyncOperation]);
 
   const validateField = (name, value) => {
     switch (name) {
@@ -100,13 +97,15 @@ const UserProfile = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const updateData = { ...user };
       if (!updateData.password) {
         delete updateData.password;
       }
-      await updateUser(updateData);
+      await handleAsyncOperation(
+        () => updateUser(updateData),
+        "Failed to update profile"
+      );
       setEditing(false);
       Swal.fire({
         title: "Success",
@@ -122,21 +121,8 @@ const UserProfile = () => {
         icon: "error",
         confirmButtonText: "OK",
       });
-    } finally {
-      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-          <div className="text-xl">Loading...</div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
@@ -146,7 +132,6 @@ const UserProfile = () => {
           user={user}
           editing={editing}
           errors={errors}
-          loading={loading}
           onEdit={handleEdit}
           onChange={handleChange}
           onSave={handleSave}

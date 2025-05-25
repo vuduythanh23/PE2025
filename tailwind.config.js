@@ -1,8 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,jsx}"],
-  theme: {
+  content: ["./index.html", "./src/**/*.{js,jsx}"],  theme: {
     extend: {
+      colors: {
+        luxury: {
+          dark: '#333333',
+          gold: '#A4863D',
+          light: '#E6E6FA',
+          forest: '#0E300E',
+        },
+      },
       keyframes: {
         "scale-in": {
           "0%": { transform: "scale(0.5)", opacity: "0" },

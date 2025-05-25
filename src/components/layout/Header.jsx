@@ -11,17 +11,15 @@ export default function Header() {
     window.location.href = "/login";
   };
 
-  return (
-    <header className="bg-white shadow-md px-6 py-4">
+  return (    <header className="bg-luxury-forest shadow-md px-6 py-4">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/home" className="text-2xl font-bold text-gray-800">
-          SnkrSS
+        <Link to="/home" className="text-2xl font-bold text-luxury-gold font-serif tracking-wider">
+          SNKRSS
         </Link>
         <nav>
           <ul className="flex items-center gap-6">
             {/* Home Icon */}
-            <li className="group relative">
-              <Link to="/home" className="hover:text-blue-600">
+            <li className="group relative">              <Link to="/home" className="text-luxury-gold hover:text-luxury-light">
                 <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -42,11 +40,9 @@ export default function Header() {
                   </span>
                 </div>
               </Link>
-            </li>
-
-            {/* Products Icon */}
+            </li>            {/* Products Icon */}
             <li className="group relative">
-              <Link to="/products" className="hover:text-blue-600">
+              <Link to="/products" className="text-luxury-gold hover:text-luxury-light">
                 <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -71,7 +67,7 @@ export default function Header() {
 
             {/* Contact Icon */}
             <li className="group relative">
-              <a href="#contact" className="hover:text-blue-600">
+              <a href="#contact" className="text-luxury-gold hover:text-luxury-light">
                 <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +134,7 @@ export default function Header() {
                 </li>
                 {/* Profile Icon */}
                 <li className="group relative">
-                  <Link to="/profile" className="hover:text-blue-600">
+                  <Link to="/profile" className="text-luxury-gold hover:text-luxury-light">
                     <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -161,10 +157,9 @@ export default function Header() {
                   </Link>
                 </li>{" "}
                 {/* Logout Icon */}
-                <li className="group relative">
-                  <button
+                <li className="group relative">                  <button
                     onClick={handleLogout}
-                    className="hover:text-blue-600 flex flex-col items-center"
+                    className="text-luxury-gold hover:text-luxury-light flex flex-col items-center"
                   >
                     <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                       <svg
@@ -192,7 +187,7 @@ export default function Header() {
               <>
                 {/* Login Icon */}
                 <li className="group relative">
-                  <Link to="/login" className="hover:text-blue-600">
+                  <Link to="/login" className="text-luxury-gold hover:text-luxury-light">
                     <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -217,7 +212,7 @@ export default function Header() {
 
                 {/* Register Icon */}
                 <li className="group relative">
-                  <Link to="/register" className="hover:text-blue-600">
+                  <Link to="/register" className="text-luxury-gold hover:text-luxury-light">
                     <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

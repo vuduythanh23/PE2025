@@ -111,20 +111,21 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
     }));
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">
-            {type === "login" ? "Login" : "Register"}
+  return (    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-sm p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-serif text-luxury-dark">
+            {type === "login" ? "Welcome Back" : "Create Account"}
           </h2>
+          <div className="w-16 h-0.5 bg-luxury-gold mx-auto mt-4"></div>
         </div>
+
         <form className="space-y-6" onSubmit={handleSubmit}>
           {fields.map((field) => (
             <div key={field}>
               <label
                 htmlFor={field}
-                className="block text-sm font-medium text-gray-800 mb-2"
+                className="block text-sm font-medium text-luxury-dark/70 mb-2 font-serif"
               >
                 {field.charAt(0).toUpperCase() + field.slice(1)}
               </label>
@@ -134,27 +135,26 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                 type={field.includes("password") ? "password" : "text"}
                 value={formData[field]}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />{" "}
-              {touched[field] && errors[field] && field !== "password" && (
+                className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
+                placeholder={`Enter your ${field.toLowerCase()}`}
+              />
+              {touched[field] && errors[field] && (
                 <p className="mt-1 text-sm text-red-500">{errors[field]}</p>
               )}
             </div>
           ))}
+
           <button
             type="submit"
-            className={`w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={
-              loading || (type === "register" && errors.confirmPassword)
-            }
+            className={`w-full bg-luxury-gold text-white py-3 font-serif text-sm tracking-wider transition-colors
+              ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-luxury-dark"}`}
+            disabled={loading || (type === "register" && errors.confirmPassword)}
           >
             {loading
               ? "Processing..."
               : type === "login"
-              ? "Login"
-              : "Register"}
+              ? "Sign In"
+              : "Create Account"}
           </button>
         </form>
       </div>

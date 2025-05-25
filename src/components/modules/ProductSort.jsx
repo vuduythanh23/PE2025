@@ -6,13 +6,12 @@ export default function ProductSort({ sortBy, onSortChange }) {
     { value: "rating_desc", label: "Highest Rated" },
   ];
 
-  return (
-    <div className="w-full">
+  return (    <div className="w-full">
       <select
         id="sort"
         value={sortBy}
         onChange={(e) => onSortChange(e.target.value)}
-        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
       >
         {sortOptions.map((option) => (
           <option key={option.value} value={option.value}>

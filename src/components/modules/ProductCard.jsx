@@ -81,56 +81,62 @@ export default function ProductCard(props) {
       ? images[0]
       : "https://via.placeholder.com/300";
 
-  return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300">
+  return (    <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div className="relative">
         <img
           src={imageUrl}
           alt={name || "Product image"}
-          className="w-full h-64 object-cover"
+          className="w-full h-[400px] object-cover transform transition-transform duration-700 group-hover:scale-105"
         />
         {stock <= 5 && stock > 0 && (
-          <span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-sm">
-            Only {stock} left!
+          <span className="absolute top-4 right-4 bg-luxury-gold text-white px-3 py-1 text-sm font-serif">
+            Only {stock} left
           </span>
         )}
         {stock === 0 && (
-          <span className="absolute top-2 right-2 bg-gray-500 text-white px-2 py-1 rounded text-sm">
-            Out of Stock
-          </span>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+            <span className="text-white text-lg font-serif tracking-wider">
+              Sold Out
+            </span>
+          </div>
         )}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent h-32 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-            <p className="text-sm text-gray-600">{brand}</p>
+            <h3 className="text-xl font-serif text-luxury-dark">{name}</h3>
+            <p className="text-sm text-luxury-gold font-medium mt-1">{brand}</p>
           </div>
           {averageRating > 0 && (
             <div className="flex items-center">
-              <span className="text-yellow-400">★</span>
-              <span className="text-sm text-gray-600 ml-1">
+              <span className="text-luxury-gold">★</span>
+              <span className="text-sm text-luxury-dark/70 ml-1 font-serif">
                 {averageRating.toFixed(1)}
               </span>
             </div>
           )}
         </div>
 
-        <p className="text-gray-600 text-sm mb-4">{description}</p>
+        <p className="text-luxury-dark/70 text-sm mb-6 line-clamp-2">
+          {description}
+        </p>
 
         {Array.isArray(colors) && colors.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Colors:</p>
-            <div className="flex gap-2">
+          <div className="mb-6">
+            <p className="text-sm font-serif text-luxury-dark mb-3">
+              Color Options
+            </p>
+            <div className="flex gap-3">
               {colors.map((c, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedColor(c.color)}
-                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                  className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
                     selectedColor === c.color
-                      ? "border-blue-500 ring-2 ring-blue-200"
-                      : "border-gray-300"
+                      ? "border-luxury-gold ring-1 ring-luxury-gold"
+                      : "border-gray-200"
                   }`}
                   style={{ backgroundColor: c.hexCode }}
                   title={c.color}
@@ -141,17 +147,17 @@ export default function ProductCard(props) {
         )}
 
         {Array.isArray(sizes) && sizes.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Sizes:</p>
-            <div className="flex gap-2 flex-wrap">
+          <div className="mb-6">
+            <p className="text-sm font-serif text-luxury-dark mb-3">Select Size</p>
+            <div className="flex gap-3 flex-wrap">
               {sizes.map((s, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedSize(s.size)}
-                  className={`px-3 py-1 text-sm rounded transition-all duration-200 ${
+                  className={`w-12 h-12 text-sm font-serif rounded-full border transition-all duration-200 ${
                     selectedSize === s.size
-                      ? "bg-blue-500 text-white ring-2 ring-blue-200"
-                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      ? "bg-luxury-gold text-white border-luxury-gold"
+                      : "border-gray-200 text-luxury-dark hover:border-luxury-gold"
                   } ${
                     s.stock === 0
                       ? "opacity-50 cursor-not-allowed"
@@ -166,16 +172,16 @@ export default function ProductCard(props) {
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-4">
-          <p className="text-blue-600 font-bold text-lg">
+        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+          <p className="text-luxury-gold font-serif text-xl">
             {formatCurrency(price || 0)}
           </p>
           <button
             onClick={handleAddToCart}
-            className={`px-4 py-2 rounded transition-all duration-200 transform hover:scale-105 ${
+            className={`px-6 py-3 transition-all duration-200 font-serif text-sm tracking-wider ${
               stock > 0
-                ? "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                ? "bg-luxury-gold text-white hover:bg-luxury-dark active:transform active:scale-95"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
             disabled={stock === 0}
           >

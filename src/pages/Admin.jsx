@@ -4,32 +4,29 @@ import Swal from "sweetalert2";
 import Header from "../components/layout/Header";
 import AdminTable from "../styles/components/AdminTable";
 import OrderManagement from "../components/modules/OrderManagement";
+import { useLoading } from "../context/LoadingContext";
 
 export default function Admin() {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [activeTab, setActiveTab] = useState("users"); // 'users' or 'orders'
+  const { handleAsyncOperation } = useLoading();
 
   useEffect(() => {
     const getUsers = async () => {
       try {
-        const data = await getAllUsers();
+        const data = await handleAsyncOperation(
+          () => getAllUsers(),
+          "Failed to fetch users"
+        );
         setUsers(data);
       } catch (error) {
-        Swal.fire({
-          title: "Error",
-          text: error.message || "Failed to fetch users.",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
-      } finally {
-        setLoading(false);
+        // Error will be handled by handleAsyncOperation
       }
     };
 
     getUsers();
-  }, []);
+  }, [handleAsyncOperation]);
 
   const handleEdit = (user) => {
     setEditingUser({ ...user });
@@ -100,63 +97,56 @@ export default function Admin() {
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="text-xl">Loading...</div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       <Header />
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Admin Panel</h1>
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+      <main className="min-h-screen bg-gradient-to-b from-luxury-forest/5 to-luxury-light/5">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-serif text-luxury-gold mb-4">
+              Admin Dashboard
+            </h1>
+            <div className="w-24 h-0.5 bg-luxury-gold mx-auto"></div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-6">
+            {/* Tabs */}
+            <div className="flex gap-6 mb-8 border-b border-luxury-gold/20">
               <button
+                className={`pb-4 font-serif text-sm tracking-wider transition-colors relative
+                  ${
+                    activeTab === "users"
+                      ? "text-luxury-gold border-b-2 border-luxury-gold -mb-[2px]"
+                      : "text-luxury-dark/60 hover:text-luxury-dark"
+                  }`}
                 onClick={() => setActiveTab("users")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "users"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
               >
                 User Management
               </button>
               <button
+                className={`pb-4 font-serif text-sm tracking-wider transition-colors relative
+                  ${
+                    activeTab === "orders"
+                      ? "text-luxury-gold border-b-2 border-luxury-gold -mb-[2px]"
+                      : "text-luxury-dark/60 hover:text-luxury-dark"
+                  }`}
                 onClick={() => setActiveTab("orders")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "orders"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
               >
                 Order Management
               </button>
-            </nav>
+            </div>
+
+            <AdminTable
+              users={users}
+              editingUser={editingUser}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onChange={handleChange}
+              onCancel={handleCancelEdit}
+              onDelete={handleDelete}
+            />
           </div>
         </div>
-
-        {activeTab === "users" ? (
-          <AdminTable
-            users={users}
-            editingUser={editingUser}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onCancel={handleCancelEdit}
-            onChange={handleChange}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <OrderManagement />
-        )}
-      </div>
+      </main>
     </>
   );
 }

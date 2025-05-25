@@ -5,20 +5,30 @@ import Carousel from "../components/layout/Carousel";
 import Footer from "../components/layout/Footer";
 import ProductShowcase from "../styles/components/ProductShowcase";
 import { getProducts } from "../utils/api";
+import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const { handleAsyncOperation } = useLoading();
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        // Get latest products, limited to 6
-        const data = await getProducts({
-          sortBy: "newest",
-          limit: 6,
-        });
+        const data = await handleAsyncOperation(
+          async () => {
+            const response = await getProducts({
+              sortBy: "newest",
+              limit: 6,
+            });
+            
+            if (!response || !Array.isArray(response)) {
+              throw new Error('Invalid response format from server');
+            }
+            
+            return response;
+          },
+          "Failed to load featured products"
+        );
 
         // Format the products data to ensure proper structure
         const formattedProducts = data.map((product) => ({
@@ -43,56 +53,45 @@ export default function Home() {
 
         setFeaturedProducts(formattedProducts);
       } catch (error) {
-        Swal.fire({
-          title: "Error",
-          text: "Failed to load featured products",
-          icon: "error",
-        });
-      } finally {
-        setLoading(false);
+        // Error will be handled by handleAsyncOperation
       }
     };
 
     fetchFeaturedProducts();
-  }, []);
+  }, [handleAsyncOperation]);
 
   return (
     <>
       <Header />
-      <main>
+      <main className="bg-gradient-to-b from-luxury-forest/5 to-luxury-light/5">
         <Carousel />
-
-        <div className="container mx-auto px-4 py-12">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800">
-              Featured Sneakers
-            </h2>
-            <Link
-              to="/products"
-              className="text-blue-600 hover:text-blue-700 font-semibold"
-            >
-              View All Products →
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="text-xl text-gray-600">Loading...</div>
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center mb-16">
+              <h2 className="text-4xl font-serif text-luxury-gold mb-4">
+                Featured Collection
+              </h2>
+              <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>
+              <Link
+                to="/products"
+                className="text-luxury-gold hover:text-luxury-light transition-colors font-serif text-lg"
+              >
+                View All Products →
+              </Link>
             </div>
-          ) : (
-            <ProductShowcase products={featuredProducts} />
-          )}
 
-          <div className="mt-12 text-center">
-            <Link
-              to="/products"
-              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Explore All Products
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <ProductShowcase products={featuredProducts} />
           </div>
-        </div>
-      </main>
+
+            <div className="mt-20 text-center">
+              <Link
+                to="/products"
+                className="inline-block border-2 border-luxury-gold text-luxury-gold px-12 py-4 hover:bg-luxury-gold hover:text-white transition-colors font-serif tracking-wider"
+              >
+                Explore Collection
+              </Link>
+            </div>          </div>
+        </main>
       <Footer />
     </>
   );
