@@ -78,7 +78,9 @@ export default function ProductFilter({
 
       {/* Price Range Filter */}
       <div>
-        <h3 className="text-lg font-serif text-luxury-dark mb-4">Price Range</h3>
+        <h3 className="text-lg font-serif text-luxury-dark mb-4">
+          Price Range
+        </h3>
         <select
           value={
             tempFilters.priceRange.min === null

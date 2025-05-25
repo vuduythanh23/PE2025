@@ -37,14 +37,12 @@ export default function Products() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [categoriesData, brandsData, productsData] = await handleAsyncOperation(
-          async () => Promise.all([
-            getCategories(),
-            getBrands(),
-            getProducts(),
-          ]),
-          'Failed to load products data'
-        );
+        const [categoriesData, brandsData, productsData] =
+          await handleAsyncOperation(
+            async () =>
+              Promise.all([getCategories(), getBrands(), getProducts()]),
+            "Failed to load products data"
+          );
 
         setCategories(categoriesData);
         setBrands(brandsData);

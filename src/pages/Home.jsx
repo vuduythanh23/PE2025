@@ -14,21 +14,18 @@ export default function Home() {
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        const data = await handleAsyncOperation(
-          async () => {
-            const response = await getProducts({
-              sortBy: "newest",
-              limit: 6,
-            });
-            
-            if (!response || !Array.isArray(response)) {
-              throw new Error('Invalid response format from server');
-            }
-            
-            return response;
-          },
-          "Failed to load featured products"
-        );
+        const data = await handleAsyncOperation(async () => {
+          const response = await getProducts({
+            sortBy: "newest",
+            limit: 6,
+          });
+
+          if (!response || !Array.isArray(response)) {
+            throw new Error("Invalid response format from server");
+          }
+
+          return response;
+        }, "Failed to load featured products");
 
         // Format the products data to ensure proper structure
         const formattedProducts = data.map((product) => ({
@@ -67,31 +64,30 @@ export default function Home() {
         <Carousel />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
-              <h2 className="text-4xl font-serif text-luxury-gold mb-4">
-                Featured Collection
-              </h2>
-              <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>
-              <Link
-                to="/products"
-                className="text-luxury-gold hover:text-luxury-light transition-colors font-serif text-lg"
-              >
-                View All Products →
-              </Link>
-            </div>
-
+            <h2 className="text-4xl font-serif text-luxury-gold mb-4">
+              Featured Collection
+            </h2>
+            <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>
+            <Link
+              to="/products"
+              className="text-luxury-gold hover:text-luxury-light transition-colors font-serif text-lg"
+            >
+              View All Products →
+            </Link>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <ProductShowcase products={featuredProducts} />
           </div>
-
-            <div className="mt-20 text-center">
-              <Link
-                to="/products"
-                className="inline-block border-2 border-luxury-gold text-luxury-gold px-12 py-4 hover:bg-luxury-gold hover:text-white transition-colors font-serif tracking-wider"
-              >
-                Explore Collection
-              </Link>
-            </div>          </div>
-        </main>
+          <div className="mt-20 text-center">
+            <Link
+              to="/products"
+              className="inline-block border-2 border-luxury-gold text-luxury-gold px-12 py-4 hover:bg-luxury-gold hover:text-white transition-colors font-serif tracking-wider"
+            >
+              Explore Collection
+            </Link>
+          </div>{" "}
+        </div>
+      </main>
       <Footer />
     </>
   );

@@ -81,7 +81,8 @@ export default function ProductCard(props) {
       ? images[0]
       : "https://via.placeholder.com/300";
 
-  return (    <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+  return (
+    <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div className="relative">
         <img
           src={imageUrl}
@@ -148,7 +149,9 @@ export default function ProductCard(props) {
 
         {Array.isArray(sizes) && sizes.length > 0 && (
           <div className="mb-6">
-            <p className="text-sm font-serif text-luxury-dark mb-3">Select Size</p>
+            <p className="text-sm font-serif text-luxury-dark mb-3">
+              Select Size
+            </p>
             <div className="flex gap-3 flex-wrap">
               {sizes.map((s, index) => (
                 <button

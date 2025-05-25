@@ -111,7 +111,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
     }));
   };
 
-  return (    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-12 px-4">
+  return (
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md bg-white/80 backdrop-blur-sm p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-serif text-luxury-dark">
@@ -147,8 +148,14 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
           <button
             type="submit"
             className={`w-full bg-luxury-gold text-white py-3 font-serif text-sm tracking-wider transition-colors
-              ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-luxury-dark"}`}
-            disabled={loading || (type === "register" && errors.confirmPassword)}
+              ${
+                loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-luxury-dark"
+              }`}
+            disabled={
+              loading || (type === "register" && errors.confirmPassword)
+            }
           >
             {loading
               ? "Processing..."

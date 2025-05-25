@@ -8,7 +8,8 @@ export default function ProfileForm({
   onSave,
   onCancel,
 }) {
-  return (    <div className="max-w-3xl mx-auto bg-white/80 backdrop-blur-sm shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-8">
+  return (
+    <div className="max-w-3xl mx-auto bg-white/80 backdrop-blur-sm shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-serif text-luxury-dark">My Profile</h2>
@@ -38,13 +39,19 @@ export default function ProfileForm({
               onChange={onChange}
               disabled={!editing}
               className={`w-full p-3 border-b bg-transparent font-serif
-                ${editing ? 'border-luxury-gold/30 focus:border-luxury-gold' : 'border-gray-200'} 
+                ${
+                  editing
+                    ? "border-luxury-gold/30 focus:border-luxury-gold"
+                    : "border-gray-200"
+                } 
                 ${errors.email ? "border-red-500" : ""}
                 disabled:bg-gray-50 disabled:text-luxury-dark/50`}
               required
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1 font-serif">{errors.email}</p>
+              <p className="text-red-500 text-sm mt-1 font-serif">
+                {errors.email}
+              </p>
             )}
           </div>
 
@@ -94,7 +101,9 @@ export default function ProfileForm({
               required
             />
             {errors.phoneNumber && (
-              <p className="text-red-500 text-sm mt-1 font-serif">{errors.phoneNumber}</p>
+              <p className="text-red-500 text-sm mt-1 font-serif">
+                {errors.phoneNumber}
+              </p>
             )}
           </div>
 
@@ -114,7 +123,9 @@ export default function ProfileForm({
                 placeholder="Leave blank to keep current password"
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1 font-serif">{errors.password}</p>
+                <p className="text-red-500 text-sm mt-1 font-serif">
+                  {errors.password}
+                </p>
               )}
             </div>
           )}

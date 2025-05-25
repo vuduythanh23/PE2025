@@ -218,7 +218,9 @@ export default function Cart({ isOpen, onClose }) {
                       className="w-24 h-24 object-cover"
                     />
                     <div className="flex-1">
-                      <h3 className="font-serif text-luxury-dark">{item.name}</h3>
+                      <h3 className="font-serif text-luxury-dark">
+                        {item.name}
+                      </h3>
                       <p className="text-sm text-luxury-dark/70 mt-1">
                         {item.color && `Color: ${item.color}`}
                         {item.size && ` | Size: ${item.size}`}
@@ -290,7 +292,9 @@ export default function Cart({ isOpen, onClose }) {
           {cartItems.length > 0 && (
             <div className="p-6 bg-white border-t border-luxury-gold/20">
               <div className="flex justify-between items-center mb-6">
-                <span className="text-lg font-serif text-luxury-dark">Total</span>
+                <span className="text-lg font-serif text-luxury-dark">
+                  Total
+                </span>
                 <span className="text-xl font-serif text-luxury-gold">
                   {formatCurrency(calculateTotal())}
                 </span>
@@ -299,7 +303,11 @@ export default function Cart({ isOpen, onClose }) {
                 onClick={handleCheckout}
                 disabled={loading}
                 className={`w-full bg-luxury-gold text-white py-3 font-serif text-sm tracking-wider transition-colors
-                  ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-luxury-dark"}`}
+                  ${
+                    loading
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-luxury-dark"
+                  }`}
               >
                 {loading ? "Processing..." : "Proceed to Checkout"}
               </button>

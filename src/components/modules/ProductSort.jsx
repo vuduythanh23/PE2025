@@ -6,7 +6,8 @@ export default function ProductSort({ sortBy, onSortChange }) {
     { value: "rating_desc", label: "Highest Rated" },
   ];
 
-  return (    <div className="w-full">
+  return (
+    <div className="w-full">
       <select
         id="sort"
         value={sortBy}

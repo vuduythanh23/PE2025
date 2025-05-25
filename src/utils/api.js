@@ -17,66 +17,69 @@ const baseHeaders = {
 
 // Base fetch utility with timeout and retry logic
 async function fetchWithRetry(url, options, retries = 3) {
-    let lastError;
-    let lastResponse;
+  let lastError;
+  let lastResponse;
 
-    for (let i = 0; i < retries; i++) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetchWithTimeout(url, options);
+      lastResponse = response;
+
+      if (!response.ok) {
+        const error = await response.text();
+
+        // Don't retry auth failures
+        if (response.status === 401) {
+          throw new Error("Invalid credentials");
+        }
+
+        // Handle server errors
+        if (response.status >= 500) {
+          throw new Error(`Server error: ${error}`);
+        }
+
+        throw new Error(error || `HTTP error! status: ${response.status}`);
+      }
+
+      if (response.ok) return response;
+
+      const errorText = await response.text();
       try {
-        const response = await fetchWithTimeout(url, options);
-        lastResponse = response;
-        
-        if (!response.ok) {
-          const error = await response.text();
-          
-          // Don't retry auth failures
-          if (response.status === 401) {
-            throw new Error("Invalid credentials");
-          }
-          
-          // Handle server errors
-          if (response.status >= 500) {
-            throw new Error(`Server error: ${error}`);
-          }
-          
-          throw new Error(error || `HTTP error! status: ${response.status}`);
-        }
-        
-        if (response.ok) return response;
-
-        const errorText = await response.text();
-        try {
-          // Try to parse as JSON for structured error messages
-          const errorJson = JSON.parse(errorText);
-          lastError = errorJson.message || errorText;
-        } catch {
-          lastError = errorText;
-        }
-        console.warn(`Request failed (attempt ${i + 1}/${retries}):`, lastError);
-        
-        // Don't retry if we got a valid error response
-        if (response.status === 400 || response.status === 403) {
-          throw new Error(lastError);
-        }
-      } catch (error) {
-        if (error.message === "Invalid credentials") {
-          throw error;
-        }
-        lastError = error;
-        console.warn(`Request error (attempt ${i + 1}/${retries}):`, error.message);
+        // Try to parse as JSON for structured error messages
+        const errorJson = JSON.parse(errorText);
+        lastError = errorJson.message || errorText;
+      } catch {
+        lastError = errorText;
       }
+      console.warn(`Request failed (attempt ${i + 1}/${retries}):`, lastError);
 
-      if (i < retries - 1) {
-        const delay = Math.min(1000 * Math.pow(2, i), 5000); // Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, delay));
+      // Don't retry if we got a valid error response
+      if (response.status === 400 || response.status === 403) {
+        throw new Error(lastError);
       }
+    } catch (error) {
+      if (error.message === "Invalid credentials") {
+        throw error;
+      }
+      lastError = error;
+      console.warn(
+        `Request error (attempt ${i + 1}/${retries}):`,
+        error.message
+      );
     }
 
-    // If we have a structured error message, use it
-    if (typeof lastError === 'string') {
-      throw new Error(lastError);
+    if (i < retries - 1) {
+      const delay = Math.min(1000 * Math.pow(2, i), 5000); // Exponential backoff
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
-    
-    throw new Error("Unable to complete request. Please try again later.");
+  }
+
+  // If we have a structured error message, use it
+  if (typeof lastError === "string") {
+    throw new Error(lastError);
+  }
+
+  throw new Error("Unable to complete request. Please try again later.");
 }
 
 // Auth headers utility
@@ -189,11 +192,11 @@ export async function loginUser(email, password) {
     if (data.token) {
       // Clear any existing session data first
       sessionStorage.clear();
-      
+
       // Store new session data
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("user", JSON.stringify(data.user));
-      if (data.user.role === 'admin') {
+      if (data.user.role === "admin") {
         sessionStorage.setItem("isAdmin", "true");
       }
     } else {
@@ -204,7 +207,9 @@ export async function loginUser(email, password) {
   } catch (error) {
     console.error("Login error:", error);
     if (error.message === "Request timed out") {
-      throw new Error("Connection timed out. Please check your internet connection and try again.");
+      throw new Error(
+        "Connection timed out. Please check your internet connection and try again."
+      );
     }
     throw error;
   }
