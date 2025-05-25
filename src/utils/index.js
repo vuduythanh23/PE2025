@@ -12,6 +12,9 @@ export * from "./helpers/index.js";
 // Constants
 export * from "./constants/index.js";
 
+// Configuration checker
+export { ConfigChecker } from "./config-checker.js";
+
 // Legacy compatibility - export commonly used functions directly
 // This maintains backward compatibility with existing imports
 export {

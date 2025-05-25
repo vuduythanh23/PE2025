@@ -1,4 +1,4 @@
-import { API_CONFIG, BASE_HEADERS } from "../constants/api.js";
+import { API_CONFIG, BASE_HEADERS, Logger } from "../constants/api.js";
 
 // Rate limiting utility
 export const rateLimiter = {
@@ -73,11 +73,10 @@ export async function fetchWithRetry(url, options, retries = API_CONFIG.RETRY_AT
       try {
         // Try to parse as JSON for structured error messages
         const errorJson = JSON.parse(errorText);
-        lastError = errorJson.message || errorText;
-      } catch {
+        lastError = errorJson.message || errorText;      } catch {
         lastError = errorText;
       }
-      console.warn(`Request failed (attempt ${i + 1}/${retries}):`, lastError);
+      Logger.warn(`Request failed (attempt ${i + 1}/${retries}):`, lastError);
 
       // Don't retry if we got a valid error response
       if (response.status === 400 || response.status === 403) {
@@ -86,9 +85,8 @@ export async function fetchWithRetry(url, options, retries = API_CONFIG.RETRY_AT
     } catch (error) {
       if (error.message === "Invalid credentials") {
         throw error;
-      }
-      lastError = error;
-      console.warn(
+      }      lastError = error;
+      Logger.warn(
         `Request error (attempt ${i + 1}/${retries}):`,
         error.message
       );
