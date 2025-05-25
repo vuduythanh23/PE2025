@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllUsers, deleteUser, updateUser } from "../utils/api";
+import { getAllUsers, deleteUser, updateUser } from "../utils";
 import Swal from "sweetalert2";
 import Header from "../components/layout/Header";
 import AdminTable from "../styles/components/AdminTable";

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAllOrders, updateOrderStatus, deleteOrder } from "../../utils/api";
-import { formatCurrency } from "../../utils/format-utils";
+import { getAllOrders, updateOrderStatus, deleteOrder, formatCurrency } from "../../utils";
 import Swal from "sweetalert2";
 
 export default function OrderManagement() {

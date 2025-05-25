@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthCard from "../components/modules/AuthCard";
-import { loginUser } from "../utils/api";
+import { loginUser } from "../utils";
 import Swal from "sweetalert2";
 import Header from "../components/layout/Header";
 

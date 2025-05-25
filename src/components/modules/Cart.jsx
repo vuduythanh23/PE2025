@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { formatCurrency } from "../../utils/format-utils";
 import {
+  formatCurrency,
   removeFromCart,
   updateCartItemQuantity,
   clearCart,
-} from "../../utils/cart-utils";
-import { createOrder } from "../../utils/api";
-import { isAuthenticated } from "../../utils/auth-utils";
+  createOrder,
+  isAuthenticated,
+} from "../../utils";
 import { useCart } from "../../context/CartContext";
 import Swal from "sweetalert2";
 

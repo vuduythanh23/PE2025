@@ -4,7 +4,7 @@ import Header from "../components/layout/Header";
 import Carousel from "../components/layout/Carousel";
 import Footer from "../components/layout/Footer";
 import ProductShowcase from "../styles/components/ProductShowcase";
-import { getProducts } from "../utils/api";
+import { getProducts } from "../utils";
 import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 

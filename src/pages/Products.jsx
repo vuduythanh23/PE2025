@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getProducts, getCategories, getBrands } from "../utils/api";
+import { getProducts, getCategories, getBrands } from "../utils";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";

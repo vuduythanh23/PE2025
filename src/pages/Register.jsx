@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "../components/layout/Header";
 import AuthCard from "../components/modules/AuthCard";
-import { registerUser } from "../utils/api"; // Import register API function
+import { registerUser } from "../utils"; // Import register API function
 import Swal from "sweetalert2";
 
 export default function Register() {

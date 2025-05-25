@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { isAuthenticated, logout } from "../../utils/auth-utils";
+import { isAuthenticated, logout } from "../../utils";
 import { useCart } from "../../context/CartContext";
 
 export default function Header() {

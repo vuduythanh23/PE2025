@@ -5,7 +5,7 @@ import {
   validatePassword,
   validatePasswordMatch,
   validatePhone,
-} from "../../utils/validation-utils";
+} from "../../utils";
 
 export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
   const [formData, setFormData] = useState(

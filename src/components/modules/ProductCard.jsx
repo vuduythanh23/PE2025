@@ -1,6 +1,5 @@
-import { formatCurrency } from "../../utils/format-utils";
+import { formatCurrency, addToCart } from "../../utils";
 import { useState } from "react";
-import { addToCart } from "../../utils/cart-utils";
 import { useCart } from "../../context/CartContext";
 import Swal from "sweetalert2";
 
