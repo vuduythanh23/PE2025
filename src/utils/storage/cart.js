@@ -1,149 +1,145 @@
-// Storage key
 const CART_KEY = "sneakers_cart";
-import { isAuthenticated } from "./auth.js";
 
-/**
- * Get cart items from localStorage
- * @returns {Array} Array of cart items
- */
+// Lấy giỏ hàng từ localStorage
 export const getCart = () => {
-  const cart = localStorage.getItem(CART_KEY);
-  return cart ? JSON.parse(cart) : [];
+  try {
+    const cart = localStorage.getItem(CART_KEY);
+    return cart ? JSON.parse(cart) : [];
+  } catch (error) {
+    console.error('Error getting cart:', error);
+    return [];
+  }
 };
 
-/**
- * Save cart items to localStorage
- * @param {Array} cart - Cart items array
- */
+// Lưu giỏ hàng vào localStorage
 const saveCart = (cart) => {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  try {
+    // Đảm bảo mỗi item trong giỏ hàng có đủ thông tin cần thiết
+    const validCart = cart.filter(item => 
+      item && 
+      item._id && 
+      typeof item.quantity === 'number' && 
+      item.quantity > 0
+    ).map(item => ({
+      _id: item._id,
+      name: item.name || '',
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 0,
+      size: item.size || null,
+      color: item.color || null,
+      images: Array.isArray(item.images) ? item.images : [],
+      stock: Number(item.stock) || 0
+    }));
+
+    localStorage.setItem(CART_KEY, JSON.stringify(validCart));
+    return validCart;
+  } catch (error) {
+    console.error('Error saving cart:', error);
+    return [];
+  }
 };
 
-/**
- * Add item to cart
- * @param {Object} product - Product object
- * @param {number} quantity - Quantity to add
- * @param {string} selectedSize - Selected size
- * @param {string} selectedColor - Selected color
- * @param {boolean} bypassAuthCheck - If true, skips authentication check (for internal use)
- * @returns {Object} Result containing cart and authentication status
- */
-export const addToCart = (
-  product,
-  quantity = 1,
-  selectedSize = null,
-  selectedColor = null,
-  bypassAuthCheck = false
-) => {
-  // Check if user is authenticated unless bypass is enabled
-  if (!bypassAuthCheck && !isAuthenticated()) {
-    return {
-      success: false,
-      authenticated: false,
-      message: "Login required to add items to cart",
-      cart: getCart()
-    };
-  }
-
-  const cart = getCart();
-  const existingItem = cart.find(
-    (item) =>
-      item.productId === product._id &&
-      item.size === selectedSize &&
+// Thêm sản phẩm vào giỏ hàng
+export const addToCart = (product, quantity = 1, selectedSize = null, selectedColor = null) => {
+  try {
+    const cart = getCart();
+    
+    // Tìm sản phẩm có cùng id, size và color
+    const existingItemIndex = cart.findIndex(item => 
+      item._id === product._id && 
+      item.size === selectedSize && 
       item.color === selectedColor
-  );
+    );
 
-  if (existingItem) {
-    existingItem.quantity += quantity;
-  } else {
-    cart.push({
-      productId: product._id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0],
-      quantity,
-      size: selectedSize,
-      color: selectedColor,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  saveCart(cart);
-  return {
-    success: true,
-    authenticated: true,
-    message: "Item added to cart successfully",
-    cart
-  };
-};
-
-/**
- * Remove item from cart
- * @param {string} productId - Product ID
- * @param {string} size - Size
- * @param {string} color - Color
- * @returns {Array} Updated cart
- */
-export const removeFromCart = (productId, size, color) => {
-  const cart = getCart();
-  const updatedCart = cart.filter(
-    (item) =>
-      !(
-        item.productId === productId &&
-        item.size === size &&
-        item.color === color
-      )
-  );
-  saveCart(updatedCart);
-  return updatedCart;
-};
-
-/**
- * Update cart item quantity
- * @param {string} productId - Product ID
- * @param {string} size - Size
- * @param {string} color - Color
- * @param {number} quantity - New quantity
- * @returns {Array} Updated cart
- */
-export const updateCartItemQuantity = (productId, size, color, quantity) => {
-  const cart = getCart();
-  const item = cart.find(
-    (item) =>
-      item.productId === productId && item.size === size && item.color === color
-  );
-
-  if (item) {
-    if (quantity <= 0) {
-      return removeFromCart(productId, size, color);
+    // Nếu sản phẩm đã tồn tại, cập nhật số lượng
+    if (existingItemIndex !== -1) {
+      cart[existingItemIndex].quantity = Math.min(
+        cart[existingItemIndex].quantity + quantity,
+        product.stock
+      );
+    } else {
+      // Nếu sản phẩm chưa tồn tại, thêm mới
+      cart.push({
+        _id: product._id,
+        name: product.name,
+        price: Number(product.price),
+        quantity: Math.min(quantity, product.stock),
+        size: selectedSize,
+        color: selectedColor,
+        images: Array.isArray(product.images) ? product.images : [],
+        stock: Number(product.stock)
+      });
     }
-    item.quantity = quantity;
-    saveCart(cart);
+
+    return saveCart(cart);
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    return getCart();
   }
-  return cart;
 };
 
-/**
- * Clear entire cart
- */
+// Cập nhật số lượng sản phẩm
+export const updateCartItemQuantity = (productId, size, color, newQuantity) => {
+  try {
+    const cart = getCart();
+    const item = cart.find(item => 
+      item._id === productId && 
+      item.size === size && 
+      item.color === color
+    );
+
+    if (item) {
+      if (newQuantity <= 0) {
+        // Nếu số lượng = 0, xóa sản phẩm
+        return saveCart(cart.filter(item => 
+          !(item._id === productId && item.size === size && item.color === color)
+        ));
+      } else {
+        // Cập nhật số lượng mới
+        item.quantity = Math.min(newQuantity, item.stock);
+        return saveCart(cart);
+      }
+    }
+    return cart;
+  } catch (error) {
+    console.error('Error updating quantity:', error);
+    return getCart();
+  }
+};
+
+// Xóa sản phẩm khỏi giỏ hàng
+export const removeFromCart = (productId, size, color) => {
+  try {
+    const cart = getCart();
+    const updatedCart = cart.filter(item => 
+      !(item._id === productId && 
+        item.size === size && 
+        item.color === color)
+    );
+    return saveCart(updatedCart);
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    return getCart();
+  }
+};
+
+// Xóa toàn bộ giỏ hàng
 export const clearCart = () => {
-  localStorage.removeItem(CART_KEY);
+  try {
+    localStorage.removeItem(CART_KEY);
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+  }
 };
 
-/**
- * Get cart total count
- * @returns {number} Total number of items in cart
- */
-export const getCartItemCount = () => {
-  const cart = getCart();
-  return cart.reduce((total, item) => total + item.quantity, 0);
-};
-
-/**
- * Get cart total price
- * @returns {number} Total price of all items in cart
- */
-export const getCartTotal = () => {
-  const cart = getCart();
-  return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+// Tính tổng tiền giỏ hàng
+export const calculateCartTotal = (cart) => {
+  try {
+    return (cart || []).reduce((total, item) => 
+      total + (Number(item.price) || 0) * (Number(item.quantity) || 0), 
+    0);
+  } catch (error) {
+    console.error('Error calculating total:', error);
+    return 0;
+  }
 };

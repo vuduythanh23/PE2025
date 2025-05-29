@@ -32,7 +32,7 @@ export default function ProductShowcase({ products }) {
     <section className="max-w-7xl mx-auto px-6 py-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
         {validProducts.map((product, i) => {
-          console.log(`Rendering product ${i}:`, product);
+          // console.log(`Rendering product ${i}:`, product);
           return (
             <div key={product._id || i} className="group">
               <ProductCard {...product} />

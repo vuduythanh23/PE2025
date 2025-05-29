@@ -48,23 +48,6 @@ export default function Products() {
               Promise.all([getCategories(), getBrands(), getProducts()]),
             "Failed to load products data"
           );
-        
-        console.log("Categories data:", categoriesData?.length || 0, "items");
-        console.log("Brands data:", brandsData?.length || 0, "items");
-        
-        if (Array.isArray(brandsData) && brandsData.length > 0) {
-          console.log("Sample brands:", brandsData.slice(0, 3).map(brand => ({
-            id: brand._id ? brand._id.toString() : "",
-            name: brand.name
-          })));
-        }
-        
-        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-          console.log("Sample categories:", categoriesData.slice(0, 3).map(category => ({
-            id: category._id ? category._id.toString() : "",
-            name: category.name
-          })));
-        }
 
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setBrands(Array.isArray(brandsData) ? brandsData : []);
@@ -76,24 +59,15 @@ export default function Products() {
           productsData.length > 0 &&
           Array.isArray(productsData[0])
         ) {
-          console.log("Flattening nested array of products");
           productsToProcess = productsData.flat();
         }
         
         // Filter out null or undefined items
         productsToProcess = productsToProcess.filter(product => product != null);
-        
-        if (productsToProcess.length === 0) {
-          console.warn("No valid products after filtering");
-          return;
-        }
-
-        console.log("Processing products:", productsToProcess);
 
         // Format and store all products
         const formattedProducts = productsToProcess.map((product) => {
           if (!product) {
-            console.warn("Skipping null product");
             return null;
           }
 
@@ -118,14 +92,12 @@ export default function Products() {
             // Case 1: Brand is populated as an object (after populate() in API)
             brandId = String(brandObj._id);
             brandName = brandObj.name || "";
-            console.log(`Product ${product.name} has populated brand: ID=${brandId}, name=${brandName}`);
           } else if (typeof product.brand === "string") {
             // Case 2: Brand is a string ID (no populate in API)
             brandId = product.brand;
             // Try to find this brand in the brandsData to get its name
             const foundBrand = brandsData.find(b => b._id && b._id.toString() === brandId);
             brandName = foundBrand ? foundBrand.name : "";
-            console.log(`Product ${product.name} has brand ID string: ${brandId}, found name: ${brandName}`);
           } else if (product.brand && typeof product.brand === "object") {
             // Case 3: Brand is an object but might have a different structure
             if (product.brand.toString && typeof product.brand.toString === "function") {
@@ -133,10 +105,9 @@ export default function Products() {
               brandId = product.brand.toString();
               const foundBrand = brandsData.find(b => b._id && b._id.toString() === brandId);
               brandName = foundBrand ? foundBrand.name : "";
-              console.log(`Product ${product.name} has ObjectId brand: ${brandId}, resolved name: ${brandName}`);
             }
           } else {
-            console.log(`Product ${product.name} has no recognized brand format:`, product.brand);
+            // console.log(`Product ${product.name} has no recognized brand format:`, product.brand);
           }
             
           return {
@@ -168,75 +139,26 @@ export default function Products() {
   
   // Apply filters and sorting to products when activeProductFilters or sortSettings change
   useEffect(() => {
-    console.log("Filters or sort settings changed");
-    console.log("- Product filters:", activeProductFilters);
-    console.log("- Sort settings:", sortSettings);
-    console.log("All products count:", allProducts.length);
-    
     let result = [...allProducts];
-
-    // Debug sample
-    if (result.length > 0) {
-      console.log("Sample product data:", {
-        id: result[0]._id,
-        name: result[0].name,
-        categoryId: result[0].categoryId,
-        brandId: result[0].brandId,
-        category: result[0].category,
-        brand: result[0].brand
-      });
-    }
 
     // Apply category filter
     if (activeProductFilters.category) {
-      console.log("Filtering by category ID:", activeProductFilters.category);
-      
       result = result.filter(product => {
-        // Check string equality and also handle potential ObjectId string vs regular string comparison
         const matches = 
           product.categoryId === activeProductFilters.category || 
           (product.categoryId && activeProductFilters.category && 
            product.categoryId.toString() === activeProductFilters.category.toString());
-        
-        if (matches) {
-          console.log("Category match found for product:", product.name);
-        }
         return matches;
       });
-      console.log("After category filter, products count:", result.length);
-    }    // Apply brand filter
+    }
+
+    // Apply brand filter
     if (activeProductFilters.brand) {
-      console.log("Filtering by brand ID:", activeProductFilters.brand, typeof activeProductFilters.brand);
-      
-      // Log some product brand data for debugging
-      if (result.length > 0) {
-        const sampleProducts = result.slice(0, 5);
-        console.log("Sample products brand data:", sampleProducts.map(p => ({
-          name: p.name,
-          brandId: p.brandId,
-          brandIdType: typeof p.brandId,
-          brand: p.brand
-        })));
-      }
-        result = result.filter(product => {
-        // Ensure both IDs are strings for comparison
+      result = result.filter(product => {
         const productBrandId = product.brandId ? product.brandId.toString() : "";
         const filterBrandId = activeProductFilters.brand ? activeProductFilters.brand.toString() : "";
-        
-        // Perform exact string comparison of IDs
-        const matches = productBrandId === filterBrandId;
-        
-        // Debug information
-        if (matches) {
-          console.log(`Brand match found: Product ${product.name} (brandId: ${productBrandId}) matches filter (${filterBrandId})`);
-        } else if (productBrandId && filterBrandId) {
-          // Only log near misses for debug
-          console.log(`Brand mismatch: Product ${product.name} (brandId: ${productBrandId}) doesn't match filter (${filterBrandId})`);
-        }
-        
-        return matches;
+        return productBrandId === filterBrandId;
       });
-      console.log("After brand filter, products count:", result.length);
     }
     
     // Apply price range filter
@@ -244,7 +166,6 @@ export default function Products() {
       activeProductFilters.priceRange.min !== null ||
       activeProductFilters.priceRange.max !== null
     ) {
-      console.log("Filtering by price range:", activeProductFilters.priceRange);
       result = result.filter((product) => {
         const price = Number(product.price);
         if (isNaN(price)) {
@@ -269,7 +190,6 @@ export default function Products() {
         }
         return true;
       });
-      console.log("After price filter, products count:", result.length);
     }
 
     // Apply sorting - now using sortSettings
@@ -296,49 +216,25 @@ export default function Products() {
   
   // Handler for temporary filter changes (doesn't apply until user clicks Apply)
   const handleTempFiltersChange = (newFilters) => {
-    console.log("Filter changed:", newFilters);
-    setTempFilters((prev) => {
-      const updatedFilters = {
-        ...prev,
-        ...newFilters,
-      };
-      console.log("Updated temp filters:", updatedFilters);
-      return updatedFilters;
-    });
+    setTempFilters((prev) => ({
+      ...prev,
+      ...newFilters,
+    }));
   };
+
   // Apply filters from temporary state to active filter state
   const handleApplyFilters = () => {
-    console.log("Applying filters:", tempFilters);
-    // Deep clone the tempFilters to avoid reference issues
     const filtersToApply = JSON.parse(JSON.stringify(tempFilters));
     
     // Make sure brand and category IDs are strings for consistent comparison
     if (filtersToApply.brand) {
-      // Ensure it's a string - this is critical since MongoDB ObjectIds need string comparison
       filtersToApply.brand = String(filtersToApply.brand);
-      
-      // Find the brand in our data to verify it exists
-      const selectedBrand = brands.find(b => {
-        // Make sure we handle both string ids and ObjectIds
-        const brandId = b._id ? (typeof b._id === 'string' ? b._id : b._id.toString()) : '';
-        return brandId === filtersToApply.brand;
-      });
-      
-      console.log("Selected brand before applying filter:", {
-        id: filtersToApply.brand,
-        brandObject: selectedBrand || 'Not found in brands array'
-      });
-      
-      if (!selectedBrand) {
-        console.warn(`Warning: Selected brand ID ${filtersToApply.brand} not found in brands array`);
-      }
     }
     
     if (filtersToApply.category) {
       filtersToApply.category = String(filtersToApply.category);
     }
     
-    console.log("Normalized filters to apply:", filtersToApply);
     setActiveProductFilters(filtersToApply);
   };
 
@@ -357,7 +253,6 @@ export default function Products() {
 
   // Sort change applies immediately (doesn't wait for Apply button)
   const handleSortChange = (sortValue) => {
-    console.log("Sort changed to:", sortValue);
     setSortSettings({
       sortBy: sortValue
     });

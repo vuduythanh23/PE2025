@@ -85,15 +85,13 @@ export {
   removeAdmin,
   isAuthenticated,
   logout,
-  
-  // Cart storage
+    // Cart storage
   getCart,
   addToCart,
   removeFromCart,
   updateCartItemQuantity,
   clearCart,
-  getCartItemCount,
-  getCartTotal,
+  calculateCartTotal,
 } from "./storage/index.js";
 
 export {

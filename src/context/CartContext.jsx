@@ -1,5 +1,5 @@
-import { createContext, useState, useContext, useEffect } from "react";
-import { getCart } from "../utils";
+import { createContext, useState, useContext, useEffect, useCallback, useMemo } from "react";
+import { getCart, calculateCartTotal } from "../utils";
 
 const CartContext = createContext();
 
@@ -7,30 +7,45 @@ export function CartProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCartBouncing, setIsCartBouncing] = useState(false);
   const [cartItems, setCartItems] = useState([]);
+  const [cartTotal, setCartTotal] = useState(0);
 
-  // Initialize cart items
+  // Khởi tạo giỏ hàng từ localStorage
   useEffect(() => {
-    setCartItems(getCart());
+    const items = getCart();
+    setCartItems(items);
+    setCartTotal(calculateCartTotal(items));
   }, []);
 
-  const openCart = () => setIsCartOpen(true);
-  const closeCart = () => setIsCartOpen(false);
-  const toggleCart = () => setIsCartOpen((prev) => !prev);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
-  const animateCart = () => {
+  // Hiệu ứng bounce khi thêm sản phẩm
+  const animateCart = useCallback(() => {
     setIsCartBouncing(true);
-    setTimeout(() => setIsCartBouncing(false), 1000); // Animation duration
-  };
+    const timer = setTimeout(() => setIsCartBouncing(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const updateCartItems = () => {
-    setCartItems(getCart());
-  };
+  // Cập nhật giỏ hàng
+  const updateCartItems = useCallback(() => {
+    const items = getCart();
+    setCartItems(items);
+    setCartTotal(calculateCartTotal(items));
+    // Kích hoạt hiệu ứng bounce
+    animateCart();
+  }, [animateCart]);
 
-  const getTotalQuantity = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
+  // Lấy tổng số lượng sản phẩm trong giỏ
+  const getTotalQuantity = useCallback(() => {
+    return cartItems.reduce((total, item) => {
+      const quantity = parseInt(item?.quantity) || 0;
+      return total + quantity;
+    }, 0);
+  }, [cartItems]);
 
-  const value = {
+  // Memoize value để tránh re-render không cần thiết
+  const value = useMemo(() => ({
     isCartOpen,
     openCart,
     closeCart,
@@ -38,9 +53,21 @@ export function CartProvider({ children }) {
     isCartBouncing,
     animateCart,
     cartItems,
+    cartTotal,
     updateCartItems,
     getTotalQuantity,
-  };
+  }), [
+    isCartOpen,
+    openCart,
+    closeCart,
+    toggleCart,
+    isCartBouncing,
+    animateCart,
+    cartItems,
+    cartTotal,
+    updateCartItems,
+    getTotalQuantity,
+  ]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

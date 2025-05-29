@@ -10,8 +10,8 @@ export default function ProductFilter({
   onApplyFilters,
   onResetFilters,
 }) {
-  console.log("ProductFilter received categories:", categories.length);
-  console.log("ProductFilter received brands:", brands.length);
+  // console.log("ProductFilter received categories:", categories.length);
+  // console.log("ProductFilter received brands:", brands.length);
   // Local state for filters
   const [tempFilters, setTempFilters] = useState({
     category: selectedCategory,

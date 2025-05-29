@@ -1,4 +1,4 @@
-import { formatCurrency, addToCart, isAuthenticated } from "../../utils";
+  import { formatCurrency, addToCart, isAuthenticated } from "../../utils";
 import { useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -18,16 +18,19 @@ export default function ProductCard(props) {
     stock = 0,
     averageRating = 0,
   } = props;
+
   const { animateCart, updateCartItems } = useCart();
   const navigate = useNavigate();
-  const [selectedColor, setSelectedColor] = useState(
-    colors?.[0]?.color || null
-  );
+  const [selectedColor, setSelectedColor] = useState(colors?.[0]?.color || null);
   const [selectedSize, setSelectedSize] = useState(sizes?.[0]?.size || null);
-  const handleAddToCart = () => {
+
+  // Get the first valid image URL or use a fallback
+  const productImage = images?.[0] || '/images/product-placeholder.png';
+
+  const handleAddToCart = async () => {
     // First, check authentication status
     if (!isAuthenticated()) {
-      Swal.fire({
+      const result = await Swal.fire({
         title: "Login Required",
         text: "You need to login before adding items to your cart",
         icon: "info",
@@ -35,95 +38,79 @@ export default function ProductCard(props) {
         confirmButtonText: "Login",
         cancelButtonText: "Cancel",
         backdrop: "rgba(0, 0, 0, 0.7)",
-        customClass: {
-          container: "sweetalert-dialog",
-        },      }).then((result) => {
-        if (result.isConfirmed) {
-          // Redirect to login page with a redirect parameter back to products
-          navigate("/login?redirect=/products");
-        }
       });
+
+      if (result.isConfirmed) {
+        navigate("/login?redirect=/products");
+      }
       return;
     }
 
-    // Continue with regular validation
-    if (!selectedSize && sizes?.length > 0) {
-      Swal.fire({
-        title: "Please Select Size",
+    // Validate size if product has sizes
+    if (sizes?.length > 0 && !selectedSize) {
+      await Swal.fire({
+        title: "Please Select a Size",
         text: "You need to select a size before adding to cart",
         icon: "warning",
-        backdrop: "rgba(0, 0, 0, 0.7)",
-        customClass: {
-          container: "sweetalert-dialog",
-        },
       });
       return;
     }
 
-    if (!selectedColor && colors?.length > 0) {
-      Swal.fire({
-        title: "Please Select Color",
+    // Validate color if product has colors
+    if (colors?.length > 0 && !selectedColor) {
+      await Swal.fire({
+        title: "Please Select a Color",
         text: "You need to select a color before adding to cart",
         icon: "warning",
-        backdrop: "rgba(0, 0, 0, 0.7)",
-        customClass: {
-          container: "sweetalert-dialog",
-        },
       });
       return;
     }
 
-    const productData = {
-      _id,
-      name,
-      price,
-      images: Array.isArray(images) ? images : [],
-    };
+    try {
+      // Thêm sản phẩm vào giỏ hàng
+      addToCart(
+        {
+          _id,
+          name,
+          price,
+          images,
+          stock,
+        },
+        1,
+        selectedSize,
+        selectedColor
+      );
 
-    // User is authenticated at this point, so we can add to cart
-    const result = addToCart(productData, 1, selectedSize, selectedColor);
-    
-    if (result.success) {
-      animateCart(); // Trigger cart animation
-      updateCartItems(); // Update cart items in context
+      // Cập nhật UI giỏ hàng
+      updateCartItems();
 
-      Swal.fire({
+      // Hiển thị thông báo thành công
+      await Swal.fire({
         title: "Added to Cart!",
-        text: "The item has been added to your cart",
+        text: "Product has been added to your cart",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
-        backdrop: "rgba(0, 0, 0, 0.7)",
-        customClass: {
-          container: "sweetalert-dialog",
-        },
+      });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      await Swal.fire({
+        title: "Error",
+        text: "Failed to add product to cart. Please try again.",
+        icon: "error",
       });
     }
   };
-  console.log(`Rendering ProductCard for ${_id}:`, {
-    name,
-    images,
-    price,
-    stock,
-    hasImages: Array.isArray(images) && images.length > 0,
-  });
-
-  const imageUrl =
-    Array.isArray(images) && images.length > 0
-      ? images[0]
-      : "https://via.placeholder.com/300";
-
-  console.log("Using image URL:", imageUrl);
 
   return (
     <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div className="relative">
         <img
-          src={imageUrl}
+          src={productImage}
           alt={name || "Product image"}
           className="w-full h-[400px] object-cover transform transition-transform duration-700 group-hover:scale-105"
           onError={(e) => {
-            console.error("Image failed to load:", imageUrl);
+            console.error("Image failed to load:", productImage);
             e.target.src = "https://via.placeholder.com/300?text=Image+Error";
           }}
         />

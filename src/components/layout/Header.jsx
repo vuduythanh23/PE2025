@@ -4,6 +4,7 @@ import { useCart } from "../../context/CartContext";
 
 export default function Header() {
   const { toggleCart, isCartBouncing, cartItems, getTotalQuantity } = useCart();
+  const totalItems = getTotalQuantity();
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -119,7 +120,7 @@ export default function Header() {
                           : "transform group-hover:-translate-y-1"
                       }`}
                     >
-                      <span className="relative flex items-center justify-center w-6 h-6">
+                      <span className="relative flex items-center justify-center w-6 h-6 text-luxury-gold">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-6 w-6"
@@ -134,13 +135,13 @@ export default function Header() {
                             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                           />
                         </svg>
-                        {cartItems.length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs transition-transform duration-300 ease-out animate-scale-in">
-                            {getTotalQuantity()}
+                        {totalItems > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transform scale-100 transition-transform duration-200">
+                            {totalItems}
                           </span>
                         )}
                       </span>
-                      <span className="absolute top-full mt-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="absolute top-full mt-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity text-luxury-gold">
                         Cart
                       </span>
                     </div>
