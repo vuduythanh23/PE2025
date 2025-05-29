@@ -24,7 +24,6 @@ export async function getProducts(filters = {}) {
       console.error("Server response error:", error);
       throw new Error(`Failed to fetch products: ${error}`);
     }
-
     const data = await res.json();
     console.log("Received products data:", data);
 
@@ -33,7 +32,38 @@ export async function getProducts(filters = {}) {
       throw new Error("Invalid response format: expected array of products");
     }
 
-    return data;
+    // Check if we have a nested array structure (e.g. [[{product}], [{product}]])
+    // This can happen in some API responses
+    let processedData = data;
+    if (data.length > 0 && Array.isArray(data[0])) {
+      console.log("Detected nested array structure, flattening response");
+      processedData = data.flat();
+    }
+
+    // Filter out null or undefined items
+    processedData = processedData.filter((item) => item != null);
+
+    console.log("After filtering nulls, products count:", processedData.length);
+
+    // Additional detailed logging of the first product if available
+    if (processedData.length > 0 && processedData[0]) {
+      console.log("First product sample:", {
+        id: processedData[0]._id || "no id",
+        name: processedData[0].name || "no name",
+        hasImages:
+          Array.isArray(processedData[0].images) &&
+          processedData[0].images.length > 0,
+        imageUrl:
+          Array.isArray(processedData[0].images) &&
+          processedData[0].images.length > 0
+            ? processedData[0].images[0]
+            : "no image",
+      });
+    } else {
+      console.log("No products returned in array or first product is null");
+    }
+
+    return processedData;
   } catch (error) {
     console.error("Error in getProducts:", error);
     throw error;
@@ -47,9 +77,12 @@ export async function getProducts(filters = {}) {
  * @throws {Error} If fetching fails
  */
 export async function getProductById(id) {
-  const res = await fetchWithTimeout(`${ENDPOINTS.PRODUCTS}/${encodeURIComponent(id)}`, {
-    headers: BASE_HEADERS,
-  });
+  const res = await fetchWithTimeout(
+    `${ENDPOINTS.PRODUCTS}/${encodeURIComponent(id)}`,
+    {
+      headers: BASE_HEADERS,
+    }
+  );
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Failed to fetch product: ${error}`);
@@ -224,10 +257,13 @@ export async function updateProduct(id, updates) {
  * @throws {Error} If deletion fails
  */
 export async function deleteProduct(id) {
-  const res = await fetchWithTimeout(`${ENDPOINTS.PRODUCTS}/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
+  const res = await fetchWithTimeout(
+    `${ENDPOINTS.PRODUCTS}/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    }
+  );
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Failed to delete product: ${error}`);

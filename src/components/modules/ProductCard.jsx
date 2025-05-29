@@ -74,11 +74,20 @@ export default function ProductCard(props) {
       },
     });
   };
+  console.log(`Rendering ProductCard for ${_id}:`, {
+    name,
+    images,
+    price,
+    stock,
+    hasImages: Array.isArray(images) && images.length > 0,
+  });
 
   const imageUrl =
     Array.isArray(images) && images.length > 0
       ? images[0]
       : "https://via.placeholder.com/300";
+
+  console.log("Using image URL:", imageUrl);
 
   return (
     <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
@@ -87,6 +96,10 @@ export default function ProductCard(props) {
           src={imageUrl}
           alt={name || "Product image"}
           className="w-full h-[400px] object-cover transform transition-transform duration-700 group-hover:scale-105"
+          onError={(e) => {
+            console.error("Image failed to load:", imageUrl);
+            e.target.src = "https://via.placeholder.com/300?text=Image+Error";
+          }}
         />
         {stock <= 5 && stock > 0 && (
           <span className="absolute top-4 right-4 bg-luxury-gold text-white px-3 py-1 text-sm font-serif">

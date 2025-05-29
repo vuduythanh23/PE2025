@@ -44,37 +44,64 @@ export default function Products() {
             "Failed to load products data"
           );
 
-        setCategories(categoriesData);
-        setBrands(brandsData);
+        setCategories(categoriesData);        setBrands(brandsData);
+        
+        // Check if productsData is an array of arrays and flatten it if needed
+        let productsToProcess = productsData;
+        if (
+          Array.isArray(productsData) &&
+          productsData.length > 0 &&
+          Array.isArray(productsData[0])
+        ) {
+          console.log("Flattening nested array of products");
+          productsToProcess = productsData.flat();
+        }
+        
+        // Filter out null or undefined items
+        productsToProcess = productsToProcess.filter(product => product != null);
+        
+        if (productsToProcess.length === 0) {
+          console.warn("No valid products after filtering");
+          return;
+        }
+
+        console.log("Processing products:", productsToProcess);
 
         // Format and store all products
-        const formattedProducts = productsData.map((product) => ({
-          _id: product._id || "",
-          name: product.name || "",
-          description: product.description || "",
-          price: product.price || 0,
-          images: Array.isArray(product.images) ? product.images : [],
-          category:
-            typeof product.category === "object"
-              ? product.category.name
-              : product.category || "",
-          brand:
-            typeof product.brand === "object"
-              ? product.brand.name
-              : product.brand || "",
-          categoryId:
-            typeof product.category === "object"
-              ? product.category._id
-              : product.category || "",
-          brandId:
-            typeof product.brand === "object"
-              ? product.brand._id
-              : product.brand || "",
-          colors: Array.isArray(product.colors) ? product.colors : [],
-          sizes: Array.isArray(product.sizes) ? product.sizes : [],
-          stock: product.stock || 0,
-          averageRating: product.averageRating || 0,
-        }));
+        const formattedProducts = productsToProcess.map((product) => {
+          if (!product) {
+            console.warn("Skipping null product");
+            return null;
+          }
+          
+          return {
+            _id: product._id || "",
+            name: product.name || "",
+            description: product.description || "",
+            price: product.price || 0,
+            images: Array.isArray(product.images) ? product.images : [],
+            category:
+              typeof product.category === "object" && product.category
+                ? product.category.name || ""
+                : product.category || "",
+            brand:
+              typeof product.brand === "object" && product.brand
+                ? product.brand.name || ""
+                : product.brand || "",
+            categoryId:
+              typeof product.category === "object" && product.category
+                ? product.category._id || ""
+                : product.category || "",
+            brandId:
+              typeof product.brand === "object" && product.brand
+                ? product.brand._id || ""
+                : product.brand || "",
+            colors: Array.isArray(product.colors) ? product.colors : [],
+            sizes: Array.isArray(product.sizes) ? product.sizes : [],
+            stock: product.stock || 0,
+            averageRating: product.averageRating || 0,
+          };
+        }).filter(item => item !== null); // Filter out any null items after mapping
 
         setAllProducts(formattedProducts);
         setFilteredProducts(formattedProducts);
@@ -247,23 +274,29 @@ export default function Products() {
                   {filteredProducts.length}{" "}
                   {filteredProducts.length === 1 ? "Product" : "Products"}
                 </p>
-              </div>
-
-              <div className="flex justify-center items-center h-96">
-                <div className="text-xl text-luxury-gold/50 font-serif">
-                  Loading...
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredProducts.map((product) => (
-                  <div key={product._id} className="group">
-                    <ProductCard {...product} />
+              </div>{" "}
+              {filteredProducts.length === 0 && allProducts.length > 0 ? (
+                <div className="flex justify-center items-center h-96">
+                  <div className="text-xl text-luxury-gold/50 font-serif">
+                    No products match your filters
                   </div>
-                ))}
-              </div>
-
-              {filteredProducts.length === 0 && (
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="flex justify-center items-center h-96">
+                  <div className="text-xl text-luxury-gold/50 font-serif">
+                    Loading...
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredProducts.map((product) => (
+                    <div key={product._id} className="group">
+                      <ProductCard {...product} />
+                    </div>
+                  ))}
+                </div>
+              )}{" "}
+              {filteredProducts.length === 0 && allProducts.length > 0 && (
                 <div className="text-center py-16">
                   <p className="text-xl text-luxury-dark/70 font-serif">
                     No products found matching your criteria.
