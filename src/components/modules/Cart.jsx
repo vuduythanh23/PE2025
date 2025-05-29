@@ -56,10 +56,10 @@ export default function Cart({ isOpen, onClose }) {
         backdrop: "rgba(0, 0, 0, 0.7)",
         customClass: {
           container: "sweetalert-dialog",
-        },
-      }).then((result) => {
+        },      }).then((result) => {
         if (result.isConfirmed) {
-          navigate("/login");
+          // Redirect to login page with a redirect parameter back to the current page
+          navigate("/login?redirect=/products");
         }
       });
       return;

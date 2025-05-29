@@ -1,5 +1,6 @@
 // Storage key
 const CART_KEY = "sneakers_cart";
+import { isAuthenticated } from "./auth.js";
 
 /**
  * Get cart items from localStorage
@@ -24,14 +25,26 @@ const saveCart = (cart) => {
  * @param {number} quantity - Quantity to add
  * @param {string} selectedSize - Selected size
  * @param {string} selectedColor - Selected color
- * @returns {Array} Updated cart
+ * @param {boolean} bypassAuthCheck - If true, skips authentication check (for internal use)
+ * @returns {Object} Result containing cart and authentication status
  */
 export const addToCart = (
   product,
   quantity = 1,
   selectedSize = null,
-  selectedColor = null
+  selectedColor = null,
+  bypassAuthCheck = false
 ) => {
+  // Check if user is authenticated unless bypass is enabled
+  if (!bypassAuthCheck && !isAuthenticated()) {
+    return {
+      success: false,
+      authenticated: false,
+      message: "Login required to add items to cart",
+      cart: getCart()
+    };
+  }
+
   const cart = getCart();
   const existingItem = cart.find(
     (item) =>
@@ -56,7 +69,12 @@ export const addToCart = (
   }
 
   saveCart(cart);
-  return cart;
+  return {
+    success: true,
+    authenticated: true,
+    message: "Item added to cart successfully",
+    cart
+  };
 };
 
 /**

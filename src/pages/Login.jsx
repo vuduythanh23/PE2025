@@ -36,6 +36,9 @@ export default function Login() {
       
       sessionStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
       sessionStorage.setItem('user', JSON.stringify(response.user));
+        // Check if there's a redirect parameter in the URL
+      const params = new URLSearchParams(window.location.search);
+      const redirectPath = params.get('redirect') || (isAdmin ? "/admin" : "/");
       
       await Swal.fire({
         title: isAdmin ? "Admin Login Successful!" : "Login Successful!",
@@ -45,7 +48,7 @@ export default function Login() {
       });
       
       // Navigate after the alert is closed
-      navigate(isAdmin ? "/admin" : "/");    } catch (error) {
+      navigate(redirectPath);} catch (error) {
       let errorMessage = "An unexpected error occurred. Please try again.";
       
       if (error.message === "Invalid credentials") {

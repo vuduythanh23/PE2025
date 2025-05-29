@@ -1,3 +1,4 @@
+// filepath: c:\Users\LEGION\Desktop\PE2025\SNKRSS\PE2025\src\pages\Products.jsx
 import { useState, useEffect } from "react";
 import { getProducts, getCategories, getBrands } from "../utils";
 import Header from "../components/layout/Header";
@@ -14,25 +15,29 @@ export default function Products() {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const { handleAsyncOperation } = useLoading();
-  const [activeFilters, setActiveFilters] = useState({
+  
+  // Separate states for left panel filters and right panel sorting
+  const [activeProductFilters, setActiveProductFilters] = useState({
     category: "",
     brand: "",
     priceRange: { min: null, max: null },
-    sortBy: "newest",
     page: 1,
     limit: 12,
   });
 
-  // Temporary filters state that changes as user selects options
+  const [sortSettings, setSortSettings] = useState({
+    sortBy: "newest",
+  });
+
+  // Temporary filters state that changes as user selects options in the left panel
   const [tempFilters, setTempFilters] = useState({
     category: "",
     brand: "",
     priceRange: { min: null, max: null },
-    sortBy: "newest",
     page: 1,
     limit: 12,
   });
-
+  
   // Fetch initial filter options and all products
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -43,8 +48,26 @@ export default function Products() {
               Promise.all([getCategories(), getBrands(), getProducts()]),
             "Failed to load products data"
           );
+        
+        console.log("Categories data:", categoriesData?.length || 0, "items");
+        console.log("Brands data:", brandsData?.length || 0, "items");
+        
+        if (Array.isArray(brandsData) && brandsData.length > 0) {
+          console.log("Sample brands:", brandsData.slice(0, 3).map(brand => ({
+            id: brand._id ? brand._id.toString() : "",
+            name: brand.name
+          })));
+        }
+        
+        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
+          console.log("Sample categories:", categoriesData.slice(0, 3).map(category => ({
+            id: category._id ? category._id.toString() : "",
+            name: category.name
+          })));
+        }
 
-        setCategories(categoriesData);        setBrands(brandsData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setBrands(Array.isArray(brandsData) ? brandsData : []);
         
         // Check if productsData is an array of arrays and flatten it if needed
         let productsToProcess = productsData;
@@ -73,29 +96,59 @@ export default function Products() {
             console.warn("Skipping null product");
             return null;
           }
+
+          // Ensure consistent handling of IDs - convert all to strings for comparison
+          const productId = product._id ? product._id.toString() : "";
           
+          // Extract category data - handle all possible formats
+          const categoryObj = typeof product.category === "object" && product.category;
+          const categoryId = categoryObj && categoryObj._id 
+            ? categoryObj._id.toString() 
+            : (typeof product.category === "string" ? product.category : "");
+          const categoryName = categoryObj && categoryObj.name 
+            ? categoryObj.name 
+            : "";
+            // Extract brand data - handle all possible formats
+          const brandObj = typeof product.brand === "object" && product.brand;
+          let brandId = "";
+          let brandName = "";
+            // Brand handling optimized based on MongoDB schema 
+          // In the schema, brand is defined as mongoose.Schema.Types.ObjectId with ref: 'Brand'
+          if (brandObj && brandObj._id) {
+            // Case 1: Brand is populated as an object (after populate() in API)
+            brandId = String(brandObj._id);
+            brandName = brandObj.name || "";
+            console.log(`Product ${product.name} has populated brand: ID=${brandId}, name=${brandName}`);
+          } else if (typeof product.brand === "string") {
+            // Case 2: Brand is a string ID (no populate in API)
+            brandId = product.brand;
+            // Try to find this brand in the brandsData to get its name
+            const foundBrand = brandsData.find(b => b._id && b._id.toString() === brandId);
+            brandName = foundBrand ? foundBrand.name : "";
+            console.log(`Product ${product.name} has brand ID string: ${brandId}, found name: ${brandName}`);
+          } else if (product.brand && typeof product.brand === "object") {
+            // Case 3: Brand is an object but might have a different structure
+            if (product.brand.toString && typeof product.brand.toString === "function") {
+              // Handle MongoDB ObjectId directly
+              brandId = product.brand.toString();
+              const foundBrand = brandsData.find(b => b._id && b._id.toString() === brandId);
+              brandName = foundBrand ? foundBrand.name : "";
+              console.log(`Product ${product.name} has ObjectId brand: ${brandId}, resolved name: ${brandName}`);
+            }
+          } else {
+            console.log(`Product ${product.name} has no recognized brand format:`, product.brand);
+          }
+            
           return {
-            _id: product._id || "",
+            _id: productId,
             name: product.name || "",
             description: product.description || "",
             price: product.price || 0,
             images: Array.isArray(product.images) ? product.images : [],
-            category:
-              typeof product.category === "object" && product.category
-                ? product.category.name || ""
-                : product.category || "",
-            brand:
-              typeof product.brand === "object" && product.brand
-                ? product.brand.name || ""
-                : product.brand || "",
-            categoryId:
-              typeof product.category === "object" && product.category
-                ? product.category._id || ""
-                : product.category || "",
-            brandId:
-              typeof product.brand === "object" && product.brand
-                ? product.brand._id || ""
-                : product.brand || "",
+            category: categoryName,
+            brand: brandName,
+            categoryId: categoryId,
+            brandId: brandId,
             colors: Array.isArray(product.colors) ? product.colors : [],
             sizes: Array.isArray(product.sizes) ? product.sizes : [],
             stock: product.stock || 0,
@@ -112,54 +165,116 @@ export default function Products() {
 
     fetchInitialData();
   }, [handleAsyncOperation]);
-
-  // Apply filters and sorting to products only when activeFilters change
+  
+  // Apply filters and sorting to products when activeProductFilters or sortSettings change
   useEffect(() => {
+    console.log("Filters or sort settings changed");
+    console.log("- Product filters:", activeProductFilters);
+    console.log("- Sort settings:", sortSettings);
+    console.log("All products count:", allProducts.length);
+    
     let result = [...allProducts];
 
-    // Apply category filter
-    if (activeFilters.category) {
-      result = result.filter(
-        (product) => product.categoryId === activeFilters.category
-      );
-    }
-
-    // Apply brand filter
-    if (activeFilters.brand) {
-      result = result.filter(
-        (product) => product.brandId === activeFilters.brand
-      );
-    }
-
-    // Apply price range filter
-    if (
-      activeFilters.priceRange.min !== null ||
-      activeFilters.priceRange.max !== null
-    ) {
-      result = result.filter((product) => {
-        const price = product.price;
-        if (
-          activeFilters.priceRange.min !== null &&
-          activeFilters.priceRange.max !== null
-        ) {
-          return (
-            price >= activeFilters.priceRange.min &&
-            (activeFilters.priceRange.max === Infinity
-              ? true
-              : price <= activeFilters.priceRange.max)
-          );
-        } else if (activeFilters.priceRange.min !== null) {
-          return price >= activeFilters.priceRange.min;
-        } else if (activeFilters.priceRange.max !== null) {
-          return price <= activeFilters.priceRange.max;
-        }
-        return true;
+    // Debug sample
+    if (result.length > 0) {
+      console.log("Sample product data:", {
+        id: result[0]._id,
+        name: result[0].name,
+        categoryId: result[0].categoryId,
+        brandId: result[0].brandId,
+        category: result[0].category,
+        brand: result[0].brand
       });
     }
 
-    // Apply sorting
+    // Apply category filter
+    if (activeProductFilters.category) {
+      console.log("Filtering by category ID:", activeProductFilters.category);
+      
+      result = result.filter(product => {
+        // Check string equality and also handle potential ObjectId string vs regular string comparison
+        const matches = 
+          product.categoryId === activeProductFilters.category || 
+          (product.categoryId && activeProductFilters.category && 
+           product.categoryId.toString() === activeProductFilters.category.toString());
+        
+        if (matches) {
+          console.log("Category match found for product:", product.name);
+        }
+        return matches;
+      });
+      console.log("After category filter, products count:", result.length);
+    }    // Apply brand filter
+    if (activeProductFilters.brand) {
+      console.log("Filtering by brand ID:", activeProductFilters.brand, typeof activeProductFilters.brand);
+      
+      // Log some product brand data for debugging
+      if (result.length > 0) {
+        const sampleProducts = result.slice(0, 5);
+        console.log("Sample products brand data:", sampleProducts.map(p => ({
+          name: p.name,
+          brandId: p.brandId,
+          brandIdType: typeof p.brandId,
+          brand: p.brand
+        })));
+      }
+        result = result.filter(product => {
+        // Ensure both IDs are strings for comparison
+        const productBrandId = product.brandId ? product.brandId.toString() : "";
+        const filterBrandId = activeProductFilters.brand ? activeProductFilters.brand.toString() : "";
+        
+        // Perform exact string comparison of IDs
+        const matches = productBrandId === filterBrandId;
+        
+        // Debug information
+        if (matches) {
+          console.log(`Brand match found: Product ${product.name} (brandId: ${productBrandId}) matches filter (${filterBrandId})`);
+        } else if (productBrandId && filterBrandId) {
+          // Only log near misses for debug
+          console.log(`Brand mismatch: Product ${product.name} (brandId: ${productBrandId}) doesn't match filter (${filterBrandId})`);
+        }
+        
+        return matches;
+      });
+      console.log("After brand filter, products count:", result.length);
+    }
+    
+    // Apply price range filter
+    if (
+      activeProductFilters.priceRange.min !== null ||
+      activeProductFilters.priceRange.max !== null
+    ) {
+      console.log("Filtering by price range:", activeProductFilters.priceRange);
+      result = result.filter((product) => {
+        const price = Number(product.price);
+        if (isNaN(price)) {
+          console.warn("Invalid price for product:", product._id, product.name, product.price);
+          return false;
+        }
+        
+        if (
+          activeProductFilters.priceRange.min !== null &&
+          activeProductFilters.priceRange.max !== null
+        ) {
+          const passes = 
+            price >= activeProductFilters.priceRange.min &&
+            (activeProductFilters.priceRange.max === Infinity
+              ? true
+              : price <= activeProductFilters.priceRange.max);
+          return passes;
+        } else if (activeProductFilters.priceRange.min !== null) {
+          return price >= activeProductFilters.priceRange.min;
+        } else if (activeProductFilters.priceRange.max !== null) {
+          return price <= activeProductFilters.priceRange.max;
+        }
+        return true;
+      });
+      console.log("After price filter, products count:", result.length);
+    }
+
+    // Apply sorting - now using sortSettings
     result.sort((a, b) => {
-      switch (activeFilters.sortBy) {
+      switch (sortSettings.sortBy) {
         case "price_asc":
           return a.price - b.price;
         case "price_desc":
@@ -175,53 +290,82 @@ export default function Products() {
 
     // Apply pagination
     const startIndex = 0;
-    const endIndex = activeFilters.page * activeFilters.limit;
+    const endIndex = activeProductFilters.page * activeProductFilters.limit;
     setFilteredProducts(result.slice(startIndex, endIndex));
-  }, [allProducts, activeFilters]);
-
+  }, [allProducts, activeProductFilters, sortSettings]);
+  
+  // Handler for temporary filter changes (doesn't apply until user clicks Apply)
   const handleTempFiltersChange = (newFilters) => {
-    setTempFilters((prev) => ({
-      ...prev,
-      ...newFilters,
-      page: 1, // Reset to first page when filters change
-    }));
+    console.log("Filter changed:", newFilters);
+    setTempFilters((prev) => {
+      const updatedFilters = {
+        ...prev,
+        ...newFilters,
+      };
+      console.log("Updated temp filters:", updatedFilters);
+      return updatedFilters;
+    });
   };
-
+  // Apply filters from temporary state to active filter state
   const handleApplyFilters = () => {
-    setActiveFilters(tempFilters);
+    console.log("Applying filters:", tempFilters);
+    // Deep clone the tempFilters to avoid reference issues
+    const filtersToApply = JSON.parse(JSON.stringify(tempFilters));
+    
+    // Make sure brand and category IDs are strings for consistent comparison
+    if (filtersToApply.brand) {
+      // Ensure it's a string - this is critical since MongoDB ObjectIds need string comparison
+      filtersToApply.brand = String(filtersToApply.brand);
+      
+      // Find the brand in our data to verify it exists
+      const selectedBrand = brands.find(b => {
+        // Make sure we handle both string ids and ObjectIds
+        const brandId = b._id ? (typeof b._id === 'string' ? b._id : b._id.toString()) : '';
+        return brandId === filtersToApply.brand;
+      });
+      
+      console.log("Selected brand before applying filter:", {
+        id: filtersToApply.brand,
+        brandObject: selectedBrand || 'Not found in brands array'
+      });
+      
+      if (!selectedBrand) {
+        console.warn(`Warning: Selected brand ID ${filtersToApply.brand} not found in brands array`);
+      }
+    }
+    
+    if (filtersToApply.category) {
+      filtersToApply.category = String(filtersToApply.category);
+    }
+    
+    console.log("Normalized filters to apply:", filtersToApply);
+    setActiveProductFilters(filtersToApply);
   };
 
+  // Reset both temporary and active filters
   const handleResetFilters = () => {
     const resetFilters = {
       category: "",
       brand: "",
       priceRange: { min: null, max: null },
-      sortBy: "newest",
       page: 1,
       limit: 12,
     };
     setTempFilters(resetFilters);
-    setActiveFilters(resetFilters);
+    setActiveProductFilters(resetFilters);
   };
 
+  // Sort change applies immediately (doesn't wait for Apply button)
   const handleSortChange = (sortValue) => {
-    // Apply sort immediately without waiting for Apply button
-    setActiveFilters((prev) => ({
-      ...prev,
-      sortBy: sortValue,
-    }));
-    setTempFilters((prev) => ({
-      ...prev,
-      sortBy: sortValue,
-    }));
+    console.log("Sort changed to:", sortValue);
+    setSortSettings({
+      sortBy: sortValue
+    });
   };
 
+  // Load more products
   const handleLoadMore = () => {
-    setActiveFilters((prev) => ({
-      ...prev,
-      page: prev.page + 1,
-    }));
-    setTempFilters((prev) => ({
+    setActiveProductFilters((prev) => ({
       ...prev,
       page: prev.page + 1,
     }));
@@ -264,10 +408,8 @@ export default function Products() {
               <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                 <div className="w-full sm:w-64">
                   <ProductSort
-                    sortBy={tempFilters.sortBy}
-                    onSortChange={(value) =>
-                      handleTempFiltersChange({ sortBy: value })
-                    }
+                    sortBy={sortSettings.sortBy} 
+                    onSortChange={handleSortChange}
                   />
                 </div>
                 <p className="text-luxury-dark/70 font-serif">

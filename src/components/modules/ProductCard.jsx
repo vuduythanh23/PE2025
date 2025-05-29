@@ -1,6 +1,7 @@
-import { formatCurrency, addToCart } from "../../utils";
+import { formatCurrency, addToCart, isAuthenticated } from "../../utils";
 import { useState } from "react";
 import { useCart } from "../../context/CartContext";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 export default function ProductCard(props) {
@@ -17,14 +18,35 @@ export default function ProductCard(props) {
     stock = 0,
     averageRating = 0,
   } = props;
-
   const { animateCart, updateCartItems } = useCart();
+  const navigate = useNavigate();
   const [selectedColor, setSelectedColor] = useState(
     colors?.[0]?.color || null
   );
   const [selectedSize, setSelectedSize] = useState(sizes?.[0]?.size || null);
-
   const handleAddToCart = () => {
+    // First, check authentication status
+    if (!isAuthenticated()) {
+      Swal.fire({
+        title: "Login Required",
+        text: "You need to login before adding items to your cart",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Login",
+        cancelButtonText: "Cancel",
+        backdrop: "rgba(0, 0, 0, 0.7)",
+        customClass: {
+          container: "sweetalert-dialog",
+        },      }).then((result) => {
+        if (result.isConfirmed) {
+          // Redirect to login page with a redirect parameter back to products
+          navigate("/login?redirect=/products");
+        }
+      });
+      return;
+    }
+
+    // Continue with regular validation
     if (!selectedSize && sizes?.length > 0) {
       Swal.fire({
         title: "Please Select Size",
@@ -58,21 +80,25 @@ export default function ProductCard(props) {
       images: Array.isArray(images) ? images : [],
     };
 
-    addToCart(productData, 1, selectedSize, selectedColor);
-    animateCart(); // Trigger cart animation
-    updateCartItems(); // Update cart items in context
+    // User is authenticated at this point, so we can add to cart
+    const result = addToCart(productData, 1, selectedSize, selectedColor);
+    
+    if (result.success) {
+      animateCart(); // Trigger cart animation
+      updateCartItems(); // Update cart items in context
 
-    Swal.fire({
-      title: "Added to Cart!",
-      text: "The item has been added to your cart",
-      icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-      backdrop: "rgba(0, 0, 0, 0.7)",
-      customClass: {
-        container: "sweetalert-dialog",
-      },
-    });
+      Swal.fire({
+        title: "Added to Cart!",
+        text: "The item has been added to your cart",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+        backdrop: "rgba(0, 0, 0, 0.7)",
+        customClass: {
+          container: "sweetalert-dialog",
+        },
+      });
+    }
   };
   console.log(`Rendering ProductCard for ${_id}:`, {
     name,
