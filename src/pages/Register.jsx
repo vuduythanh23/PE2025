@@ -2,8 +2,32 @@ import { useState } from "react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import AuthCard from "../components/modules/AuthCard";
-import { registerUser } from "../utils"; // Import register API function
+import { registerUser } from "../utils";
 import Swal from "sweetalert2";
+
+// Brand logos array using URL constructor
+const brandLogos = [
+  {
+    id: "nike",
+    logo: new URL("../assets/img/nike.svg", import.meta.url).href,
+    alt: "Nike Logo",
+  },
+  {
+    id: "adidas",
+    logo: new URL("../assets/img/adidas.svg", import.meta.url).href,
+    alt: "Adidas Logo",
+  },
+  {
+    id: "puma",
+    logo: new URL("../assets/img/puma.svg", import.meta.url).href,
+    alt: "Puma Logo",
+  },
+  {
+    id: "newBalance",
+    logo: new URL("../assets/img/new-balance.svg", import.meta.url).href,
+    alt: "New Balance Logo",
+  },
+];
 
 export default function Register() {
   const [loading, setLoading] = useState(false);
@@ -11,9 +35,8 @@ export default function Register() {
   const handleRegister = async (formData) => {
     setLoading(true);
     try {
-      // Remove confirmPassword before sending to API
       const { confirmPassword, ...registrationData } = formData;
-      const response = await registerUser(registrationData); // Call register API
+      const response = await registerUser(registrationData);
       Swal.fire({
         title: "Registration Successful!",
         text: `Welcome, ${response.user.username}!`,
@@ -37,24 +60,49 @@ export default function Register() {
     }
   };
 
+  const formFields = [
+    { id: "username", label: "Username" },
+    { id: "email", label: "Email Address" },
+    { id: "password", label: "Password" },
+    { id: "confirmPassword", label: "Password Confirmation" },
+    { id: "firstName", label: "First Name" },
+    { id: "lastName", label: "Last Name" },
+    { id: "address", label: "Delivery Address" },
+    { id: "phoneNumber", label: "Phone Number" },
+  ];
+
   return (
     <>
       <Header />
-      <AuthCard
-        type="register"
-        onSubmit={handleRegister} // Pass the register handler
-        loading={loading} // Pass the loading state
-        fields={[
-          "username",
-          "email",
-          "password",
-          "confirmPassword",
-          "firstName",
-          "lastName",
-          "address",
-          "phoneNumber",
-        ]} // Include all required fields for registration
-      />
+      <div className="min-h-[calc(100vh-160px)] flex flex-col md:flex-row">
+        {/* Registration form - appears on top on mobile, left side on desktop */}
+        <div className="w-full md:w-1/2 p-8">
+          <AuthCard
+            type="register"
+            onSubmit={handleRegister}
+            loading={loading}
+            fields={formFields}
+          />
+        </div>
+
+        {/* Brand logos - appears below on mobile, right side on desktop */}
+        <div className="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center">
+          <div className="grid grid-cols-2 gap-8 max-w-md">
+            {brandLogos.map((brand) => (
+              <div
+                key={brand.id}
+                className="p-6 bg-white rounded-xl shadow-lg transform transition-all hover:scale-105"
+              >
+                <img
+                  src={brand.logo}
+                  alt={brand.alt}
+                  className="w-32 h-32 object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
       <Footer />
     </>
   );

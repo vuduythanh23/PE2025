@@ -9,7 +9,9 @@ import {
 
 export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
   const [formData, setFormData] = useState(
-    fields.reduce((acc, field) => ({ ...acc, [field]: "" }), {})
+    Array.isArray(fields)
+      ? fields.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
+      : fields.reduce((acc, field) => ({ ...acc, [field]: "" }), {})
   );
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -60,7 +62,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
 
   const validate = () => {
     const newErrors = {};
-    fields.forEach((field) => {
+    const fieldIds = Array.isArray(fields) ? fields.map((f) => f.id) : fields;
+    fieldIds.forEach((field) => {
       const error = validateField(field, formData[field]);
       if (error) {
         newErrors[field] = error;
@@ -73,8 +76,6 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Clear any previous errors
     setErrors({});
 
     // Trim whitespace from email
@@ -112,8 +113,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-sm p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+    <div className="w-full">
+      <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-8 transform hover:scale-[1.01] transition-all">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-serif text-luxury-dark">
             {type === "login" ? "Welcome Back" : "Create Account"}
@@ -121,33 +122,36 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
           <div className="w-16 h-0.5 bg-luxury-gold mx-auto mt-4"></div>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {fields.map((field) => (
-            <div key={field}>
+        <form className="grid grid-cols-2 gap-6" onSubmit={handleSubmit}>
+          {(Array.isArray(fields)
+            ? fields
+            : fields.map((f) => ({ id: f, label: f }))
+          ).map((field) => (
+            <div key={field.id} className="col-span-1">
               <label
-                htmlFor={field}
+                htmlFor={field.id}
                 className="block text-sm font-medium text-luxury-dark/70 mb-2 font-serif"
               >
-                {field.charAt(0).toUpperCase() + field.slice(1)}
+                {field.label}
               </label>
               <input
-                id={field}
-                name={field}
-                type={field.includes("password") ? "password" : "text"}
-                value={formData[field]}
+                id={field.id}
+                name={field.id}
+                type={field.id.includes("password") ? "password" : "text"}
+                value={formData[field.id]}
                 onChange={handleChange}
-                className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
-                placeholder={`Enter your ${field.toLowerCase()}`}
+                className="w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm"
+                placeholder={`Enter your ${field.label.toLowerCase()}`}
               />
-              {touched[field] && errors[field] && (
-                <p className="mt-1 text-sm text-red-500">{errors[field]}</p>
+              {touched[field.id] && errors[field.id] && (
+                <p className="mt-1 text-sm text-red-500">{errors[field.id]}</p>
               )}
             </div>
           ))}
 
           <button
             type="submit"
-            className={`w-full bg-luxury-gold text-white py-3 font-serif text-sm tracking-wider transition-colors
+            className={`col-span-2 bg-luxury-gold text-white py-3 rounded-lg font-serif text-sm tracking-wider transition-all transform hover:scale-[1.02] hover:shadow-lg
               ${
                 loading
                   ? "opacity-50 cursor-not-allowed"
