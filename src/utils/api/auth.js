@@ -61,8 +61,15 @@ export async function loginUser(email, password) {
       console.error("Login error response:", data);
       throw new Error(data?.message || "Authentication failed");
     }
-
     console.log("Login successful, data:", data);
+    console.log("User data:", data.user);
+    console.log(
+      "Admin check - role:",
+      data.user.role,
+      "isAdmin:",
+      data.user.isAdmin
+    );
+
     if (data.token) {
       // Clear any existing session data first
       sessionStorage.clear();
@@ -70,9 +77,20 @@ export async function loginUser(email, password) {
       // Store new session data
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("user", JSON.stringify(data.user));
-      if (data.user.role === "admin") {
+
+      // Check for admin status in multiple fields to be safe
+      if (data.user.role === "admin" || data.user.isAdmin === true) {
+        console.log("Setting admin status to true for user:", data.user.email);
         sessionStorage.setItem("isAdmin", "true");
+      } else {
+        console.log("User is not an admin");
       }
+
+      // Double-check that it was set correctly
+      console.log(
+        "Admin status after login:",
+        sessionStorage.getItem("isAdmin")
+      );
     } else {
       throw new Error("No authentication token received");
     }

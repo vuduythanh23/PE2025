@@ -7,10 +7,11 @@ import {
   validatePhone,
 } from "../../utils";
 
-export default function AuthCard({ type, onSubmit, loading, fields = [] }) {  const [formData, setFormData] = useState(
+export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
+  const [formData, setFormData] = useState(
     Array.isArray(fields)
       ? fields.reduce((acc, field) => {
-          const fieldId = typeof field === 'object' ? field.id : field;
+          const fieldId = typeof field === "object" ? field.id : field;
           return { ...acc, [fieldId]: "" };
         }, {})
       : {}
@@ -63,12 +64,12 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {  co
   }, [formData.password, formData.confirmPassword, type]);
   const validate = () => {
     const newErrors = {};
-    const fieldIds = Array.isArray(fields) 
-      ? fields.map((f) => typeof f === 'object' ? f.id : f) 
+    const fieldIds = Array.isArray(fields)
+      ? fields.map((f) => (typeof f === "object" ? f.id : f))
       : fields;
-    
+
     fieldIds.forEach((field) => {
-      const fieldId = typeof field === 'object' ? field.id : field;
+      const fieldId = typeof field === "object" ? field.id : field;
       const error = validateField(fieldId, formData[fieldId]);
       if (error) {
         newErrors[fieldId] = error;
@@ -127,20 +128,26 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {  co
           <div className="w-16 h-0.5 bg-luxury-gold mx-auto mt-4"></div>
         </div>
 
-        <form 
-          className={type === "login" ? "flex flex-col gap-4" : "grid grid-cols-2 gap-6"} 
+        <form
+          className={
+            type === "login" ? "flex flex-col gap-4" : "grid grid-cols-2 gap-6"
+          }
           onSubmit={handleSubmit}
         >
           {/* Xử lý các trường input - hiển thị dọc */}
-          {(Array.isArray(fields) && fields.some(field => typeof field === 'object')
+          {(Array.isArray(fields) &&
+          fields.some((field) => typeof field === "object")
             ? fields
-            : fields.map((f) => ({ id: typeof f === 'string' ? f : f.id, label: typeof f === 'string' ? f : f.label }))
+            : fields.map((f) => ({
+                id: typeof f === "string" ? f : f.id,
+                label: typeof f === "string" ? f : f.label,
+              }))
           ).map((field) => {
             const fieldId = field.id;
             const fieldLabel = field.label || fieldId;
             return (
-              <div 
-                key={fieldId} 
+              <div
+                key={fieldId}
                 className={type === "login" ? "w-full mb-4" : "col-span-1"}
               >
                 <label
@@ -152,7 +159,14 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {  co
                 <input
                   id={fieldId}
                   name={fieldId}
-                  type={fieldId && typeof fieldId === 'string' && fieldId.includes && fieldId.includes("password") ? "password" : "text"}
+                  type={
+                    fieldId &&
+                    typeof fieldId === "string" &&
+                    fieldId.includes &&
+                    fieldId.includes("password")
+                      ? "password"
+                      : "text"
+                  }
                   value={formData[fieldId] || ""}
                   onChange={handleChange}
                   className="w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm"
@@ -167,7 +181,11 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {  co
 
           <button
             type="submit"
-            className={`${type === "login" ? "w-full" : "col-span-2"} bg-luxury-gold text-white py-3 rounded-lg font-serif text-sm tracking-wider transition-all transform hover:scale-[1.02] hover:shadow-lg ${type === "login" ? "mt-2" : ""}
+            className={`${
+              type === "login" ? "w-full" : "col-span-2"
+            } bg-luxury-gold text-white py-3 rounded-lg font-serif text-sm tracking-wider transition-all transform hover:scale-[1.02] hover:shadow-lg ${
+              type === "login" ? "mt-2" : ""
+            }
               ${
                 loading
                   ? "opacity-50 cursor-not-allowed"

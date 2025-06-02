@@ -115,14 +115,14 @@ export default function AdminTable({
                   <input
                     type="text"
                     name="phoneNumber"
-                    value={editingUser.phoneNumber || ''}
+                    value={editingUser.phoneNumber || ""}
                     onChange={onChange}
                     placeholder="Enter phone number"
                     className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
                   />
                 ) : (
                   <span className="text-sm text-luxury-dark font-serif">
-                    {user.phoneNumber || '-'}
+                    {user.phoneNumber || "-"}
                   </span>
                 )}
               </td>
@@ -138,8 +138,8 @@ export default function AdminTable({
                   {user.isPermanentlyLocked
                     ? "Permanently Locked"
                     : user.lockUntil && new Date(user.lockUntil) > new Date()
-                      ? "Temporarily Locked"
-                      : "Active"}
+                    ? "Temporarily Locked"
+                    : "Active"}
                 </span>
               </td>
 
@@ -159,37 +159,82 @@ export default function AdminTable({
                       Cancel
                     </button>
                   </div>
-                ) : (                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                ) : (
+                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => onEdit(user)}
                       className="px-3 py-1 text-sm text-luxury-gold hover:bg-luxury-gold/10 rounded transition-colors flex items-center"
                       title="Edit user information"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
                       </svg>
                       Edit
                     </button>
-                    {(user.isPermanentlyLocked || (user.lockUntil && new Date(user.lockUntil) > new Date()) || user.failedLoginAttempts > 0) && (
+                    {(user.isPermanentlyLocked ||
+                      (user.lockUntil &&
+                        new Date(user.lockUntil) > new Date()) ||
+                      user.failedLoginAttempts > 0) && (
                       <button
                         onClick={() => onUnlock(user._id)}
                         className="px-3 py-1 text-sm text-green-500 hover:bg-green-50 rounded transition-colors flex items-center"
                         title="Unlock user account"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
                         </svg>
                         Unlock
                       </button>
                     )}
                     <button
                       onClick={() => onDelete(user._id)}
-                      className={`px-3 py-1 text-sm ${user.isAdmin ? 'text-gray-400 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'} rounded transition-colors flex items-center`}
+                      className={`px-3 py-1 text-sm ${
+                        user.isAdmin
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-red-500 hover:bg-red-50"
+                      } rounded transition-colors flex items-center`}
                       disabled={user.isAdmin}
-                      title={user.isAdmin ? "Admin accounts cannot be deleted" : "Delete this user account"}
+                      title={
+                        user.isAdmin
+                          ? "Admin accounts cannot be deleted"
+                          : "Delete this user account"
+                      }
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                       Delete
                     </button>

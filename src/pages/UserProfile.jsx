@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { getCurrentUser, updateUser, validateEmail, validatePhone, validatePassword } from "../utils";
+import {
+  getCurrentUser,
+  updateUser,
+  validateEmail,
+  validatePhone,
+  validatePassword,
+} from "../utils";
 import Header from "../components/layout/Header";
 import ProfileForm from "../styles/components/ProfileForm";
 import { useLoading } from "../context/LoadingContext";

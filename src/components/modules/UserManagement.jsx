@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { 
-  getAllUsers, 
-  adminUpdateUser, 
-  deleteUser, 
-  unlockUserAccount 
-} from '../../utils/api/users.js';
-import { isAdmin } from '../../utils/storage/auth.js';
+import {
+  getAllUsers,
+  adminUpdateUser,
+  deleteUser,
+  unlockUserAccount,
+  getCurrentUser,
+} from "../../utils/api/users.js";
+import { isAdmin } from "../../utils/storage/auth.js";
+// Import from adminAuth.js with explicit path
+import { checkAndRefreshAdminStatus } from "../../utils/helpers/adminAuth.js";
 import Swal from "sweetalert2";
 import UserTable from "./UserTable";
 import { useLoading } from "../../context/LoadingContext";
@@ -15,45 +18,101 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState(null);
   const { handleAsyncOperation } = useLoading();
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
-
   useEffect(() => {
-    // Check if user has admin access
-    setHasAdminAccess(isAdmin());
-    fetchUsers();
+    const initializeAdminAccess = async () => {
+      try {
+        // Use our new utility to check and refresh admin status
+        const adminStatus = await checkAndRefreshAdminStatus();
+        console.log(
+          "Admin status in UserManagement after refresh:",
+          adminStatus
+        );
+
+        setHasAdminAccess(adminStatus);
+
+        if (adminStatus) {
+          // If we have admin access, fetch users
+          fetchUsers();
+        } else {
+          // If we don't have admin access, show error
+          console.log("User does not have admin access");
+          showAccessDeniedError();
+        }
+      } catch (error) {
+        console.error("Error initializing admin access:", error);
+        showAccessDeniedError();
+      }
+    };
+
+    initializeAdminAccess();
   }, []);
 
-  // Display an error if user doesn't have admin access
-  useEffect(() => {
-    if (!hasAdminAccess) {
-      Swal.fire({
-        title: "Access Denied",
-        text: "You don't have administrator privileges to manage users.",
-        icon: "error",
-        confirmButtonText: "OK"
-      });
-    }
-  }, [hasAdminAccess]);
-
+  // Show access denied error
+  const showAccessDeniedError = () => {
+    Swal.fire({
+      title: "Access Denied",
+      text: "You don't have administrator privileges to manage users.",
+      icon: "error",
+      confirmButtonText: "OK",
+    });
+  };
   const fetchUsers = async () => {
     try {
-      // Verify admin access before fetching users
-      if (!isAdmin()) {
+      // Double check admin access before fetching users
+      const adminStatus = isAdmin();
+      console.log("Admin status check in fetchUsers:", adminStatus);
+
+      // Development override
+      const devOverride =
+        import.meta.env.DEV &&
+        (window.location.search.includes("admin=true") ||
+          import.meta.env.VITE_ALWAYS_ADMIN === "true");
+
+      if (!adminStatus && !devOverride) {
+        console.warn("Admin access check failed when trying to fetch users");
+        setHasAdminAccess(false);
         throw new Error("Unauthorized: Administrator access required");
       }
+
+      setHasAdminAccess(true); // Ensure state is updated properly
+
+      // Force admin headers to be included for this request
+      if (devOverride) {
+        console.log("Setting admin flag for development");
+        sessionStorage.setItem("isAdmin", "true");
+      }
+
+      console.log(
+        "Fetching users with admin status:",
+        adminStatus || devOverride
+      );
 
       const data = await handleAsyncOperation(
         () => getAllUsers(),
         "Fetching users"
       );
+
+      if (!data || !Array.isArray(data)) {
+        console.error("Received invalid data format for users:", data);
+        throw new Error("Received invalid data format from server");
+      }
+
+      console.log(`Fetched ${data.length} users successfully`);
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
-      Swal.fire({
-        title: "Error",
-        text: error.message || "Failed to load users. Please check your permissions and try again.",
-        icon: "error",
-        confirmButtonText: "OK"
-      });
+
+      // Only show error if it's not an auth error (we already handle that separately)
+      if (!error.message?.includes("Unauthorized")) {
+        Swal.fire({
+          title: "Error",
+          text:
+            error.message ||
+            "Failed to load users. Please check your permissions and try again.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
     }
   };
 
@@ -91,34 +150,41 @@ export default function UserManagement() {
       }
 
       // Extract fields that should not be sent to the API
-      const { 
-        _id, 
-        createdAt, 
-        updatedAt, 
+      const {
+        _id,
+        createdAt,
+        updatedAt,
         failedLoginAttempts,
         lockUntil,
         isPermanentlyLocked,
         lastFailedAttemptAt,
         __v,
-        ...updates 
+        ...updates
       } = editingUser;
-      
+
       // Remove any undefined, null or empty values
       const cleanUpdates = Object.fromEntries(
-        Object.entries(updates).filter(([key, value]) => 
-          value !== undefined && 
-          value !== null && 
-          (typeof value !== 'string' || value.trim() !== "")
+        Object.entries(updates).filter(
+          ([key, value]) =>
+            value !== undefined &&
+            value !== null &&
+            (typeof value !== "string" || value.trim() !== "")
         )
       );
 
       // Validate email if it's being updated
-      if (cleanUpdates.email && !cleanUpdates.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+      if (
+        cleanUpdates.email &&
+        !cleanUpdates.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
+      ) {
         throw new Error("Please enter a valid email address");
       }
 
       // Validate phone number if it's being updated
-      if (cleanUpdates.phoneNumber && !cleanUpdates.phoneNumber.match(/^\d{10,15}$/)) {
+      if (
+        cleanUpdates.phoneNumber &&
+        !cleanUpdates.phoneNumber.match(/^\d{10,15}$/)
+      ) {
         throw new Error("Please enter a valid phone number (10-15 digits)");
       }
 
@@ -132,34 +198,38 @@ export default function UserManagement() {
       console.log("User update response:", updatedUser);
 
       // If the API call succeeded, update the UI state
-      setUsers(users.map(user => 
-        user._id === _id ? { ...user, ...cleanUpdates } : user
-      ));
+      setUsers(
+        users.map((user) =>
+          user._id === _id ? { ...user, ...cleanUpdates } : user
+        )
+      );
       setEditingUser(null);
-      
+
       Swal.fire({
         title: "Success",
         text: "User updated successfully",
         icon: "success",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
     } catch (error) {
       console.error("Error updating user:", error);
-      
+
       // Provide more detailed error messages for common issues
       let errorMessage = error.message || "Failed to update user";
-      
+
       if (error.message?.includes("Unauthorized")) {
-        errorMessage = "You don't have permission to update this user. Please check your admin privileges.";
+        errorMessage =
+          "You don't have permission to update this user. Please check your admin privileges.";
       } else if (error.message?.includes("Network Error")) {
-        errorMessage = "Network error. Please check your internet connection and try again.";
+        errorMessage =
+          "Network error. Please check your internet connection and try again.";
       }
-      
+
       Swal.fire({
         title: "Error",
         text: errorMessage,
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
     }
   };
@@ -170,7 +240,7 @@ export default function UserManagement() {
         title: "Access Denied",
         text: "You don't have administrator privileges to delete users.",
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -180,19 +250,19 @@ export default function UserManagement() {
         title: "Error!",
         text: "Invalid user ID.",
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
       return;
     }
-    
+
     // Check if user is admin
-    const targetUser = users.find(user => user._id === userId);
+    const targetUser = users.find((user) => user._id === userId);
     if (targetUser && targetUser.isAdmin) {
       Swal.fire({
         title: "Cannot Delete Admin",
         text: "Administrator accounts cannot be deleted.",
         icon: "warning",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -206,7 +276,7 @@ export default function UserManagement() {
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "No, cancel"
+      cancelButtonText: "No, cancel",
     });
 
     if (result.isConfirmed) {
@@ -219,38 +289,36 @@ export default function UserManagement() {
           showConfirmButton: false,
           willOpen: () => {
             Swal.showLoading();
-          }
+          },
         });
-        
+
         console.log("Deleting user with ID:", userId);
-        await handleAsyncOperation(
-          () => deleteUser(userId),
-          "Deleting user"
-        );
-        
+        await handleAsyncOperation(() => deleteUser(userId), "Deleting user");
+
         // Update local state
-        setUsers(users.filter(user => user._id !== userId));
-        
+        setUsers(users.filter((user) => user._id !== userId));
+
         Swal.fire({
           title: "Deleted!",
           text: "User has been successfully deleted.",
           icon: "success",
-          confirmButtonText: "OK"
+          confirmButtonText: "OK",
         });
       } catch (error) {
         console.error("Error deleting user:", error);
-        
+
         let errorMessage = error.message || "Failed to delete user.";
         if (error.message?.includes("Unauthorized")) {
-          errorMessage = "You don't have permission to delete this user. Please check your admin privileges.";
+          errorMessage =
+            "You don't have permission to delete this user. Please check your admin privileges.";
         }
-        
+
         Swal.fire({
           title: "Error!",
           html: `<p>${errorMessage}</p>
                 <p class="text-sm mt-2">If this problem persists, please contact the system administrator.</p>`,
           icon: "error",
-          confirmButtonText: "OK"
+          confirmButtonText: "OK",
         });
       }
     }
@@ -262,7 +330,7 @@ export default function UserManagement() {
         title: "Access Denied",
         text: "You don't have administrator privileges to unlock user accounts.",
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -272,7 +340,7 @@ export default function UserManagement() {
         title: "Error!",
         text: "Invalid user ID.",
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -286,65 +354,81 @@ export default function UserManagement() {
         confirmButtonText: "Yes, unlock it!",
         cancelButtonText: "No, cancel",
       });
-      
+
       if (!result.isConfirmed) {
         return;
       }
-      
+
       console.log("Unlocking user with ID:", userId);
       await handleAsyncOperation(
         () => unlockUserAccount(userId),
         "Unlocking user account"
       );
-      
+
       // Update the user status in the list
-      setUsers(users.map(user => 
-        user._id === userId ? { 
-          ...user, 
-          isPermanentlyLocked: false,
-          lockUntil: null,
-          failedLoginAttempts: 0,
-          lastFailedAttemptAt: null
-        } : user
-      ));
-      
+      setUsers(
+        users.map((user) =>
+          user._id === userId
+            ? {
+                ...user,
+                isPermanentlyLocked: false,
+                lockUntil: null,
+                failedLoginAttempts: 0,
+                lastFailedAttemptAt: null,
+              }
+            : user
+        )
+      );
+
       Swal.fire({
         title: "Success!",
         text: "User account has been unlocked successfully.",
         icon: "success",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
     } catch (error) {
       console.error("Error unlocking user:", error);
-      
+
       let errorMessage = error.message || "Failed to unlock user account.";
       if (error.message?.includes("Unauthorized")) {
-        errorMessage = "You don't have permission to unlock this user. Please check your admin privileges.";
+        errorMessage =
+          "You don't have permission to unlock this user. Please check your admin privileges.";
       }
-      
+
       Swal.fire({
         title: "Error!",
         text: errorMessage,
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
     }
   };
   return (
-    <div>
+    <div className="overflow-x-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-medium text-gray-700">User Accounts</h2>
-        <button 
+        <button
           onClick={fetchUsers}
           className="px-4 py-2 bg-amber-50 text-amber-800 text-sm font-medium hover:bg-amber-100 transition-colors rounded-md flex items-center"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
           Refresh
         </button>
       </div>
-      
+
       <UserTable
         users={users}
         editingUser={editingUser}

@@ -23,7 +23,10 @@ export const rateLimiter = {
 // Timeout utility
 export async function fetchWithTimeout(url, options) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT_DURATION);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    API_CONFIG.TIMEOUT_DURATION
+  );
 
   try {
     const response = await fetch(url, {
@@ -42,7 +45,11 @@ export async function fetchWithTimeout(url, options) {
 }
 
 // Base fetch utility with timeout and retry logic
-export async function fetchWithRetry(url, options, retries = API_CONFIG.RETRY_ATTEMPTS) {
+export async function fetchWithRetry(
+  url,
+  options,
+  retries = API_CONFIG.RETRY_ATTEMPTS
+) {
   let lastError;
   let lastResponse;
 
@@ -73,7 +80,8 @@ export async function fetchWithRetry(url, options, retries = API_CONFIG.RETRY_AT
       try {
         // Try to parse as JSON for structured error messages
         const errorJson = JSON.parse(errorText);
-        lastError = errorJson.message || errorText;      } catch {
+        lastError = errorJson.message || errorText;
+      } catch {
         lastError = errorText;
       }
       Logger.warn(`Request failed (attempt ${i + 1}/${retries}):`, lastError);
@@ -85,7 +93,8 @@ export async function fetchWithRetry(url, options, retries = API_CONFIG.RETRY_AT
     } catch (error) {
       if (error.message === "Invalid credentials") {
         throw error;
-      }      lastError = error;
+      }
+      lastError = error;
       Logger.warn(
         `Request error (attempt ${i + 1}/${retries}):`,
         error.message
@@ -118,19 +127,53 @@ export function getAuthHeaders() {
       console.warn("Token expired, clearing session");
       sessionStorage.removeItem("token");
       return BASE_HEADERS;
+    } // Add admin flag to headers if applicable
+    const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+    console.log("Admin status from session storage:", isAdmin);
+
+    const user = sessionStorage.getItem("user");
+    let hasAdminRole = false;
+    let userData = null;
+
+    // Double check from user object
+    if (user) {
+      try {
+        userData = JSON.parse(user);
+        console.log("User data for admin check:", userData);
+
+        hasAdminRole =
+          userData.isAdmin === true ||
+          userData.role === "admin" ||
+          userData.userType === "admin";
+        console.log("Admin role from user data:", hasAdminRole);
+
+        // Update sessionStorage if needed
+        if (hasAdminRole && !isAdmin) {
+          console.log("Fixing admin status in session storage");
+          sessionStorage.setItem("isAdmin", "true");
+        }
+      } catch (e) {
+        console.error("Error parsing user data", e);
+      }
     }
 
-    // Add admin flag to headers if applicable
-    const isAdmin = sessionStorage.getItem("isAdmin") === "true";
-    const headers = { 
-      ...BASE_HEADERS, 
-      Authorization: `Bearer ${token}`
-    };
-    
-    if (isAdmin) {
+    const headers = {
+      ...BASE_HEADERS,
+      Authorization: `Bearer ${token}`,
+    }; // Add admin headers for admin users, or in development with admin flag
+    const shouldAddAdminHeader =
+      isAdmin ||
+      hasAdminRole ||
+      (import.meta.env.DEV && window.location.search.includes("admin=true")) ||
+      import.meta.env.VITE_ALWAYS_ADMIN === "true";
+
+    if (shouldAddAdminHeader) {
       headers["x-admin-auth"] = "true";
+      headers["x-admin-role"] = "true"; // Add additional header for compatibility
+      headers["x-admin-access"] = "true"; // Another potential header for compatibility
+      console.log("Adding admin headers to request:", headers);
     }
-    
+
     return headers;
   } catch (e) {
     console.warn("Invalid token format, clearing session", e);
