@@ -35,7 +35,11 @@ export const removeUser = () => {
 /**
  * Admin status management
  */
-export const isAdmin = () => sessionStorage.getItem(ADMIN_KEY) === "true";
+export const isAdmin = () => {
+  const adminStatus = sessionStorage.getItem(ADMIN_KEY) === "true";
+  console.log("Admin status check:", adminStatus);
+  return adminStatus;
+};
 
 export const setAdmin = () => {
   sessionStorage.setItem(ADMIN_KEY, "true");

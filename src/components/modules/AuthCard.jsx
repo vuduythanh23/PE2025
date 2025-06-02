@@ -7,11 +7,13 @@ import {
   validatePhone,
 } from "../../utils";
 
-export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
-  const [formData, setFormData] = useState(
+export default function AuthCard({ type, onSubmit, loading, fields = [] }) {  const [formData, setFormData] = useState(
     Array.isArray(fields)
-      ? fields.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
-      : fields.reduce((acc, field) => ({ ...acc, [field]: "" }), {})
+      ? fields.reduce((acc, field) => {
+          const fieldId = typeof field === 'object' ? field.id : field;
+          return { ...acc, [fieldId]: "" };
+        }, {})
+      : {}
   );
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -59,14 +61,17 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
       }
     }
   }, [formData.password, formData.confirmPassword, type]);
-
   const validate = () => {
     const newErrors = {};
-    const fieldIds = Array.isArray(fields) ? fields.map((f) => f.id) : fields;
+    const fieldIds = Array.isArray(fields) 
+      ? fields.map((f) => typeof f === 'object' ? f.id : f) 
+      : fields;
+    
     fieldIds.forEach((field) => {
-      const error = validateField(field, formData[field]);
+      const fieldId = typeof field === 'object' ? field.id : field;
+      const error = validateField(fieldId, formData[fieldId]);
       if (error) {
-        newErrors[field] = error;
+        newErrors[fieldId] = error;
       }
     });
 
@@ -122,36 +127,47 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
           <div className="w-16 h-0.5 bg-luxury-gold mx-auto mt-4"></div>
         </div>
 
-        <form className="grid grid-cols-2 gap-6" onSubmit={handleSubmit}>
-          {(Array.isArray(fields)
+        <form 
+          className={type === "login" ? "flex flex-col gap-4" : "grid grid-cols-2 gap-6"} 
+          onSubmit={handleSubmit}
+        >
+          {/* Xử lý các trường input - hiển thị dọc */}
+          {(Array.isArray(fields) && fields.some(field => typeof field === 'object')
             ? fields
-            : fields.map((f) => ({ id: f, label: f }))
-          ).map((field) => (
-            <div key={field.id} className="col-span-1">
-              <label
-                htmlFor={field.id}
-                className="block text-sm font-medium text-luxury-dark/70 mb-2 font-serif"
+            : fields.map((f) => ({ id: typeof f === 'string' ? f : f.id, label: typeof f === 'string' ? f : f.label }))
+          ).map((field) => {
+            const fieldId = field.id;
+            const fieldLabel = field.label || fieldId;
+            return (
+              <div 
+                key={fieldId} 
+                className={type === "login" ? "w-full mb-4" : "col-span-1"}
               >
-                {field.label}
-              </label>
-              <input
-                id={field.id}
-                name={field.id}
-                type={field.id.includes("password") ? "password" : "text"}
-                value={formData[field.id]}
-                onChange={handleChange}
-                className="w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm"
-                placeholder={`Enter your ${field.label.toLowerCase()}`}
-              />
-              {touched[field.id] && errors[field.id] && (
-                <p className="mt-1 text-sm text-red-500">{errors[field.id]}</p>
-              )}
-            </div>
-          ))}
+                <label
+                  htmlFor={fieldId}
+                  className="block text-sm font-medium text-luxury-dark/70 mb-2 font-serif"
+                >
+                  {fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)}
+                </label>
+                <input
+                  id={fieldId}
+                  name={fieldId}
+                  type={fieldId && typeof fieldId === 'string' && fieldId.includes && fieldId.includes("password") ? "password" : "text"}
+                  value={formData[fieldId] || ""}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm"
+                  placeholder={`Enter your ${fieldLabel.toLowerCase()}`}
+                />
+                {touched[fieldId] && errors[fieldId] && (
+                  <p className="mt-1 text-sm text-red-500">{errors[fieldId]}</p>
+                )}
+              </div>
+            );
+          })}
 
           <button
             type="submit"
-            className={`col-span-2 bg-luxury-gold text-white py-3 rounded-lg font-serif text-sm tracking-wider transition-all transform hover:scale-[1.02] hover:shadow-lg
+            className={`${type === "login" ? "w-full" : "col-span-2"} bg-luxury-gold text-white py-3 rounded-lg font-serif text-sm tracking-wider transition-all transform hover:scale-[1.02] hover:shadow-lg ${type === "login" ? "mt-2" : ""}
               ${
                 loading
                   ? "opacity-50 cursor-not-allowed"

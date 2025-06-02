@@ -95,17 +95,20 @@ export default function Login() {
       setLoading(false);
     }
   };
-
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <AuthCard
-        type="login"
-        onSubmit={handleLogin}
-        loading={loading}
-        fields={["email", "password"]}
-      />
+      <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <AuthCard
+            type="login"
+            onSubmit={handleLogin}
+            loading={loading}
+            fields={["email", "password"]}
+          />
+        </div>
+      </div>
       <Footer />
-    </>
+    </div>
   );
 }

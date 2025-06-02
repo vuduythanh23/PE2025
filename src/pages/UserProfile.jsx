@@ -85,7 +85,6 @@ const UserProfile = () => {
     });
     setErrors({});
   };
-
   const handleSave = async (e) => {
     e.preventDefault();
     if (!validate()) {
@@ -98,7 +97,7 @@ const UserProfile = () => {
         delete updateData.password;
       }
       await handleAsyncOperation(
-        () => updateUser(updateData),
+        () => updateUser(user._id, updateData),
         "Failed to update profile"
       );
       setEditing(false);

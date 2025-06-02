@@ -119,8 +119,21 @@ export function getAuthHeaders() {
       sessionStorage.removeItem("token");
       return BASE_HEADERS;
     }
+
+    // Add admin flag to headers if applicable
+    const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+    const headers = { 
+      ...BASE_HEADERS, 
+      Authorization: `Bearer ${token}`
+    };
+    
+    if (isAdmin) {
+      headers["x-admin-auth"] = "true";
+    }
+    
+    return headers;
   } catch (e) {
-    console.warn("Invalid token format, clearing session");
+    console.warn("Invalid token format, clearing session", e);
     sessionStorage.removeItem("token");
     return BASE_HEADERS;
   }

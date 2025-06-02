@@ -1,5 +1,6 @@
-import { ENDPOINTS } from "../constants/api.js";
+import { ENDPOINTS, BASE_HEADERS } from "../constants/api.js";
 import { getAuthHeaders, fetchWithTimeout } from "./base.js";
+import { getToken } from "../storage/auth.js";
 
 /**
  * Gets current user data
@@ -51,13 +52,9 @@ export async function getUserById(id) {
 // Regular user update (for user's own profile)
 export const updateUser = async (userId, userData) => {
   try {
-    const token = getToken(); // From your auth storage utility
-    const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    const response = await fetch(`${ENDPOINTS.USERS}/${userId}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(userData)
     });
     
@@ -73,22 +70,62 @@ export const updateUser = async (userId, userData) => {
   }
 };
 
-// Admin-specific user update
+/**
+ * Admin-specific user update
+ * @param {string} userId - User ID to update
+ * @param {Object} userData - Updated user data
+ * @returns {Promise<Object>} Updated user data
+ * @throws {Error} If update fails
+ */
 export const adminUpdateUser = async (userId, userData) => {
   try {
-    const token = getToken(); // From your auth storage utility
-    const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    // Perform validation on the client side
+    if (userData.username && userData.username.length < 3) {
+      throw new Error('Username must be at least 3 characters long');
+    }
+
+    if (userData.email && !userData.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+      throw new Error('Please provide a valid email address');
+    }
+
+    if (userData.password && userData.password.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+    
+    // Get token directly from storage
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      throw new Error("Authentication required. Please log in again.");
+    }
+    
+    // Build headers with explicit admin role
+    const headers = {
+      ...BASE_HEADERS,
+      "Authorization": `Bearer ${token}`,
+      "x-admin-role": "true"
+    };
+    
+    console.log("Admin update headers:", headers);
+    console.log("Updating user with data:", userData);
+    
+    // Use the admin-specific endpoint
+    const response = await fetch(`${ENDPOINTS.USERS}/${userId}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: headers,
       body: JSON.stringify(userData)
     });
     
+    console.log("Admin update response status:", response.status);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update user');
+      let errorMessage = 'Failed to update user';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        console.error("Failed to parse error response:", e);
+      }
+      throw new Error(errorMessage);
     }
     
     return await response.json();
@@ -98,30 +135,93 @@ export const adminUpdateUser = async (userId, userData) => {
   }
 };
 
-export const unlockUserAccount = (userId) => {
-  // Implementation details
-  return fetch(`/api/users/${userId}/unlock`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+/**
+ * Unlocks a user account
+ * @param {string} userId - User ID to unlock
+ * @returns {Promise<Object>} Updated user data
+ * @throws {Error} If unlock operation fails
+ */
+export const unlockUserAccount = async (userId) => {
+  try {
+    // Get token directly from storage
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      throw new Error("Authentication required. Please log in again.");
     }
-  }).then(response => response.json());
+    
+    // Build headers with explicit admin role
+    const headers = {
+      ...BASE_HEADERS,
+      "Authorization": `Bearer ${token}`,
+      "x-admin-role": "true" 
+    };
+    
+    console.log("Admin unlock headers:", headers);
+    
+    const response = await fetch(`${ENDPOINTS.USERS}/${userId}/unlock`, {
+      method: 'POST',
+      headers: headers
+    });
+    
+    console.log("Unlock response status:", response.status);
+    
+    if (!response.ok) {
+      let errorMessage = 'Failed to unlock user account';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        console.error("Failed to parse error response:", e);
+      }
+      throw new Error(errorMessage);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error in unlockUserAccount:', error);
+    throw error;
+  }
 };
 
 /**
- * Deletes a user account
+ * Deletes a user account (admin only)
  * @param {string} id - User ID to delete
  * @returns {Promise<Object>} Deletion confirmation
  * @throws {Error} If deletion fails
  */
 export async function deleteUser(id) {
+  // Get token directly from storage
+  const token = sessionStorage.getItem("token");
+  if (!token) {
+    throw new Error("Authentication required. Please log in again.");
+  }
+  
+  // Build headers with explicit admin role
+  const headers = {
+    ...BASE_HEADERS,
+    "Authorization": `Bearer ${token}`,
+    "x-admin-role": "true"
+  };
+  
+  console.log("Admin delete headers:", headers);
+  
   const res = await fetchWithTimeout(`${ENDPOINTS.USERS}/${encodeURIComponent(id)}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
+    headers: headers,
   });
+  
+  console.log("Delete response status:", res.status);
+  
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Failed to delete user: ${error}`);
+    let errorMessage = "Failed to delete user";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch (e) {
+      const error = await res.text();
+      errorMessage = error || errorMessage;
+    }
+    throw new Error(errorMessage);
   }
   return res.json();
 }
