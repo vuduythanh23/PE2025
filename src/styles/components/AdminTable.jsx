@@ -8,6 +8,7 @@ export default function AdminTable({
   onCancel,
   onChange,
   onDelete,
+  onUnlock,
 }) {
   return (
     <div className="overflow-x-auto">
@@ -30,10 +31,7 @@ export default function AdminTable({
               Last Name
             </th>
             <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
-              Address
-            </th>
-            <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
-              Phone
+              Status
             </th>
             <th className="px-6 py-4 text-left text-sm font-serif text-luxury-dark">
               Actions
@@ -111,35 +109,17 @@ export default function AdminTable({
               </td>
 
               <td className="px-6 py-4">
-                {editingUser?._id === user._id ? (
-                  <input
-                    type="text"
-                    name="address"
-                    value={editingUser.address}
-                    onChange={onChange}
-                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
-                  />
-                ) : (
-                  <span className="text-sm text-luxury-dark/70 font-serif">
-                    {user.address}
-                  </span>
-                )}
-              </td>
-
-              <td className="px-6 py-4">
-                {editingUser?._id === user._id ? (
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={editingUser.phoneNumber}
-                    onChange={onChange}
-                    className="w-full p-2 border-b border-luxury-gold/30 bg-transparent font-serif focus:outline-none focus:border-luxury-gold"
-                  />
-                ) : (
-                  <span className="text-sm text-luxury-dark/70 font-serif">
-                    {user.phoneNumber}
-                  </span>
-                )}
+                <span
+                  className={`text-sm font-serif ${
+                    user.accountLocked ? "text-red-500" : "text-green-500"
+                  }`}
+                >
+                  {user.accountLocked
+                    ? user.unlockTime
+                      ? "Temporarily Locked"
+                      : "Permanently Locked"
+                    : "Active"}
+                </span>
               </td>
 
               <td className="px-6 py-4">
@@ -166,6 +146,14 @@ export default function AdminTable({
                     >
                       Edit
                     </button>
+                    {user.accountLocked && (
+                      <button
+                        onClick={() => onUnlock(user._id)}
+                        className="text-green-500 hover:text-green-600 transition-colors"
+                      >
+                        Unlock
+                      </button>
+                    )}
                     <button
                       onClick={() => onDelete(user._id)}
                       className="text-red-500 hover:text-red-600 transition-colors"

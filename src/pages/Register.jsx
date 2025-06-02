@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
 import AuthCard from "../components/modules/AuthCard";
 import { registerUser } from "../utils"; // Import register API function
 import Swal from "sweetalert2";
@@ -54,6 +55,7 @@ export default function Register() {
           "phoneNumber",
         ]} // Include all required fields for registration
       />
+      <Footer />
     </>
   );
 }

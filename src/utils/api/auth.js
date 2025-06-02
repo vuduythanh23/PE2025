@@ -1,6 +1,8 @@
 import { ENDPOINTS, BASE_HEADERS } from "../constants/api.js";
 import { rateLimiter, fetchWithRetry } from "./base.js";
 
+const LOCK_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+
 /**
  * Authenticates a user with email and password
  * @param {string} email - User's email
@@ -34,6 +36,26 @@ export async function loginUser(email, password) {
 
     if (!res.ok) {
       if (res.status === 401) {
+        if (data?.accountLocked) {
+          if (data.unlockTime) {
+            const remainingTime = Math.ceil(
+              (new Date(data.unlockTime) - new Date()) / 60000
+            );
+            throw new Error(
+              `Account is temporarily locked. Please try again in ${remainingTime} minutes.`
+            );
+          } else {
+            throw new Error(
+              "Account is locked. Please contact an administrator."
+            );
+          }
+        } else if (data?.remainingAttempts >= 0) {
+          throw new Error(
+            `Invalid password. ${data.remainingAttempts} attempt${
+              data.remainingAttempts !== 1 ? "s" : ""
+            } remaining before account lockout.`
+          );
+        }
         throw new Error("Invalid email or password");
       }
       console.error("Login error response:", data);
@@ -84,5 +106,25 @@ export async function registerUser(formData) {
     const error = await res.text();
     throw new Error(`Registration failed: ${error}`);
   }
+  return res.json();
+}
+
+/**
+ * Unlocks a locked user account (admin only)
+ * @param {string} userId - ID of user to unlock
+ * @returns {Promise<Object>} Updated user data
+ * @throws {Error} If unlock fails
+ */
+export async function unlockUserAccount(userId) {
+  const res = await fetch(`${ENDPOINTS.USERS}/${userId}/unlock`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Failed to unlock account: ${error}`);
+  }
+
   return res.json();
 }

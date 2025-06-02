@@ -59,6 +59,26 @@ export async function updateUser(id, updates) {
 }
 
 /**
+ * Updates a user as admin
+ * @param {string} id - User ID
+ * @param {Object} updates - User updates
+ * @returns {Promise<Object>} Updated user data
+ * @throws {Error} If update fails
+ */
+export async function adminUpdateUser(id, updates) {
+  const res = await fetch(`${ENDPOINTS.USERS}/${id}/adminUpdateUser`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || "Failed to update user");
+  }
+  return res.json();
+}
+
+/**
  * Deletes a user account
  * @param {string} id - User ID to delete
  * @returns {Promise<Object>} Deletion confirmation

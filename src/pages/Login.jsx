@@ -4,11 +4,12 @@ import AuthCard from "../components/modules/AuthCard";
 import { loginUser } from "../utils";
 import Swal from "sweetalert2";
 import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();  
-  
+  const navigate = useNavigate();
+
   const handleLogin = async (formData) => {
     // Validate login data
     if (!formData.email || !formData.password) {
@@ -16,7 +17,7 @@ export default function Login() {
         title: "Login Failed",
         text: "Email and password are required",
         icon: "error",
-        confirmButtonText: "Retry"
+        confirmButtonText: "Retry",
       });
       return;
     }
@@ -26,46 +27,69 @@ export default function Login() {
 
     try {
       const response = await loginUser(email, password);
-      
+
       if (!response?.user) {
-        throw new Error('Invalid response from server');
+        throw new Error("Invalid response from server");
       }
-      
+
       // Check if the logged-in user is an admin based on the response
-      const isAdmin = response.user.role === 'admin';
-      
-      sessionStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
-      sessionStorage.setItem('user', JSON.stringify(response.user));
-        // Check if there's a redirect parameter in the URL
+      const isAdmin = response.user.role === "admin";
+
+      sessionStorage.setItem("userRole", isAdmin ? "admin" : "user");
+      sessionStorage.setItem("user", JSON.stringify(response.user));
+
+      // Check if there's a redirect parameter in the URL
       const params = new URLSearchParams(window.location.search);
-      const redirectPath = params.get('redirect') || (isAdmin ? "/admin" : "/");
-      
+      const redirectPath = params.get("redirect") || (isAdmin ? "/admin" : "/");
+
       await Swal.fire({
         title: isAdmin ? "Admin Login Successful!" : "Login Successful!",
-        text: isAdmin ? "Welcome to the Admin Panel." : `Welcome, ${response.user.username || "User"}!`,
+        text: isAdmin
+          ? "Welcome to the Admin Panel."
+          : `Welcome, ${response.user.username || "User"}!`,
         icon: "success",
         confirmButtonText: "OK",
       });
-      
+
       // Navigate after the alert is closed
-      navigate(redirectPath);} catch (error) {
+      navigate(redirectPath);
+    } catch (error) {
       let errorMessage = "An unexpected error occurred. Please try again.";
-      
-      if (error.message === "Invalid credentials") {
-        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      let errorTitle = "Login Failed";
+      let icon = "error";
+
+      // Handle specific error messages
+      if (error.message.includes("temporarily locked")) {
+        errorTitle = "Account Temporarily Locked";
+        icon = "warning";
+        errorMessage = error.message;
+      } else if (error.message.includes("contact an administrator")) {
+        errorTitle = "Account Locked";
+        icon = "warning";
+        errorMessage =
+          "Your account has been locked due to too many failed attempts. Please contact an administrator to unlock your account.";
+      } else if (error.message.includes("remaining")) {
+        errorTitle = "Invalid Password";
+        icon = "warning";
+        errorMessage = error.message;
+      } else if (error.message === "Invalid credentials") {
+        errorMessage =
+          "Invalid email or password. Please check your credentials and try again.";
       } else if (error.message === "Request timed out") {
-        errorMessage = "The connection timed out. Please check your internet connection and try again.";
+        errorMessage =
+          "The connection timed out. Please check your internet connection and try again.";
       } else if (error.message === "Network Error") {
-        errorMessage = "Unable to connect to the server. Please check your internet connection.";
+        errorMessage =
+          "Unable to connect to the server. Please check your internet connection.";
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       Swal.fire({
-        title: "Login Failed",
+        title: errorTitle,
         text: errorMessage,
-        icon: "error",
-        confirmButtonText: "Retry",
+        icon: icon,
+        confirmButtonText: "OK",
       });
     } finally {
       setLoading(false);
@@ -81,6 +105,7 @@ export default function Login() {
         loading={loading}
         fields={["email", "password"]}
       />
+      <Footer />
     </>
   );
 }

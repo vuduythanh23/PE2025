@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { getAllUsers, deleteUser, updateUser } from "../utils";
+import {
+  getAllUsers,
+  deleteUser,
+  updateUser,
+  unlockUserAccount,
+} from "../utils";
 import Swal from "sweetalert2";
 import Header from "../components/layout/Header";
 import AdminTable from "../styles/components/AdminTable";
@@ -45,9 +50,13 @@ export default function Admin() {
 
   const handleSave = async () => {
     try {
-      await updateUser(editingUser);
+      // Đảm bảo truyền đúng tham số cho updateUser: id và updates
+      const { _id, ...updates } = editingUser;
+      await updateUser(_id, updates);
       setUsers(
-        users.map((user) => (user._id === editingUser._id ? editingUser : user))
+        users.map((user) =>
+          user._id === editingUser._id ? { ...user, ...updates } : user
+        )
       );
       setEditingUser(null);
       Swal.fire({
@@ -97,6 +106,53 @@ export default function Admin() {
     }
   };
 
+  const handleUnlock = async (userId) => {
+    try {
+      const result = await Swal.fire({
+        title: "Unlock Account",
+        text: "Are you sure you want to unlock this account?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#10B981",
+        cancelButtonColor: "#6B7280",
+        confirmButtonText: "Yes, unlock it!",
+      });
+
+      if (result.isConfirmed) {
+        await unlockUserAccount(userId);
+
+        // Update the user in the list
+        setUsers(
+          users.map((user) => {
+            if (user._id === userId) {
+              return {
+                ...user,
+                accountLocked: false,
+                loginAttempts: 0,
+                unlockTime: null,
+              };
+            }
+            return user;
+          })
+        );
+
+        Swal.fire({
+          title: "Success",
+          text: "Account has been unlocked.",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Error",
+        text: error.message || "Failed to unlock account",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
   return (
     <>
       <Header />
@@ -135,15 +191,20 @@ export default function Admin() {
               </button>
             </div>
 
-            <AdminTable
-              users={users}
-              editingUser={editingUser}
-              onEdit={handleEdit}
-              onSave={handleSave}
-              onChange={handleChange}
-              onCancel={handleCancelEdit}
-              onDelete={handleDelete}
-            />
+            {activeTab === "users" ? (
+              <AdminTable
+                users={users}
+                editingUser={editingUser}
+                onEdit={handleEdit}
+                onSave={handleSave}
+                onChange={handleChange}
+                onCancel={handleCancelEdit}
+                onDelete={handleDelete}
+                onUnlock={handleUnlock}
+              />
+            ) : (
+              <OrderManagement />
+            )}
           </div>
         </div>
       </main>
