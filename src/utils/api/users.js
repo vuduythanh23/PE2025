@@ -48,35 +48,65 @@ export async function getUserById(id) {
  * @returns {Promise<Object>} Updated user data
  * @throws {Error} If update fails
  */
-export async function updateUser(id, updates) {
-  const res = await fetch(`${ENDPOINTS.USERS}/${id}`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(updates),
-  });
-  if (!res.ok) throw new Error("Failed to update user");
-  return res.json();
-}
-
-/**
- * Updates a user as admin
- * @param {string} id - User ID
- * @param {Object} updates - User updates
- * @returns {Promise<Object>} Updated user data
- * @throws {Error} If update fails
- */
-export async function adminUpdateUser(id, updates) {
-  const res = await fetch(`${ENDPOINTS.USERS}/${id}/adminUpdateUser`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(updates),
-  });
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(error || "Failed to update user");
+// Regular user update (for user's own profile)
+export const updateUser = async (userId, userData) => {
+  try {
+    const token = getToken(); // From your auth storage utility
+    const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update user');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error in updateUser:', error);
+    throw error;
   }
-  return res.json();
-}
+};
+
+// Admin-specific user update
+export const adminUpdateUser = async (userId, userData) => {
+  try {
+    const token = getToken(); // From your auth storage utility
+    const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update user');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error in adminUpdateUser:', error);
+    throw error;
+  }
+};
+
+export const unlockUserAccount = (userId) => {
+  // Implementation details
+  return fetch(`/api/users/${userId}/unlock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then(response => response.json());
+};
 
 /**
  * Deletes a user account

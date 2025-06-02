@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  getAllUsers,
-  deleteUser,
-  updateUser,
-  unlockUserAccount,
-} from "../utils";
+import { 
+  getAllUsers, 
+  adminUpdateUser, 
+  deleteUser, 
+  unlockUserAccount 
+} from '../utils/api/users.js';
 import Swal from "sweetalert2";
 import Header from "../components/layout/Header";
 import AdminTable from "../styles/components/AdminTable";
@@ -18,7 +18,7 @@ export default function Admin() {
   const { handleAsyncOperation } = useLoading();
 
   useEffect(() => {
-    const getUsers = async () => {
+    const fetchUsers = async () => {
       try {
         const data = await handleAsyncOperation(
           () => getAllUsers(),
@@ -26,15 +26,27 @@ export default function Admin() {
         );
         setUsers(data);
       } catch (error) {
-        // Error will be handled by handleAsyncOperation
+        console.error("Error fetching users:", error);
+        Swal.fire({
+          title: "Error",
+          text: "Failed to load users. Please check your permissions and try again.",
+          icon: "error",
+          confirmButtonText: "OK"
+        });
       }
     };
 
-    getUsers();
+    fetchUsers();
   }, [handleAsyncOperation]);
 
   const handleEdit = (user) => {
-    setEditingUser({ ...user });
+    setEditingUser({
+      ...user,
+      username: user.username || "",
+      email: user.email || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+    });
   };
 
   const handleCancelEdit = () => {
@@ -50,106 +62,103 @@ export default function Admin() {
 
   const handleSave = async () => {
     try {
-      // Đảm bảo truyền đúng tham số cho updateUser: id và updates
+      if (!editingUser || !editingUser._id) {
+        throw new Error("No user selected for editing");
+      }
+
       const { _id, ...updates } = editingUser;
-      await updateUser(_id, updates);
-      setUsers(
-        users.map((user) =>
-          user._id === editingUser._id ? { ...user, ...updates } : user
-        )
+      
+      // Remove any undefined or empty values
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([key, value]) => value !== undefined && value !== "")
       );
+
+      const updatedUser = await handleAsyncOperation(
+        () => adminUpdateUser(_id, cleanUpdates),
+        "Failed to update user"
+      );
+
+      setUsers(users.map(user => 
+        user._id === _id ? { ...user, ...cleanUpdates } : user
+      ));
       setEditingUser(null);
+      
       Swal.fire({
         title: "Success",
         text: "User updated successfully",
         icon: "success",
-        confirmButtonText: "OK",
+        confirmButtonText: "OK"
       });
     } catch (error) {
+      console.error("Error updating user:", error);
       Swal.fire({
         title: "Error",
         text: error.message || "Failed to update user",
         icon: "error",
-        confirmButtonText: "OK",
+        confirmButtonText: "OK"
       });
     }
   };
 
   const handleDelete = async (userId) => {
-    const userToDelete = users.find((u) => u._id === userId);
-    if (userToDelete.isAdmin) {
-      Swal.fire({
-        title: "Error",
-        text: "Admin users cannot be deleted",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+    if (!userId) {
+      Swal.fire("Error!", "Invalid user ID.", "error");
       return;
     }
 
-    try {
-      await deleteUser(userId);
-      setUsers(users.filter((user) => user._id !== userId));
-      Swal.fire({
-        title: "Success",
-        text: "User deleted successfully.",
-        icon: "success",
-        confirmButtonText: "OK",
-      });
-    } catch (error) {
-      Swal.fire({
-        title: "Error",
-        text: "Failed to delete user.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+    // Confirm deletion with SweetAlert
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await handleAsyncOperation(
+          () => deleteUser(userId),
+          "Failed to delete user"
+        );
+        
+        setUsers(users.filter(user => user._id !== userId));
+        Swal.fire("Deleted!", "User has been deleted.", "success");
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        Swal.fire("Error!", error.message || "Failed to delete user.", "error");
+      }
     }
   };
 
   const handleUnlock = async (userId) => {
+    if (!userId) {
+      Swal.fire("Error!", "Invalid user ID.", "error");
+      return;
+    }
+
     try {
-      const result = await Swal.fire({
-        title: "Unlock Account",
-        text: "Are you sure you want to unlock this account?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#10B981",
-        cancelButtonColor: "#6B7280",
-        confirmButtonText: "Yes, unlock it!",
-      });
-
-      if (result.isConfirmed) {
-        await unlockUserAccount(userId);
-
-        // Update the user in the list
-        setUsers(
-          users.map((user) => {
-            if (user._id === userId) {
-              return {
-                ...user,
-                accountLocked: false,
-                loginAttempts: 0,
-                unlockTime: null,
-              };
-            }
-            return user;
-          })
-        );
-
-        Swal.fire({
-          title: "Success",
-          text: "Account has been unlocked.",
-          icon: "success",
-          confirmButtonText: "OK",
-        });
-      }
+      await handleAsyncOperation(
+        () => unlockUserAccount(userId),
+        "Failed to unlock user account"
+      );
+      
+      // Update the user status in the list
+      setUsers(users.map(user => 
+        user._id === userId ? { 
+          ...user, 
+          isPermanentlyLocked: false,
+          lockUntil: null,
+          failedLoginAttempts: 0
+        } : user
+      ));
+      
+      Swal.fire("Success!", "User account unlocked.", "success");
     } catch (error) {
-      Swal.fire({
-        title: "Error",
-        text: error.message || "Failed to unlock account",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      console.error("Error unlocking user:", error);
+      Swal.fire("Error!", error.message || "Failed to unlock user account.", "error");
     }
   };
 
