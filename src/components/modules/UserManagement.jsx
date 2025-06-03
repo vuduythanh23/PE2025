@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   getAllUsers,
+  adminUpdateUser,
   deleteUser,
   unlockUserAccount,
   getCurrentUser,
@@ -8,8 +9,6 @@ import {
 import { isAdmin } from "../../utils/storage/auth.js";
 // Import from adminAuth.js with explicit path
 import { checkAndRefreshAdminStatus } from "../../utils/helpers/adminAuth.js";
-// Import the new admin API helper
-import { adminUpdateUserApi } from "../../utils/helpers/adminApiHelper.js";
 import Swal from "sweetalert2";
 import UserTable from "./UserTable";
 import { useLoading } from "../../context/LoadingContext";
@@ -189,8 +188,10 @@ export default function UserManagement() {
         throw new Error("Please enter a valid phone number (10-15 digits)");
       }
 
-      console.log("Updating user with ID:", _id, "Updates:", cleanUpdates);      const updatedUser = await handleAsyncOperation(
-        () => adminUpdateUserApi(_id, cleanUpdates),
+      console.log("Updating user with ID:", _id, "Updates:", cleanUpdates);
+
+      const updatedUser = await handleAsyncOperation(
+        () => adminUpdateUser(_id, cleanUpdates),
         "Updating user"
       );
 

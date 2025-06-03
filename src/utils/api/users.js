@@ -123,7 +123,9 @@ export const adminUpdateUser = async (userId, userData) => {
     const token = sessionStorage.getItem("token");
     if (!token) {
       throw new Error("Authentication required. Please log in again.");
-    }    // Build headers with explicit admin role
+    }
+    
+    // Build headers with explicit admin role
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const isUserAdmin = user?.isAdmin === true || user?.role === "admin";
     
@@ -137,25 +139,19 @@ export const adminUpdateUser = async (userId, userData) => {
     const headers = {
       ...BASE_HEADERS,
       Authorization: `Bearer ${token}`,
-      "x-admin-role": "true",
+      "x-admin-role": "true", 
       "x-admin-auth": "true",
       "x-admin-access": "true", // Additional header for compatibility
     };
     
     console.log("Admin update headers:", headers);
-    console.log("Updating user with data:", userData);    // For debugging, check what the current admin endpoint is
-    const adminEndpoint = `${ENDPOINTS.USERS}/${userId}`;
+    console.log("Updating user with data:", userData);
+    
+    // Sử dụng endpoint admin đặc biệt để tránh trùng lặp với route updateUser thông thường
+    const adminEndpoint = `${ENDPOINTS.USERS}/admin/${userId}`;
     console.log("Using admin endpoint:", adminEndpoint);
-    
-    // Create a custom route object for reference
-    const routes = {
-      regular: `${ENDPOINTS.USERS}/${userId}`,
-      admin: `${ENDPOINTS.USERS}/${userId}`
-    };
-    
-    console.log("Available routes:", routes);
-    
-    // Use the admin-specific endpoint with proper route
+
+    // Sử dụng endpoint admin với route phù hợp
     const response = await fetch(adminEndpoint, {
       method: "PATCH",
       headers: headers,

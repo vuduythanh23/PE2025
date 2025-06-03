@@ -40,8 +40,8 @@ const UserTable = ({
             <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
-          </tr>
-        </thead>{" "}
+          </tr>{" "}
+        </thead>
         <tbody className="divide-y divide-gray-200">
           {users.map((user) => (
             <tr key={user._id}>
@@ -115,7 +115,7 @@ const UserTable = ({
                     {user.phoneNumber || "-"}
                   </div>
                 )}
-              </td>{" "}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span
                   className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -130,7 +130,7 @@ const UserTable = ({
                     ? "Temporarily Locked"
                     : "Active"}
                 </span>
-              </td>{" "}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 {editingUser?._id === user._id ? (
                   <div className="flex space-x-2">
@@ -182,7 +182,7 @@ const UserTable = ({
               </td>
             </tr>
           ))}
-        </tbody>{" "}
+        </tbody>
       </table>
     </div>
   );
