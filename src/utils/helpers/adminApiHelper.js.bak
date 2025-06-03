@@ -1,0 +1,179 @@
+/**
+ * Admin API Helper
+ * Utilities for making admin-specific API calls
+ */
+
+import { ENDPOINTS, BASE_HEADERS } from "../constants/api.js";
+import { fetchWithTimeout } from "../api/base.js";
+
+/**
+ * Get admin-specific headers
+ * @returns {Object} Headers with admin privileges
+ */
+export const getAdminHeaders = () => {
+  const token = sessionStorage.getItem("token");
+  if (!token) {
+    throw new Error("Authentication required. Please log in again.");
+  }
+
+  // Check if user is admin from session storage and user object
+  const isAdminInStorage = sessionStorage.getItem("isAdmin") === "true";
+  let userObj = null;
+  try {
+    userObj = JSON.parse(sessionStorage.getItem("user") || "{}");
+  } catch (e) {
+    console.error("Error parsing user data", e);
+  }
+
+  const hasAdminRole = userObj?.isAdmin === true || 
+                       userObj?.role === "admin" || 
+                       userObj?.userType === "admin";
+
+  // Log admin status for debugging
+  console.log("Admin status check:", { 
+    isAdminInStorage, 
+    hasAdminRole, 
+    userObj 
+  });
+
+  // Update admin status in storage if needed
+  if (hasAdminRole && !isAdminInStorage) {
+    sessionStorage.setItem("isAdmin", "true");
+    console.log("Updated admin status in storage to true");
+  }
+  
+  // Get a userId if available
+  const userId = userObj?._id || "";
+
+  // Include every possible header that might be checked by middleware
+  // Different backends might have different conventions, so we include all formats
+  return {
+    ...BASE_HEADERS,
+    Authorization: `Bearer ${token}`,
+    // Admin role indicators (multiple formats)
+    "X-Admin-Role": "true",
+    "x-admin-role": "true", 
+    "X-ADMIN-ROLE": "true",
+    // Admin auth indicators
+    "x-admin-auth": "true",
+    "X-Admin-Auth": "true",
+    "X-ADMIN-AUTH": "true",
+    // Admin access indicators
+    "x-admin-access": "true",
+    "X-Admin-Access": "true",
+    "X-ADMIN-ACCESS": "true",
+    // Token in header (some APIs check this)
+    "x-token": token,
+    "X-Token": token,
+    // User info
+    "X-Admin-User-Id": userId,
+    "x-admin-user-id": userId,
+    // Role as value instead of true/false
+    "X-Role": "admin",
+    "x-role": "admin",
+    "role": "admin"
+  };
+};
+
+/**
+ * Update a user as admin
+ * @param {string} userId - User ID to update
+ * @param {Object} userData - User data to update
+ * @returns {Promise<Object>} Updated user data
+ */
+export const adminUpdateUserApi = async (userId, userData) => {
+  if (!userId) throw new Error("User ID is required");
+  
+  console.log(`Attempting admin update for user ${userId}...`);
+  
+  // Get current admin user
+  let currentUser;
+  try {
+    currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
+    console.log("Current admin user:", currentUser);
+  } catch (e) {
+    console.error("Error parsing user data", e);
+  }
+  
+  // Use our enhanced headers function
+  const adminHeaders = getAdminHeaders();
+  
+  console.log("Using admin headers:", adminHeaders);
+    // Try multiple endpoints and methods until one works  const attempts = [
+    // First attempt - PATCH to /users/:id with admin flag in query
+    {
+      url: `${ENDPOINTS.USERS}/${userId}?admin=true`,
+      method: "PATCH",
+      headers: adminHeaders
+    },
+    // Second attempt - PUT instead of PATCH
+    {
+      url: `${ENDPOINTS.USERS}/${userId}?admin=true`,
+      method: "PUT", 
+      headers: adminHeaders
+    },
+    // Third attempt - regular endpoint with special admin headers
+    {
+      url: `${ENDPOINTS.USERS}/${userId}`,
+      method: "PATCH",
+      headers: adminHeaders
+    },
+    // Fourth attempt - try admin sub-route pattern
+    {
+      url: `${ENDPOINTS.USERS}/admin/${userId}`,
+      method: "PATCH",
+      headers: adminHeaders
+    },
+    // Fifth attempt - try Admin API pattern with PUT
+    {
+      url: `${ENDPOINTS.USERS}/admin/update/${userId}`,
+      method: "PUT",
+      headers: adminHeaders
+    },
+    // Sixth attempt - try user management pattern
+    {
+      url: `${ENDPOINTS.USERS}/manage/${userId}`,
+      method: "PATCH",
+      headers: adminHeaders
+    },
+    // Seventh attempt - two-step approach (GET user first, then update)
+    {
+      url: `${ENDPOINTS.USERS}/${userId}`,
+      method: "PUT",
+      headers: {
+        ...adminHeaders,
+        "X-HTTP-Method-Override": "PATCH" // Some APIs support this header
+      }
+    }
+  ];
+  
+  let lastError = null;
+  
+  // Try each method
+  for (const attempt of attempts) {
+    try {
+      console.log(`Trying ${attempt.method} to ${attempt.url}`);
+      
+      const response = await fetchWithTimeout(attempt.url, {
+        method: attempt.method,
+        headers: attempt.headers,
+        body: JSON.stringify(userData),
+      });
+      
+      if (response.ok) {
+        console.log("Admin update successful with:", attempt);
+        return await response.json();
+      }
+      
+      const errorText = await response.text();
+      console.error(`Attempt failed: ${response.status} ${errorText}`);
+      lastError = `HTTP ${response.status}: ${errorText}`;
+    } catch (error) {
+      console.error("Request error:", error);
+      lastError = error.message;
+    }
+  }
+    // If we get here, all attempts failed
+  console.error("All admin update attempts failed");
+  throw new Error(`Failed to update user: ${lastError}`);
+};

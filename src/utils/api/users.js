@@ -123,9 +123,17 @@ export const adminUpdateUser = async (userId, userData) => {
     const token = sessionStorage.getItem("token");
     if (!token) {
       throw new Error("Authentication required. Please log in again.");
+    }    // Build headers with explicit admin role
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const isUserAdmin = user?.isAdmin === true || user?.role === "admin";
+    
+    console.log("Current user admin status:", isUserAdmin, "User data:", user);
+    
+    // Force set admin status if needed
+    if (isUserAdmin) {
+      sessionStorage.setItem("isAdmin", "true");
     }
-
-    // Build headers with explicit admin role
+    
     const headers = {
       ...BASE_HEADERS,
       Authorization: `Bearer ${token}`,
@@ -133,11 +141,22 @@ export const adminUpdateUser = async (userId, userData) => {
       "x-admin-auth": "true",
       "x-admin-access": "true", // Additional header for compatibility
     };
-
+    
     console.log("Admin update headers:", headers);
-    console.log("Updating user with data:", userData);    // Looking at the routes in the image, I need to use the admin-specific endpoint
-    // The route is defined as 'router.patch('/:id', authenticate, isAdmin, userController.adminUpdateUser)'
-    const response = await fetch(`${ENDPOINTS.USERS}/${userId}`, {
+    console.log("Updating user with data:", userData);    // For debugging, check what the current admin endpoint is
+    const adminEndpoint = `${ENDPOINTS.USERS}/${userId}`;
+    console.log("Using admin endpoint:", adminEndpoint);
+    
+    // Create a custom route object for reference
+    const routes = {
+      regular: `${ENDPOINTS.USERS}/${userId}`,
+      admin: `${ENDPOINTS.USERS}/${userId}`
+    };
+    
+    console.log("Available routes:", routes);
+    
+    // Use the admin-specific endpoint with proper route
+    const response = await fetch(adminEndpoint, {
       method: "PATCH",
       headers: headers,
       body: JSON.stringify(userData),
