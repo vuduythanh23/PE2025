@@ -19,6 +19,7 @@ export const ENDPOINTS = {
   BRANDS: `${API_CONFIG.BASE_URL}/brands`,
   CATEGORIES: `${API_CONFIG.BASE_URL}/categories`,
   ORDERS: `${API_CONFIG.BASE_URL}/orders`,
+  UPLOAD: `${API_CONFIG.BASE_URL}/upload`,
 };
 
 // HTTP Headers

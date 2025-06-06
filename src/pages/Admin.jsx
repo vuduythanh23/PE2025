@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "../components/layout/Header";
 import OrderManagement from "../components/modules/OrderManagement";
 import UserManagement from "../components/modules/UserManagement";
+import ProductManagement from "../components/modules/ProductManagement";
 import { isAdmin, setAdmin } from "../utils/storage/auth";
 // Using explicit .js extension in the import
 import { checkAndRefreshAdminStatus } from "../utils/helpers/adminAuth.js";
@@ -11,7 +12,7 @@ const AdminDebug = import.meta.env.DEV
   : { debugAdminStatus: () => {} };
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("users"); // 'users' or 'orders'
+  const [activeTab, setActiveTab] = useState("users"); // 'users', 'orders', or 'products'
   const [adminAccessConfirmed, setAdminAccessConfirmed] = useState(false);
 
   // Check admin access on mount
@@ -104,7 +105,7 @@ export default function Admin() {
             )}
           </div>
           <div className="bg-white shadow-md rounded-md p-6">
-            {/* Tabs */}
+            {/* Tabs */}{" "}
             <div className="flex gap-6 mb-8 border-b border-gray-200">
               <button
                 className={`pb-4 font-medium text-sm transition-colors relative
@@ -128,9 +129,25 @@ export default function Admin() {
               >
                 Order Management
               </button>
+              <button
+                className={`pb-4 font-medium text-sm transition-colors relative
+                  ${
+                    activeTab === "products"
+                      ? "text-amber-700 border-b-2 border-amber-700 -mb-[2px]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                onClick={() => setActiveTab("products")}
+              >
+                Product Management
+              </button>
             </div>
-
-            {activeTab === "users" ? <UserManagement /> : <OrderManagement />}
+            {activeTab === "users" ? (
+              <UserManagement />
+            ) : activeTab === "orders" ? (
+              <OrderManagement />
+            ) : (
+              <ProductManagement />
+            )}
           </div>
         </div>
       </main>
