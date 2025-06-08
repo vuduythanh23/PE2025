@@ -113,7 +113,6 @@ const CatalogManagement = () => {
       );
     }
   }, [brands, brandSearchQuery]);
-
   // Filter categories based on search query
   useEffect(() => {
     if (categories.length) {
@@ -128,6 +127,40 @@ const CatalogManagement = () => {
       );
     }
   }, [categories, categorySearchQuery]);
+
+  // Add ESC key handlers to close modals
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        if (showBrandForm) {
+          setShowBrandForm(false);
+          setEditingBrand(null);
+          setBrandFormData({
+            name: "",
+            description: "",
+            logoUrl: "",
+          });
+          setBrandErrors({});
+        }
+        if (showCategoryForm) {
+          setShowCategoryForm(false);
+          setEditingCategory(null);
+          setCategoryFormData({
+            name: "",
+            description: "",
+            slug: "",
+            parent: "",
+          });
+          setCategoryErrors({});
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [showBrandForm, showCategoryForm]);
 
   // ========== PRODUCT FUNCTIONS ==========
   const fetchProducts = async () => {
@@ -809,16 +842,61 @@ const CatalogManagement = () => {
             >
               <FaPlus className="mr-2" /> Add Brand
             </button>
-          </div>
-
-          {/* Brand Form */}
+          </div>          {/* Brand Form Modal */}
           {showBrandForm && (
-            <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-              <h4 className="text-lg font-medium mb-4">
-                {editingBrand ? "Edit Brand" : "Add New Brand"}
-              </h4>
-              <form onSubmit={handleBrandSubmit}>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center pt-10 z-50"
+              onClick={() => {
+                setShowBrandForm(false);
+                setEditingBrand(null);
+                setBrandFormData({
+                  name: "",
+                  description: "",
+                  logoUrl: "",
+                });
+                setBrandErrors({});
+              }}
+            >
+              <div 
+                className="bg-white p-6 rounded-lg w-full max-w-lg mb-10"
+                onClick={(e) => e.stopPropagation()} // Prevent clicks from closing the modal when clicking inside
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold text-gray-800">
+                    {editingBrand ? "Edit Brand" : "Add New Brand"}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowBrandForm(false);
+                      setEditingBrand(null);
+                      setBrandFormData({
+                        name: "",
+                        description: "",
+                        logoUrl: "",
+                      });
+                      setBrandErrors({});
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                    aria-label="Close"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                
+                <form onSubmit={handleBrandSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Brand Name *
@@ -828,31 +906,17 @@ const CatalogManagement = () => {
                       name="name"
                       value={brandFormData.name}
                       onChange={handleBrandInputChange}
-                      className={`w-full px-3 py-2 border ${
+                      className={`w-full p-2 border rounded-md ${
                         brandErrors.name ? "border-red-500" : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500`}
+                      }`}
+                      placeholder="Enter brand name"
                     />
                     {brandErrors.name && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {brandErrors.name}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{brandErrors.name}</p>
                     )}
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Logo URL
-                    </label>
-                    <input
-                      type="text"
-                      name="logoUrl"
-                      value={brandFormData.logoUrl}
-                      onChange={handleBrandInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Description
                     </label>
@@ -861,27 +925,82 @@ const CatalogManagement = () => {
                       value={brandFormData.description}
                       onChange={handleBrandInputChange}
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      placeholder="Enter brand description"
                     />
                   </div>
-                </div>
-
-                <div className="flex justify-end mt-4 space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowBrandForm(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md"
-                  >
-                    {editingBrand ? "Update Brand" : "Add Brand"}
-                  </button>
-                </div>
-              </form>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Logo URL
+                    </label>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          name="logoUrl"
+                          value={brandFormData.logoUrl}
+                          onChange={handleBrandInputChange}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                          placeholder="Enter logo URL"
+                        />
+                      </div>
+                      {/* Logo Preview */}
+                      <div className="w-16 h-16 border border-gray-300 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                        {brandFormData.logoUrl ? (
+                          <img
+                            src={brandFormData.logoUrl}
+                            alt="Logo preview"
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.nextSibling.style.display = "flex";
+                            }}
+                            onLoad={(e) => {
+                              e.target.style.display = "block";
+                              e.target.nextSibling.style.display = "none";
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`w-full h-full ${
+                            brandFormData.logoUrl ? "hidden" : "flex"
+                          } items-center justify-center text-xs text-gray-400`}
+                        >
+                          <div className="text-center">
+                            <FaTags className="mx-auto mb-1 text-gray-300" />
+                            <div>No Logo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBrandForm(false);
+                        setEditingBrand(null);
+                        setBrandFormData({
+                          name: "",
+                          description: "",
+                          logoUrl: "",
+                        });
+                        setBrandErrors({});
+                      }}
+                      className="py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="py-2 px-6 bg-amber-500 text-white rounded-md hover:bg-amber-600"
+                    >
+                      {editingBrand ? "Update" : "Create"}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
@@ -1009,16 +1128,63 @@ const CatalogManagement = () => {
             >
               <FaPlus className="mr-2" /> Add Category
             </button>
-          </div>
-
-          {/* Category Form */}
+          </div>          {/* Category Form Modal */}
           {showCategoryForm && (
-            <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-              <h4 className="text-lg font-medium mb-4">
-                {editingCategory ? "Edit Category" : "Add New Category"}
-              </h4>
-              <form onSubmit={handleCategorySubmit}>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center pt-10 z-50"
+              onClick={() => {
+                setShowCategoryForm(false);
+                setEditingCategory(null);
+                setCategoryFormData({
+                  name: "",
+                  description: "",
+                  slug: "",
+                  parent: "",
+                });
+                setCategoryErrors({});
+              }}
+            >
+              <div 
+                className="bg-white p-6 rounded-lg w-full max-w-lg mb-10"
+                onClick={(e) => e.stopPropagation()} // Prevent clicks from closing the modal when clicking inside
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold text-gray-800">
+                    {editingCategory ? "Edit Category" : "Add New Category"}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowCategoryForm(false);
+                      setEditingCategory(null);
+                      setCategoryFormData({
+                        name: "",
+                        description: "",
+                        slug: "",
+                        parent: "",
+                      });
+                      setCategoryErrors({});
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                    aria-label="Close"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                
+                <form onSubmit={handleCategorySubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category Name *
@@ -1028,19 +1194,16 @@ const CatalogManagement = () => {
                       name="name"
                       value={categoryFormData.name}
                       onChange={handleCategoryInputChange}
-                      className={`w-full px-3 py-2 border ${
-                        categoryErrors.name
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500`}
+                      className={`w-full p-2 border rounded-md ${
+                        categoryErrors.name ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="Enter category name"
                     />
                     {categoryErrors.name && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {categoryErrors.name}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{categoryErrors.name}</p>
                     )}
                   </div>
-
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Slug *
@@ -1050,30 +1213,30 @@ const CatalogManagement = () => {
                       name="slug"
                       value={categoryFormData.slug}
                       onChange={handleCategoryInputChange}
-                      className={`w-full px-3 py-2 border ${
-                        categoryErrors.slug
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500`}
+                      className={`w-full p-2 border rounded-md ${
+                        categoryErrors.slug ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="category-slug"
                     />
                     {categoryErrors.slug && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {categoryErrors.slug}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{categoryErrors.slug}</p>
                     )}
+                    <p className="text-gray-500 text-xs mt-1">
+                      URL-friendly version of the name (auto-generated from name)
+                    </p>
                   </div>
-
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Parent Category
-                    </label>{" "}
+                    </label>
                     <select
                       name="parent"
                       value={categoryFormData.parent}
                       onChange={handleCategoryInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full p-2 border border-gray-300 rounded-md"
                     >
-                      <option value="">None (Top Level Category)</option>{" "}
+                      <option value="">None (Top Level Category)</option>
                       {getPotentialParentCategories()
                         .sort((a, b) => {
                           // Sort by hierarchy - top level first, then by name
@@ -1091,8 +1254,8 @@ const CatalogManagement = () => {
                         ))}
                     </select>
                   </div>
-
-                  <div className="md:col-span-2">
+                  
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Description
                     </label>
@@ -1101,27 +1264,38 @@ const CatalogManagement = () => {
                       value={categoryFormData.description}
                       onChange={handleCategoryInputChange}
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      placeholder="Enter category description (optional)"
                     />
                   </div>
-                </div>
-
-                <div className="flex justify-end mt-4 space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowCategoryForm(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md"
-                  >
-                    {editingCategory ? "Update Category" : "Add Category"}
-                  </button>
-                </div>
-              </form>
+                  
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCategoryForm(false);
+                        setEditingCategory(null);
+                        setCategoryFormData({
+                          name: "",
+                          description: "",
+                          slug: "",
+                          parent: "",
+                        });
+                        setCategoryErrors({});
+                      }}
+                      className="py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="py-2 px-6 bg-amber-500 text-white rounded-md hover:bg-amber-600"
+                    >
+                      {editingCategory ? "Update" : "Create"}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
