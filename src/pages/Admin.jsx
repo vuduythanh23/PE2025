@@ -3,6 +3,9 @@ import Header from "../components/layout/Header";
 import OrderManagement from "../components/modules/OrderManagement";
 import UserManagement from "../components/modules/UserManagement";
 import ProductManagement from "../components/modules/ProductManagement";
+import BrandManagement from "../components/modules/BrandManagement";
+import CategoryManagement from "../components/modules/CategoryManagement";
+import AdminStats from "../components/modules/AdminStats";
 import { isAdmin, setAdmin } from "../utils/storage/auth";
 // Using explicit .js extension in the import
 import { checkAndRefreshAdminStatus } from "../utils/helpers/adminAuth.js";
@@ -12,7 +15,7 @@ const AdminDebug = import.meta.env.DEV
   : { debugAdminStatus: () => {} };
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("users"); // 'users', 'orders', or 'products'
+  const [activeTab, setActiveTab] = useState("users"); // 'users', 'orders', 'products', 'brands', or 'categories'
   const [adminAccessConfirmed, setAdminAccessConfirmed] = useState(false);
 
   // Check admin access on mount
@@ -103,12 +106,14 @@ export default function Admin() {
                 )}
               </div>
             )}
-          </div>
+          </div>          {/* Admin Statistics Dashboard */}
+          <AdminStats />
+
           <div className="bg-white shadow-md rounded-md p-6">
-            {/* Tabs */}{" "}
-            <div className="flex gap-6 mb-8 border-b border-gray-200">
+            {/* Tabs */}
+            <div className="flex gap-6 mb-8 border-b border-gray-200 overflow-x-auto">
               <button
-                className={`pb-4 font-medium text-sm transition-colors relative
+                className={`pb-4 font-medium text-sm transition-colors relative whitespace-nowrap
                   ${
                     activeTab === "users"
                       ? "text-amber-700 border-b-2 border-amber-700 -mb-[2px]"
@@ -119,7 +124,7 @@ export default function Admin() {
                 User Management
               </button>
               <button
-                className={`pb-4 font-medium text-sm transition-colors relative
+                className={`pb-4 font-medium text-sm transition-colors relative whitespace-nowrap
                   ${
                     activeTab === "orders"
                       ? "text-amber-700 border-b-2 border-amber-700 -mb-[2px]"
@@ -130,7 +135,7 @@ export default function Admin() {
                 Order Management
               </button>
               <button
-                className={`pb-4 font-medium text-sm transition-colors relative
+                className={`pb-4 font-medium text-sm transition-colors relative whitespace-nowrap
                   ${
                     activeTab === "products"
                       ? "text-amber-700 border-b-2 border-amber-700 -mb-[2px]"
@@ -140,13 +145,39 @@ export default function Admin() {
               >
                 Product Management
               </button>
+              <button
+                className={`pb-4 font-medium text-sm transition-colors relative whitespace-nowrap
+                  ${
+                    activeTab === "brands"
+                      ? "text-amber-700 border-b-2 border-amber-700 -mb-[2px]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                onClick={() => setActiveTab("brands")}
+              >
+                Brand Management
+              </button>
+              <button
+                className={`pb-4 font-medium text-sm transition-colors relative whitespace-nowrap
+                  ${
+                    activeTab === "categories"
+                      ? "text-amber-700 border-b-2 border-amber-700 -mb-[2px]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                onClick={() => setActiveTab("categories")}
+              >
+                Category Management
+              </button>
             </div>
             {activeTab === "users" ? (
               <UserManagement />
             ) : activeTab === "orders" ? (
               <OrderManagement />
-            ) : (
+            ) : activeTab === "products" ? (
               <ProductManagement />
+            ) : activeTab === "brands" ? (
+              <BrandManagement />
+            ) : (
+              <CategoryManagement />
             )}
           </div>
         </div>

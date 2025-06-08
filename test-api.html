@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test Page</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPIs() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Test brands API
+                console.log('Testing brands API...');
+                const brandsResponse = await fetch('/api/brands');
+                console.log('Brands response status:', brandsResponse.status);
+                
+                if (brandsResponse.ok) {
+                    const brands = await brandsResponse.json();
+                    console.log('Brands data:', brands);
+                    resultsDiv.innerHTML += `<p>✅ Brands API works - Found ${brands.length} brands</p>`;
+                } else {
+                    resultsDiv.innerHTML += `<p>❌ Brands API failed - Status: ${brandsResponse.status}</p>`;
+                }
+                
+                // Test categories API
+                console.log('Testing categories API...');
+                const categoriesResponse = await fetch('/api/categories');
+                console.log('Categories response status:', categoriesResponse.status);
+                
+                if (categoriesResponse.ok) {
+                    const categories = await categoriesResponse.json();
+                    console.log('Categories data:', categories);
+                    resultsDiv.innerHTML += `<p>✅ Categories API works - Found ${categories.length} categories</p>`;
+                } else {
+                    resultsDiv.innerHTML += `<p>❌ Categories API failed - Status: ${categoriesResponse.status}</p>`;
+                }
+                
+            } catch (error) {
+                console.error('API test error:', error);
+                resultsDiv.innerHTML += `<p>❌ API test failed: ${error.message}</p>`;
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', testAPIs);
+    </script>
+</body>
+</html>
