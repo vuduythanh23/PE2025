@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { getBrands, createBrand, updateBrand, deleteBrand } from "../../utils/api/brands";
+import {
+  getBrands,
+  createBrand,
+  updateBrand,
+  deleteBrand,
+} from "../../utils/api/brands";
+import { getProducts } from "../../utils/api/products";
 import Swal from "sweetalert2";
 import { useLoading } from "../../context/LoadingContext";
 
@@ -16,20 +22,69 @@ const BrandManagement = ({ onDataChange }) => {
   const [errors, setErrors] = useState({});
   const { handleAsyncOperation } = useLoading();
 
+  // Add ESC key handler to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showForm) {
+        resetForm();
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [showForm]);
+
   // Fetch all brands on component mount
   useEffect(() => {
     fetchBrands();
   }, []);
-
+  
   // Function to fetch all brands
   const fetchBrands = async () => {
     try {
       setLoading(true);
-      const data = await handleAsyncOperation(
-        () => getBrands(),
-        "Fetching brands"
-      );
-      setBrands(Array.isArray(data) ? data : []);
+      // Fetch both brands and products to calculate product counts
+      const [brandsData, productsData] = await Promise.all([
+        handleAsyncOperation(() => getBrands(), "Fetching brands"),
+        handleAsyncOperation(() => getProducts(), "Fetching products for counts")
+      ]);
+      
+      // Validate and normalize brands data
+      const brandsArray = Array.isArray(brandsData) ? brandsData : [];
+      
+      // Process products to count by brand
+      const productsByBrand = {};
+      if (Array.isArray(productsData)) {
+        productsData.forEach(product => {
+          if (product && product.brand) {
+            // Extract brand ID based on whether it's an object or string
+            const brandId = typeof product.brand === 'object' ? 
+              (product.brand._id || product.brand.id) : product.brand;
+            
+            if (brandId) {
+              // Initialize counter if needed
+              if (!productsByBrand[brandId]) {
+                productsByBrand[brandId] = 0;
+              }
+              // Increment the counter
+              productsByBrand[brandId]++;
+            }
+          }
+        });
+      }
+      
+      // Add product count to each brand
+      const brandsWithCounts = brandsArray.map(brand => {
+        const brandId = brand._id || brand.id;
+        return {
+          ...brand,
+          productCount: productsByBrand[brandId] || 0
+        };
+      });
+      
+      setBrands(brandsWithCounts);
     } catch (err) {
       console.error("Error fetching brands:", err);
       Swal.fire({
@@ -55,11 +110,11 @@ const BrandManagement = ({ onDataChange }) => {
   // Function to validate form data
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = "Brand name is required";
     }
-    
+
     if (formData.logoUrl && !isValidUrl(formData.logoUrl)) {
       newErrors.logoUrl = "Please enter a valid URL";
     }
@@ -81,7 +136,7 @@ const BrandManagement = ({ onDataChange }) => {
   // Function to handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -203,13 +258,39 @@ const BrandManagement = ({ onDataChange }) => {
         </button>
       </div>      {/* Brand Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-[480px] shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center pt-10 z-50"
+          onClick={resetForm}
+        >
+          <div 
+            className="bg-white p-6 rounded-lg w-full max-w-lg mb-10"
+            onClick={(e) => e.stopPropagation()} // Prevent clicks from closing the modal when clicking inside
+          >            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">
                 {editingBrand ? "Edit Brand" : "Add New Brand"}
-              </h3>
-              
+              </h2>
+              <button
+                onClick={resetForm}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -229,7 +310,6 @@ const BrandManagement = ({ onDataChange }) => {
                     <p className="text-red-500 text-xs mt-1">{errors.name}</p>
                   )}
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Description
@@ -240,9 +320,10 @@ const BrandManagement = ({ onDataChange }) => {
                     onChange={handleInputChange}
                     rows="3"
                     className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="Enter brand description (optional)"
+                    placeholder="Enter brand description"
                   />
-                </div>                <div>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Logo URL
                   </label>
@@ -254,33 +335,37 @@ const BrandManagement = ({ onDataChange }) => {
                     className={`w-full p-2 border rounded-md ${
                       errors.logoUrl ? "border-red-500" : "border-gray-300"
                     }`}
-                    placeholder="Enter logo URL (optional)"
+                    placeholder="Enter logo URL"
                   />
                   {errors.logoUrl && (
-                    <p className="text-red-500 text-xs mt-1">{errors.logoUrl}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.logoUrl}
+                    </p>
                   )}
-                  
+
                   {/* Logo Preview */}
                   {formData.logoUrl && (
                     <div className="mt-3">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Logo Preview:</p>
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Logo Preview:
+                      </p>
                       <div className="flex items-center justify-center w-20 h-20 border-2 border-gray-200 rounded-lg bg-gray-50">
                         <img
                           src={formData.logoUrl}
                           alt="Logo preview"
                           className="max-w-full max-h-full object-contain"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextElementSibling.style.display = 'flex';
+                            e.target.style.display = "none";
+                            e.target.nextElementSibling.style.display = "flex";
                           }}
                           onLoad={(e) => {
-                            e.target.style.display = 'block';
-                            e.target.nextElementSibling.style.display = 'none';
+                            e.target.style.display = "block";
+                            e.target.nextElementSibling.style.display = "none";
                           }}
                         />
-                        <div 
+                        <div
                           className="flex items-center justify-center w-full h-full text-gray-400 text-xs text-center"
-                          style={{ display: 'none' }}
+                          style={{ display: "none" }}
                         >
                           Invalid URL
                         </div>
@@ -288,7 +373,6 @@ const BrandManagement = ({ onDataChange }) => {
                     </div>
                   )}
                 </div>
-
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     type="button"
@@ -331,6 +415,9 @@ const BrandManagement = ({ onDataChange }) => {
                   Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Products
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created At
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -342,7 +429,7 @@ const BrandManagement = ({ onDataChange }) => {
               {brands.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="5"
+                    colSpan="6"
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No brands found
@@ -359,13 +446,15 @@ const BrandManagement = ({ onDataChange }) => {
                             alt={brand.name}
                             className="h-full w-full object-cover"
                             onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
+                              e.target.style.display = "none";
+                              e.target.nextSibling.style.display = "flex";
                             }}
                           />
                         ) : null}
-                        <div 
-                          className={`h-full w-full ${brand.logoUrl ? 'hidden' : 'flex'} items-center justify-center text-xs text-gray-500`}
+                        <div
+                          className={`h-full w-full ${
+                            brand.logoUrl ? "hidden" : "flex"
+                          } items-center justify-center text-xs text-gray-500`}
                         >
                           No Logo
                         </div>
@@ -383,7 +472,16 @@ const BrandManagement = ({ onDataChange }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {brand.createdAt ? new Date(brand.createdAt).toLocaleDateString() : "-"}
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {brand.productCount || 0}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {brand.createdAt
+                          ? new Date(brand.createdAt).toLocaleDateString()
+                          : "-"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

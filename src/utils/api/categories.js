@@ -8,7 +8,9 @@ import { rateLimiter, fetchWithTimeout, getAuthHeaders } from "./base.js";
  */
 export async function getCategories() {
   await rateLimiter.checkLimit("getCategories");
-  const res = await fetchWithTimeout(ENDPOINTS.CATEGORIES, { headers: BASE_HEADERS });
+  const res = await fetchWithTimeout(ENDPOINTS.CATEGORIES, {
+    headers: BASE_HEADERS,
+  });
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Failed to fetch categories: ${error}`);
@@ -24,9 +26,12 @@ export async function getCategories() {
  */
 export async function getCategoryById(id) {
   await rateLimiter.checkLimit("getCategoryById");
-  const res = await fetchWithTimeout(`${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`, {
-    headers: BASE_HEADERS,
-  });
+  const res = await fetchWithTimeout(
+    `${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`,
+    {
+      headers: BASE_HEADERS,
+    }
+  );
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Failed to fetch category: ${error}`);
@@ -42,10 +47,21 @@ export async function getCategoryById(id) {
  */
 export async function createCategory(data) {
   await rateLimiter.checkLimit("createCategory");
+  // Chuyển đổi parentId thành parent nếu cần
+  const categoryData = { ...data };
+
+  // Chỉ sử dụng field "parent" theo validator/model của API
+  if (
+    categoryData.parent === "" ||
+    categoryData.parent === null ||
+    categoryData.parent === undefined
+  ) {
+    delete categoryData.parent;
+  }
   const res = await fetchWithTimeout(`${ENDPOINTS.CATEGORIES}`, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify(data),
+    body: JSON.stringify(categoryData),
   });
   if (!res.ok) {
     const error = await res.text();
@@ -63,11 +79,25 @@ export async function createCategory(data) {
  */
 export async function updateCategory(id, updates) {
   await rateLimiter.checkLimit("updateCategory");
-  const res = await fetchWithTimeout(`${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(updates),
-  });
+  // Chuyển đổi parentId thành parent nếu cần
+  const categoryUpdates = { ...updates };
+
+  // Chỉ sử dụng field "parent" theo validator/model của API
+  if (
+    categoryUpdates.parent === "" ||
+    categoryUpdates.parent === null ||
+    categoryUpdates.parent === undefined
+  ) {
+    delete categoryUpdates.parent;
+  }
+  const res = await fetchWithTimeout(
+    `${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`,
+    {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(categoryUpdates),
+    }
+  );
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Failed to update category: ${error}`);
@@ -83,10 +113,13 @@ export async function updateCategory(id, updates) {
  */
 export async function deleteCategory(id) {
   await rateLimiter.checkLimit("deleteCategory");
-  const res = await fetchWithTimeout(`${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
+  const res = await fetchWithTimeout(
+    `${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    }
+  );
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Failed to delete category: ${error}`);

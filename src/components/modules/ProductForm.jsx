@@ -3,7 +3,7 @@ import { createProduct, updateProduct } from "../../utils/api/products";
 import { getCategories } from "../../utils/api/categories";
 import { getBrands } from "../../utils/api/brands";
 
-const ProductForm = ({ product, onClose, onSuccess }) => {
+const ProductForm = ({ product, onCancel, onSuccess }) => {
   // State for form data
   const [formData, setFormData] = useState({
     name: "",
@@ -783,9 +783,9 @@ const ProductForm = ({ product, onClose, onSuccess }) => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">
             {product ? "Edit Product" : "Add New Product"}
-          </h2>
+          </h2>{" "}
           <button
-            onClick={onClose}
+            onClick={onCancel}
             className="text-gray-500 hover:text-gray-700"
           >
             <svg
@@ -1484,9 +1484,10 @@ const ProductForm = ({ product, onClose, onSuccess }) => {
           </div>
           {/* Form Actions */}
           <div className="flex justify-end gap-3">
+            {" "}
             <button
               type="button"
-              onClick={onClose}
+              onClick={onCancel}
               className="py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
               Cancel

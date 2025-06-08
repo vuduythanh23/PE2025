@@ -1,4 +1,4 @@
-  import { formatCurrency, addToCart, isAuthenticated } from "../../utils";
+import { formatCurrency, addToCart, isAuthenticated } from "../../utils";
 import { useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -21,11 +21,14 @@ export default function ProductCard(props) {
 
   const { animateCart, updateCartItems } = useCart();
   const navigate = useNavigate();
-  const [selectedColor, setSelectedColor] = useState(colors?.[0]?.color || null);
-  const [selectedSize, setSelectedSize] = useState(sizes?.[0]?.size || null);
-
-  // Get the first valid image URL or use a fallback
-  const productImage = images?.[0] || '/images/product-placeholder.png';
+  const [selectedColor, setSelectedColor] = useState(
+    colors?.[0]?.color || null
+  );
+  const [selectedSize, setSelectedSize] = useState(sizes?.[0]?.size || null); // Get the first valid image URL or use a fallback
+  const productImage =
+    images && images.length > 0
+      ? images[0]
+      : props.imageUrl || "/images/placeholder-product.jpg";
 
   const handleAddToCart = async () => {
     // First, check authentication status
@@ -93,7 +96,7 @@ export default function ProductCard(props) {
         showConfirmButton: false,
       });
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error("Error adding to cart:", error);
       await Swal.fire({
         title: "Error",
         text: "Failed to add product to cart. Please try again.",
@@ -105,13 +108,14 @@ export default function ProductCard(props) {
   return (
     <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div className="relative">
+        {" "}
         <img
           src={productImage}
           alt={name || "Product image"}
           className="w-full h-[400px] object-cover transform transition-transform duration-700 group-hover:scale-105"
           onError={(e) => {
             console.error("Image failed to load:", productImage);
-            e.target.src = "https://via.placeholder.com/300?text=Image+Error";
+            e.target.src = "/images/placeholder-product.jpg";
           }}
         />
         {stock <= 5 && stock > 0 && (

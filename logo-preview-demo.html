@@ -1,92 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Logo Preview Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 p-8">
+  </head>
+  <body class="bg-gray-100 p-8">
     <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h2 class="text-xl font-bold mb-4">Logo Preview Demo</h2>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Logo URL
-                </label>
-                <input
-                    type="text"
-                    id="logoUrl"
-                    class="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="Enter logo URL"
-                    value=""
-                />
-            </div>
-            
-            <div id="logoPreview" style="display: none;">
-                <p class="text-sm font-medium text-gray-700 mb-2">Logo Preview:</p>
-                <div class="flex items-center justify-center w-20 h-20 border-2 border-gray-200 rounded-lg bg-gray-50">
-                    <img
-                        id="previewImg"
-                        alt="Logo preview"
-                        class="max-w-full max-h-full object-contain"
-                        style="display: none;"
-                    />
-                    <div id="errorMsg" class="flex items-center justify-center w-full h-full text-gray-400 text-xs text-center" style="display: none;">
-                        Invalid URL
-                    </div>
-                </div>
-            </div>
+      <h2 class="text-xl font-bold mb-4">Logo Preview Demo</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Logo URL
+          </label>
+          <input
+            type="text"
+            id="logoUrl"
+            class="w-full p-2 border border-gray-300 rounded-md"
+            placeholder="Enter logo URL"
+            value=""
+          />
         </div>
-        
-        <div class="mt-6">
-            <h3 class="font-medium mb-2">Test URLs:</h3>
-            <div class="space-y-1 text-sm">
-                <button onclick="testUrl('https://cdn.worldvectorlogo.com/logos/nike-6.svg')" class="block text-blue-500 hover:underline">Nike Logo</button>
-                <button onclick="testUrl('https://cdn.worldvectorlogo.com/logos/adidas-9.svg')" class="block text-blue-500 hover:underline">Adidas Logo</button>
-                <button onclick="testUrl('https://cdn.worldvectorlogo.com/logos/puma-logo-vector.svg')" class="block text-blue-500 hover:underline">Puma Logo</button>
-                <button onclick="testUrl('invalid-url')" class="block text-red-500 hover:underline">Invalid URL (Test Error)</button>
+
+        <div id="logoPreview" style="display: none">
+          <p class="text-sm font-medium text-gray-700 mb-2">Logo Preview:</p>
+          <div
+            class="flex items-center justify-center w-20 h-20 border-2 border-gray-200 rounded-lg bg-gray-50"
+          >
+            <img
+              id="previewImg"
+              alt="Logo preview"
+              class="max-w-full max-h-full object-contain"
+              style="display: none"
+            />
+            <div
+              id="errorMsg"
+              class="flex items-center justify-center w-full h-full text-gray-400 text-xs text-center"
+              style="display: none"
+            >
+              Invalid URL
             </div>
+          </div>
         </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-medium mb-2">Test URLs:</h3>
+        <div class="space-y-1 text-sm">
+          <button
+            onclick="testUrl('https://cdn.worldvectorlogo.com/logos/nike-6.svg')"
+            class="block text-blue-500 hover:underline"
+          >
+            Nike Logo
+          </button>
+          <button
+            onclick="testUrl('https://cdn.worldvectorlogo.com/logos/adidas-9.svg')"
+            class="block text-blue-500 hover:underline"
+          >
+            Adidas Logo
+          </button>
+          <button
+            onclick="testUrl('https://cdn.worldvectorlogo.com/logos/puma-logo-vector.svg')"
+            class="block text-blue-500 hover:underline"
+          >
+            Puma Logo
+          </button>
+          <button
+            onclick="testUrl('invalid-url')"
+            class="block text-red-500 hover:underline"
+          >
+            Invalid URL (Test Error)
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        const logoUrlInput = document.getElementById('logoUrl');
-        const logoPreview = document.getElementById('logoPreview');
-        const previewImg = document.getElementById('previewImg');
-        const errorMsg = document.getElementById('errorMsg');
+      const logoUrlInput = document.getElementById("logoUrl");
+      const logoPreview = document.getElementById("logoPreview");
+      const previewImg = document.getElementById("previewImg");
+      const errorMsg = document.getElementById("errorMsg");
 
-        function testUrl(url) {
-            logoUrlInput.value = url;
-            updatePreview();
+      function testUrl(url) {
+        logoUrlInput.value = url;
+        updatePreview();
+      }
+
+      function updatePreview() {
+        const url = logoUrlInput.value.trim();
+
+        if (!url) {
+          logoPreview.style.display = "none";
+          return;
         }
 
-        function updatePreview() {
-            const url = logoUrlInput.value.trim();
-            
-            if (!url) {
-                logoPreview.style.display = 'none';
-                return;
-            }
-            
-            logoPreview.style.display = 'block';
-            previewImg.src = url;
-            previewImg.style.display = 'block';
-            errorMsg.style.display = 'none';
-        }
+        logoPreview.style.display = "block";
+        previewImg.src = url;
+        previewImg.style.display = "block";
+        errorMsg.style.display = "none";
+      }
 
-        logoUrlInput.addEventListener('input', updatePreview);
+      logoUrlInput.addEventListener("input", updatePreview);
 
-        previewImg.addEventListener('error', function() {
-            this.style.display = 'none';
-            errorMsg.style.display = 'flex';
-        });
+      previewImg.addEventListener("error", function () {
+        this.style.display = "none";
+        errorMsg.style.display = "flex";
+      });
 
-        previewImg.addEventListener('load', function() {
-            this.style.display = 'block';
-            errorMsg.style.display = 'none';
-        });
+      previewImg.addEventListener("load", function () {
+        this.style.display = "block";
+        errorMsg.style.display = "none";
+      });
     </script>
-</body>
+  </body>
 </html>

@@ -15,7 +15,7 @@ export default function Products() {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const { handleAsyncOperation } = useLoading();
-  
+
   // Separate states for left panel filters and right panel sorting
   const [activeProductFilters, setActiveProductFilters] = useState({
     category: "",
@@ -37,7 +37,7 @@ export default function Products() {
     page: 1,
     limit: 12,
   });
-  
+
   // Fetch initial filter options and all products
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -51,7 +51,7 @@ export default function Products() {
 
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setBrands(Array.isArray(brandsData) ? brandsData : []);
-        
+
         // Check if productsData is an array of arrays and flatten it if needed
         let productsToProcess = productsData;
         if (
@@ -61,71 +61,88 @@ export default function Products() {
         ) {
           productsToProcess = productsData.flat();
         }
-        
+
         // Filter out null or undefined items
-        productsToProcess = productsToProcess.filter(product => product != null);
+        productsToProcess = productsToProcess.filter(
+          (product) => product != null
+        );
 
         // Format and store all products
-        const formattedProducts = productsToProcess.map((product) => {
-          if (!product) {
-            return null;
-          }
-
-          // Ensure consistent handling of IDs - convert all to strings for comparison
-          const productId = product._id ? product._id.toString() : "";
-          
-          // Extract category data - handle all possible formats
-          const categoryObj = typeof product.category === "object" && product.category;
-          const categoryId = categoryObj && categoryObj._id 
-            ? categoryObj._id.toString() 
-            : (typeof product.category === "string" ? product.category : "");
-          const categoryName = categoryObj && categoryObj.name 
-            ? categoryObj.name 
-            : "";
-            // Extract brand data - handle all possible formats
-          const brandObj = typeof product.brand === "object" && product.brand;
-          let brandId = "";
-          let brandName = "";
-            // Brand handling optimized based on MongoDB schema 
-          // In the schema, brand is defined as mongoose.Schema.Types.ObjectId with ref: 'Brand'
-          if (brandObj && brandObj._id) {
-            // Case 1: Brand is populated as an object (after populate() in API)
-            brandId = String(brandObj._id);
-            brandName = brandObj.name || "";
-          } else if (typeof product.brand === "string") {
-            // Case 2: Brand is a string ID (no populate in API)
-            brandId = product.brand;
-            // Try to find this brand in the brandsData to get its name
-            const foundBrand = brandsData.find(b => b._id && b._id.toString() === brandId);
-            brandName = foundBrand ? foundBrand.name : "";
-          } else if (product.brand && typeof product.brand === "object") {
-            // Case 3: Brand is an object but might have a different structure
-            if (product.brand.toString && typeof product.brand.toString === "function") {
-              // Handle MongoDB ObjectId directly
-              brandId = product.brand.toString();
-              const foundBrand = brandsData.find(b => b._id && b._id.toString() === brandId);
-              brandName = foundBrand ? foundBrand.name : "";
+        const formattedProducts = productsToProcess
+          .map((product) => {
+            if (!product) {
+              return null;
             }
-          } else {
-            // console.log(`Product ${product.name} has no recognized brand format:`, product.brand);
-          }
-            
-          return {
-            _id: productId,
-            name: product.name || "",
-            description: product.description || "",
-            price: product.price || 0,
-            images: Array.isArray(product.images) ? product.images : [],
-            category: categoryName,
-            brand: brandName,
-            categoryId: categoryId,
-            brandId: brandId,
-            colors: Array.isArray(product.colors) ? product.colors : [],
-            sizes: Array.isArray(product.sizes) ? product.sizes : [],
-            stock: product.stock || 0,
-            averageRating: product.averageRating || 0,
-          };
-        }).filter(item => item !== null); // Filter out any null items after mapping
+
+            // Ensure consistent handling of IDs - convert all to strings for comparison
+            const productId = product._id ? product._id.toString() : "";
+
+            // Extract category data - handle all possible formats
+            const categoryObj =
+              typeof product.category === "object" && product.category;
+            const categoryId =
+              categoryObj && categoryObj._id
+                ? categoryObj._id.toString()
+                : typeof product.category === "string"
+                ? product.category
+                : "";
+            const categoryName =
+              categoryObj && categoryObj.name ? categoryObj.name : "";
+            // Extract brand data - handle all possible formats
+            const brandObj = typeof product.brand === "object" && product.brand;
+            let brandId = "";
+            let brandName = "";
+            // Brand handling optimized based on MongoDB schema
+            // In the schema, brand is defined as mongoose.Schema.Types.ObjectId with ref: 'Brand'
+            if (brandObj && brandObj._id) {
+              // Case 1: Brand is populated as an object (after populate() in API)
+              brandId = String(brandObj._id);
+              brandName = brandObj.name || "";
+            } else if (typeof product.brand === "string") {
+              // Case 2: Brand is a string ID (no populate in API)
+              brandId = product.brand;
+              // Try to find this brand in the brandsData to get its name
+              const foundBrand = brandsData.find(
+                (b) => b._id && b._id.toString() === brandId
+              );
+              brandName = foundBrand ? foundBrand.name : "";
+            } else if (product.brand && typeof product.brand === "object") {
+              // Case 3: Brand is an object but might have a different structure
+              if (
+                product.brand.toString &&
+                typeof product.brand.toString === "function"
+              ) {
+                // Handle MongoDB ObjectId directly
+                brandId = product.brand.toString();
+                const foundBrand = brandsData.find(
+                  (b) => b._id && b._id.toString() === brandId
+                );
+                brandName = foundBrand ? foundBrand.name : "";
+              }
+            } else {
+              // console.log(`Product ${product.name} has no recognized brand format:`, product.brand);
+            }
+            return {
+              _id: productId,
+              name: product.name || "",
+              description: product.description || "",
+              price: product.price || 0,
+              images: Array.isArray(product.images) ? product.images : [],
+              imageUrl:
+                Array.isArray(product.images) && product.images.length > 0
+                  ? product.images[0]
+                  : null,
+              category: categoryName,
+              brand: brandName,
+              categoryId: categoryId,
+              brandId: brandId,
+              colors: Array.isArray(product.colors) ? product.colors : [],
+              sizes: Array.isArray(product.sizes) ? product.sizes : [],
+              stock: product.stock || 0,
+              averageRating: product.averageRating || 0,
+            };
+          })
+          .filter((item) => item !== null); // Filter out any null items after mapping
 
         setAllProducts(formattedProducts);
         setFilteredProducts(formattedProducts);
@@ -136,31 +153,37 @@ export default function Products() {
 
     fetchInitialData();
   }, [handleAsyncOperation]);
-  
+
   // Apply filters and sorting to products when activeProductFilters or sortSettings change
   useEffect(() => {
     let result = [...allProducts];
 
     // Apply category filter
     if (activeProductFilters.category) {
-      result = result.filter(product => {
-        const matches = 
-          product.categoryId === activeProductFilters.category || 
-          (product.categoryId && activeProductFilters.category && 
-           product.categoryId.toString() === activeProductFilters.category.toString());
+      result = result.filter((product) => {
+        const matches =
+          product.categoryId === activeProductFilters.category ||
+          (product.categoryId &&
+            activeProductFilters.category &&
+            product.categoryId.toString() ===
+              activeProductFilters.category.toString());
         return matches;
       });
     }
 
     // Apply brand filter
     if (activeProductFilters.brand) {
-      result = result.filter(product => {
-        const productBrandId = product.brandId ? product.brandId.toString() : "";
-        const filterBrandId = activeProductFilters.brand ? activeProductFilters.brand.toString() : "";
+      result = result.filter((product) => {
+        const productBrandId = product.brandId
+          ? product.brandId.toString()
+          : "";
+        const filterBrandId = activeProductFilters.brand
+          ? activeProductFilters.brand.toString()
+          : "";
         return productBrandId === filterBrandId;
       });
     }
-    
+
     // Apply price range filter
     if (
       activeProductFilters.priceRange.min !== null ||
@@ -169,15 +192,20 @@ export default function Products() {
       result = result.filter((product) => {
         const price = Number(product.price);
         if (isNaN(price)) {
-          console.warn("Invalid price for product:", product._id, product.name, product.price);
+          console.warn(
+            "Invalid price for product:",
+            product._id,
+            product.name,
+            product.price
+          );
           return false;
         }
-        
+
         if (
           activeProductFilters.priceRange.min !== null &&
           activeProductFilters.priceRange.max !== null
         ) {
-          const passes = 
+          const passes =
             price >= activeProductFilters.priceRange.min &&
             (activeProductFilters.priceRange.max === Infinity
               ? true
@@ -213,7 +241,7 @@ export default function Products() {
     const endIndex = activeProductFilters.page * activeProductFilters.limit;
     setFilteredProducts(result.slice(startIndex, endIndex));
   }, [allProducts, activeProductFilters, sortSettings]);
-  
+
   // Handler for temporary filter changes (doesn't apply until user clicks Apply)
   const handleTempFiltersChange = (newFilters) => {
     setTempFilters((prev) => ({
@@ -225,16 +253,16 @@ export default function Products() {
   // Apply filters from temporary state to active filter state
   const handleApplyFilters = () => {
     const filtersToApply = JSON.parse(JSON.stringify(tempFilters));
-    
+
     // Make sure brand and category IDs are strings for consistent comparison
     if (filtersToApply.brand) {
       filtersToApply.brand = String(filtersToApply.brand);
     }
-    
+
     if (filtersToApply.category) {
       filtersToApply.category = String(filtersToApply.category);
     }
-    
+
     setActiveProductFilters(filtersToApply);
   };
 
@@ -254,7 +282,7 @@ export default function Products() {
   // Sort change applies immediately (doesn't wait for Apply button)
   const handleSortChange = (sortValue) => {
     setSortSettings({
-      sortBy: sortValue
+      sortBy: sortValue,
     });
   };
 
@@ -303,7 +331,7 @@ export default function Products() {
               <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                 <div className="w-full sm:w-64">
                   <ProductSort
-                    sortBy={sortSettings.sortBy} 
+                    sortBy={sortSettings.sortBy}
                     onSortChange={handleSortChange}
                   />
                 </div>
