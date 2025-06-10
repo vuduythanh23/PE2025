@@ -131,7 +131,7 @@ const CatalogManagement = () => {
   // Add ESC key handlers to close modals
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (showBrandForm) {
           setShowBrandForm(false);
           setEditingBrand(null);
@@ -155,10 +155,10 @@ const CatalogManagement = () => {
         }
       }
     };
-    
-    window.addEventListener('keydown', handleEscape);
+
+    window.addEventListener("keydown", handleEscape);
     return () => {
-      window.removeEventListener('keydown', handleEscape);
+      window.removeEventListener("keydown", handleEscape);
     };
   }, [showBrandForm, showCategoryForm]);
 
@@ -842,9 +842,10 @@ const CatalogManagement = () => {
             >
               <FaPlus className="mr-2" /> Add Brand
             </button>
-          </div>          {/* Brand Form Modal */}
+          </div>{" "}
+          {/* Brand Form Modal */}
           {showBrandForm && (
-            <div 
+            <div
               className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center pt-10 z-50"
               onClick={() => {
                 setShowBrandForm(false);
@@ -857,7 +858,7 @@ const CatalogManagement = () => {
                 setBrandErrors({});
               }}
             >
-              <div 
+              <div
                 className="bg-white p-6 rounded-lg w-full max-w-lg mb-10"
                 onClick={(e) => e.stopPropagation()} // Prevent clicks from closing the modal when clicking inside
               >
@@ -895,7 +896,7 @@ const CatalogManagement = () => {
                     </svg>
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleBrandSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -912,10 +913,12 @@ const CatalogManagement = () => {
                       placeholder="Enter brand name"
                     />
                     {brandErrors.name && (
-                      <p className="text-red-500 text-xs mt-1">{brandErrors.name}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {brandErrors.name}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Description
@@ -929,7 +932,7 @@ const CatalogManagement = () => {
                       placeholder="Enter brand description"
                     />
                   </div>
-                    <div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Logo URL
                     </label>
@@ -974,7 +977,7 @@ const CatalogManagement = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       type="button"
@@ -1003,7 +1006,6 @@ const CatalogManagement = () => {
               </div>
             </div>
           )}
-
           {/* Brands Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-md">
@@ -1128,9 +1130,10 @@ const CatalogManagement = () => {
             >
               <FaPlus className="mr-2" /> Add Category
             </button>
-          </div>          {/* Category Form Modal */}
+          </div>{" "}
+          {/* Category Form Modal */}
           {showCategoryForm && (
-            <div 
+            <div
               className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center pt-10 z-50"
               onClick={() => {
                 setShowCategoryForm(false);
@@ -1144,7 +1147,7 @@ const CatalogManagement = () => {
                 setCategoryErrors({});
               }}
             >
-              <div 
+              <div
                 className="bg-white p-6 rounded-lg w-full max-w-lg mb-10"
                 onClick={(e) => e.stopPropagation()} // Prevent clicks from closing the modal when clicking inside
               >
@@ -1183,7 +1186,7 @@ const CatalogManagement = () => {
                     </svg>
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleCategorySubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1195,15 +1198,19 @@ const CatalogManagement = () => {
                       value={categoryFormData.name}
                       onChange={handleCategoryInputChange}
                       className={`w-full p-2 border rounded-md ${
-                        categoryErrors.name ? "border-red-500" : "border-gray-300"
+                        categoryErrors.name
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       placeholder="Enter category name"
                     />
                     {categoryErrors.name && (
-                      <p className="text-red-500 text-xs mt-1">{categoryErrors.name}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {categoryErrors.name}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Slug *
@@ -1214,18 +1221,23 @@ const CatalogManagement = () => {
                       value={categoryFormData.slug}
                       onChange={handleCategoryInputChange}
                       className={`w-full p-2 border rounded-md ${
-                        categoryErrors.slug ? "border-red-500" : "border-gray-300"
+                        categoryErrors.slug
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       placeholder="category-slug"
                     />
                     {categoryErrors.slug && (
-                      <p className="text-red-500 text-xs mt-1">{categoryErrors.slug}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {categoryErrors.slug}
+                      </p>
                     )}
                     <p className="text-gray-500 text-xs mt-1">
-                      URL-friendly version of the name (auto-generated from name)
+                      URL-friendly version of the name (auto-generated from
+                      name)
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Parent Category
@@ -1254,7 +1266,7 @@ const CatalogManagement = () => {
                         ))}
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Description
@@ -1268,7 +1280,7 @@ const CatalogManagement = () => {
                       placeholder="Enter category description (optional)"
                     />
                   </div>
-                  
+
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       type="button"
@@ -1298,7 +1310,6 @@ const CatalogManagement = () => {
               </div>
             </div>
           )}
-
           {/* Categories Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-md">

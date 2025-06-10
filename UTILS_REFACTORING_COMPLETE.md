@@ -88,7 +88,7 @@ src/utils/
 #### Environment Variables Support:
 ```bash
 # .env configuration
-VITE_API_URL=https://salty-crabs-read.loca.lt/api
+VITE_API_URL=https://sweet-pandas-hammer.loca.lt/api
 VITE_API_TIMEOUT=15000
 VITE_API_RETRY_ATTEMPTS=3
 VITE_API_RATE_LIMIT=10

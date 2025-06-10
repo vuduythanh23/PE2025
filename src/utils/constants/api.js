@@ -1,7 +1,7 @@
 // API Configuration Constants
 export const API_CONFIG = {
   BASE_URL:
-    import.meta.env.VITE_API_URL || "https://salty-crabs-read.loca.lt/api",
+    import.meta.env.VITE_API_URL || "https://sweet-pandas-hammer.loca.lt/api",
   TIMEOUT_DURATION: parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000, // 15 seconds
   RETRY_ATTEMPTS: parseInt(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
   RATE_LIMIT: {
