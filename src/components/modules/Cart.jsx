@@ -95,7 +95,6 @@ export default function Cart({ isOpen, onClose }) {
     removeFromCart(productId, size, color);
     updateCartItems();
   };
-
   const handleCheckout = async () => {
     if (!isAuthenticated()) {
       const result = await Swal.fire({
@@ -117,23 +116,52 @@ export default function Cart({ isOpen, onClose }) {
 
     try {
       setLoading(true);
-      const order = await createOrder(cartItems);
+      
+      // Prepare order data matching the schema
+      const orderData = {
+        items: cartItems.map(item => ({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          salePrice: item.salePrice || null,
+          quantity: item.quantity,
+          selectedSize: item.size || null,
+          selectedColor: item.color || null,
+          imageUrl: item.images?.[0] || null
+        })),
+        totalAmount: cartTotal,
+        // Default shipping address - in a real app, user would provide this
+        shippingAddress: {
+          street: "Default Street",
+          city: "Default City",
+          state: "Default State",
+          zipCode: "00000",
+          country: "Default Country"
+        },
+        paymentMethod: "credit_card",
+        paymentStatus: "pending",
+        orderStatus: "pending"
+      };
+
+      const order = await createOrder(orderData);
       if (order) {
         clearCart();
         updateCartItems();
         onClose();
         Swal.fire({
           title: "Order Placed Successfully!",
+          text: "Your order has been placed and is being processed.",
           icon: "success",
-          timer: 2000,
+          timer: 3000,
           showConfirmButton: false,
         });
-        navigate("/profile");
+        navigate("/profile?tab=orders");
       }
     } catch (error) {
+      console.error("Order creation error:", error);
       Swal.fire({
         title: "Error",
-        text: "Failed to place order. Please try again.",
+        text: error.message || "Failed to place order. Please try again.",
         icon: "error",
       });
     } finally {

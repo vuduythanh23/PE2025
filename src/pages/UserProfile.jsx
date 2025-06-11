@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   getCurrentUser,
   updateUser,
@@ -8,10 +9,13 @@ import {
 } from "../utils";
 import Header from "../components/layout/Header";
 import ProfileForm from "../styles/components/ProfileForm";
+import UserOrders from "../components/modules/UserOrders";
 import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 
 const UserProfile = () => {
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [user, setUser] = useState({
     _id: "",
     username: "",
@@ -25,6 +29,13 @@ const UserProfile = () => {
   const [editing, setEditing] = useState(false);
   const [errors, setErrors] = useState({});
   const { handleAsyncOperation } = useLoading();
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -123,20 +134,52 @@ const UserProfile = () => {
       });
     }
   };
-
   return (
     <>
       <Header />
       <div className="min-h-screen bg-gray-100 py-8">
-        <ProfileForm
-          user={user}
-          editing={editing}
-          errors={errors}
-          onEdit={handleEdit}
-          onChange={handleChange}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
+        <div className="container mx-auto px-4">
+          {/* Tab Navigation */}
+          <div className="mb-8">
+            <div className="flex space-x-8 border-b border-gray-200">
+              <button
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'profile'
+                    ? 'border-luxury-gold text-luxury-gold'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab('profile')}
+              >
+                Profile
+              </button>
+              <button
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'orders'
+                    ? 'border-luxury-gold text-luxury-gold'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab('orders')}
+              >
+                My Orders
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'profile' && (
+            <ProfileForm
+              user={user}
+              editing={editing}
+              errors={errors}
+              onEdit={handleEdit}
+              onChange={handleChange}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+          )}
+
+          {activeTab === 'orders' && <UserOrders />}
+        </div>
       </div>
     </>
   );

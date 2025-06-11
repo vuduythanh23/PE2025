@@ -2,12 +2,46 @@ import { ENDPOINTS } from "../constants/api.js";
 import { fetchWithTimeout, getAuthHeaders } from "./base.js";
 
 /**
- * Creates a new order
- * @param {Object} orderData - The order data
+ * Creates a new order from cart items
+ * @param {Array|Object} cartItemsOrOrderData - Cart items array or complete order data object
  * @returns {Promise<Object>} The created order
  * @throws {Error} If creation fails
  */
-export async function createOrder(orderData) {
+export async function createOrder(cartItemsOrOrderData) {
+  let orderData;
+  
+  // Check if input is cart items array or complete order data
+  if (Array.isArray(cartItemsOrOrderData)) {
+    // Legacy support: convert cart items to order data
+    const cartItems = cartItemsOrOrderData;
+    orderData = {
+      items: cartItems.map(item => ({
+        productId: item._id,
+        name: item.name,
+        price: item.price,
+        salePrice: item.salePrice || null,
+        quantity: item.quantity,
+        selectedSize: item.size || null,
+        selectedColor: item.color || null,
+        imageUrl: item.images?.[0] || null
+      })),
+      totalAmount: cartItems.reduce((total, item) => total + (item.price * item.quantity), 0),
+      shippingAddress: {
+        street: "Default Street",
+        city: "Default City", 
+        state: "Default State",
+        zipCode: "00000",
+        country: "Default Country"
+      },
+      paymentMethod: "credit_card",
+      paymentStatus: "pending",
+      orderStatus: "pending"
+    };
+  } else {
+    // Use provided order data
+    orderData = cartItemsOrOrderData;
+  }
+
   const res = await fetchWithTimeout(`${ENDPOINTS.ORDERS}`, {
     method: "POST",
     headers: getAuthHeaders(),

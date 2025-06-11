@@ -13,7 +13,9 @@ import Admin from "./pages/Admin";
 import UserProfile from "./pages/UserProfile";
 import Products from "./pages/Products";
 import Cart from "./components/modules/Cart";
+import NotificationBanner from "./components/modules/NotificationBanner";
 import { useCart } from "./context/CartContext";
+import { isAuthenticated } from "./utils";
 
 function AppContent() {
   const { isCartOpen, closeCart } = useCart();
@@ -27,9 +29,9 @@ function AppContent() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/profile" element={<UserProfile />} />
-        <Route path="/products" element={<Products />} />
-      </Routes>
+        <Route path="/products" element={<Products />} />      </Routes>
       <Cart isOpen={isCartOpen} onClose={closeCart} />
+      {isAuthenticated() && <NotificationBanner />}
     </div>
   );
 }
