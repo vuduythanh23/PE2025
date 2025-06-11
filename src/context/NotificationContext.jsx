@@ -14,7 +14,7 @@ export function NotificationProvider({ children }) {
   const [orderUpdates, setOrderUpdates] = useState([]);
   const [lastOrderCheck, setLastOrderCheck] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
-  
+
   // Temporary flag to disable order polling until backend is stable
   const ENABLE_ORDER_POLLING = false; // Set to true when backend orders API is stable
 
@@ -54,9 +54,9 @@ export function NotificationProvider({ children }) {
 
             switch (order.orderStatus) {
               case "processing":
-                message = `Order #${order._id?.slice(
-                  -8
-                ) || 'N/A'} is now being processed`;
+                message = `Order #${
+                  order._id?.slice(-8) || "N/A"
+                } is now being processed`;
                 type = "info";
                 break;
               case "confirmed":
@@ -83,15 +83,18 @@ export function NotificationProvider({ children }) {
               addNotification(message, type, order._id);
             }
           });
-        }        setLastOrderCheck(currentTime);
+        }
+        setLastOrderCheck(currentTime);
         setOrderUpdates(orders || []);
       } catch (error) {
         console.error("Error checking for order updates:", error);
-        
+
         // Handle specific API errors
-        if (error.message?.includes("Invalid order ID") || 
-            error.message?.includes("400") ||
-            error.message?.includes("Bad Request")) {
+        if (
+          error.message?.includes("Invalid order ID") ||
+          error.message?.includes("400") ||
+          error.message?.includes("Bad Request")
+        ) {
           // This is likely because user has no orders yet - not an error
           setOrderUpdates([]);
           setLastOrderCheck(Date.now());
@@ -99,8 +102,10 @@ export function NotificationProvider({ children }) {
         }
 
         // For other errors, reduce polling frequency to avoid spam
-        if (error.message?.includes("404") || 
-            error.message?.includes("Not Found")) {
+        if (
+          error.message?.includes("404") ||
+          error.message?.includes("Not Found")
+        ) {
           // API endpoint doesn't exist, stop polling
           console.warn("Orders API endpoint not available, stopping polling");
           setIsPolling(false);
@@ -112,7 +117,7 @@ export function NotificationProvider({ children }) {
           console.log("Order update check failed:", error.message);
         }
       }
-    };    // Check for updates every 60 seconds (reduced frequency), but only when page is visible
+    }; // Check for updates every 60 seconds (reduced frequency), but only when page is visible
     let interval;
 
     const startPolling = () => {

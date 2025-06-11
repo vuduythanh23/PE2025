@@ -190,12 +190,13 @@ export default function ProductDetail() {
         icon: "warning",
       });
       return;
-    }    try {
+    }
+    try {
       await addItemToCart({
         productId: product._id,
         quantity: 1,
         selectedSize: selectedSize?.size || null,
-        selectedColor: selectedColor?.color || null
+        selectedColor: selectedColor?.color || null,
       });
 
       updateCartItems();

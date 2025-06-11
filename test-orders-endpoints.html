@@ -1,337 +1,375 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orders Endpoint Tester</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .test-section {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .test-section.success {
-            border-color: #4CAF50;
-            background-color: #f1f8e9;
-        }
-        .test-section.error {
-            border-color: #f44336;
-            background-color: #ffebee;
-        }
-        .test-section.warning {
-            border-color: #ff9800;
-            background-color: #fff3e0;
-        }
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        .response {
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 15px;
-            margin-top: 10px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .endpoint {
-            background: #e3f2fd;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-family: monospace;
-            margin: 5px 0;
-        }
-        input {
-            width: 300px;
-            padding: 8px;
-            margin: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .test-section {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .test-section.success {
+        border-color: #4caf50;
+        background-color: #f1f8e9;
+      }
+      .test-section.error {
+        border-color: #f44336;
+        background-color: #ffebee;
+      }
+      .test-section.warning {
+        border-color: #ff9800;
+        background-color: #fff3e0;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .response {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 15px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .endpoint {
+        background: #e3f2fd;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        margin: 5px 0;
+      }
+      input {
+        width: 300px;
+        padding: 8px;
+        margin: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>🔍 Orders Endpoint Discovery Tool</h1>
     <p>Test different orders API endpoints to find the correct one</p>
 
     <div class="test-section">
-        <h3>🔐 Authentication Setup</h3>
-        <label>Email:</label>
-        <input type="email" id="loginEmail" value="test@example.com" placeholder="Enter email">
-        <label>Password:</label>
-        <input type="password" id="loginPassword" value="password123" placeholder="Enter password">
-        <br>
-        <button onclick="testLogin()">Login First</button>
-        <div id="login-response" class="response"></div>
+      <h3>🔐 Authentication Setup</h3>
+      <label>Email:</label>
+      <input
+        type="email"
+        id="loginEmail"
+        value="test@example.com"
+        placeholder="Enter email"
+      />
+      <label>Password:</label>
+      <input
+        type="password"
+        id="loginPassword"
+        value="password123"
+        placeholder="Enter password"
+      />
+      <br />
+      <button onclick="testLogin()">Login First</button>
+      <div id="login-response" class="response"></div>
     </div>
 
     <div class="test-section">
-        <h3>📋 Test All Possible Orders Endpoints</h3>
-        <p>This will test various possible endpoints to find the correct one:</p>
-        
-        <div class="endpoint">GET /api/orders/my-orders</div>
-        <div class="endpoint">GET /api/orders/user-orders</div>
-        <div class="endpoint">GET /api/orders/user/orders</div>
-        <div class="endpoint">GET /api/user-orders</div>
-        <div class="endpoint">GET /api/users/orders</div>
-        <div class="endpoint">GET /api/users/me/orders</div>
-        <div class="endpoint">GET /api/orders (with user filter)</div>
-        
-        <button onclick="testAllEndpoints()">Test All Endpoints</button>
-        <div id="endpoints-test-response" class="response"></div>
+      <h3>📋 Test All Possible Orders Endpoints</h3>
+      <p>This will test various possible endpoints to find the correct one:</p>
+
+      <div class="endpoint">GET /api/orders/my-orders</div>
+      <div class="endpoint">GET /api/orders/user-orders</div>
+      <div class="endpoint">GET /api/orders/user/orders</div>
+      <div class="endpoint">GET /api/user-orders</div>
+      <div class="endpoint">GET /api/users/orders</div>
+      <div class="endpoint">GET /api/users/me/orders</div>
+      <div class="endpoint">GET /api/orders (with user filter)</div>
+
+      <button onclick="testAllEndpoints()">Test All Endpoints</button>
+      <div id="endpoints-test-response" class="response"></div>
     </div>
 
     <div class="test-section">
-        <h3>🎯 Manual Endpoint Test</h3>
-        <label>Custom Endpoint:</label>
-        <input type="text" id="customEndpoint" placeholder="/api/orders/my-orders" value="/api/orders/my-orders">
-        <button onclick="testCustomEndpoint()">Test Custom Endpoint</button>
-        <div id="custom-endpoint-response" class="response"></div>
+      <h3>🎯 Manual Endpoint Test</h3>
+      <label>Custom Endpoint:</label>
+      <input
+        type="text"
+        id="customEndpoint"
+        placeholder="/api/orders/my-orders"
+        value="/api/orders/my-orders"
+      />
+      <button onclick="testCustomEndpoint()">Test Custom Endpoint</button>
+      <div id="custom-endpoint-response" class="response"></div>
     </div>
 
     <div class="test-section">
-        <h3>🔧 Backend Route Analysis</h3>
-        <button onclick="analyzeBackendRoutes()">Analyze Backend Response Headers</button>
-        <div id="backend-analysis-response" class="response"></div>
+      <h3>🔧 Backend Route Analysis</h3>
+      <button onclick="analyzeBackendRoutes()">
+        Analyze Backend Response Headers
+      </button>
+      <div id="backend-analysis-response" class="response"></div>
     </div>
 
     <script type="module">
-        import { login } from './src/utils/api/auth.js';
-        import { getAuthHeaders } from './src/utils/api/base.js';
-        import { API_CONFIG } from './src/utils/constants/api.js';
+      import { login } from "./src/utils/api/auth.js";
+      import { getAuthHeaders } from "./src/utils/api/base.js";
+      import { API_CONFIG } from "./src/utils/constants/api.js";
 
-        // Utility functions
-        function displayResponse(elementId, data, type = 'success') {
-            const element = document.getElementById(elementId);
-            const section = element.parentElement;
-            
-            element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-            
-            section.className = `test-section ${type}`;
+      // Utility functions
+      function displayResponse(elementId, data, type = "success") {
+        const element = document.getElementById(elementId);
+        const section = element.parentElement;
+
+        element.textContent =
+          typeof data === "string" ? data : JSON.stringify(data, null, 2);
+
+        section.className = `test-section ${type}`;
+      }
+
+      async function makeRequest(endpoint, options = {}) {
+        const url = endpoint.startsWith("http")
+          ? endpoint
+          : `${API_CONFIG.BASE_URL}${endpoint}`;
+        console.log(`Testing endpoint: ${url}`);
+
+        const defaultOptions = {
+          method: "GET",
+          headers: getAuthHeaders(),
+          ...options,
+        };
+
+        console.log("Request options:", defaultOptions);
+
+        try {
+          const response = await fetch(url, defaultOptions);
+          console.log("Response status:", response.status);
+          console.log(
+            "Response headers:",
+            Object.fromEntries(response.headers.entries())
+          );
+
+          const responseData = {
+            url: url,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            ok: response.ok,
+          };
+
+          if (response.ok) {
+            try {
+              const data = await response.json();
+              responseData.data = data;
+            } catch (e) {
+              responseData.data = await response.text();
+            }
+          } else {
+            responseData.error = await response.text();
+          }
+
+          return responseData;
+        } catch (error) {
+          return {
+            url: url,
+            error: error.message,
+            networkError: true,
+          };
+        }
+      }
+
+      // Global functions for buttons
+      window.testLogin = async function () {
+        try {
+          const email = document.getElementById("loginEmail").value;
+          const password = document.getElementById("loginPassword").value;
+
+          if (!email || !password) {
+            throw new Error("Please enter both email and password");
+          }
+
+          const result = await login(email, password);
+          displayResponse(
+            "login-response",
+            `Login successful!\n${JSON.stringify(result, null, 2)}`,
+            "success"
+          );
+        } catch (error) {
+          displayResponse("login-response", error.message, "error");
+        }
+      };
+
+      window.testAllEndpoints = async function () {
+        const endpoints = [
+          "/orders/my-orders",
+          "/orders/user-orders",
+          "/orders/user/orders",
+          "/user-orders",
+          "/users/orders",
+          "/users/me/orders",
+          "/orders?user=current",
+          "/orders",
+        ];
+
+        let results = [];
+
+        for (const endpoint of endpoints) {
+          const result = await makeRequest(endpoint);
+          results.push({
+            endpoint: endpoint,
+            status: result.status,
+            ok: result.ok,
+            error: result.error,
+            dataCount: result.data
+              ? Array.isArray(result.data)
+                ? result.data.length
+                : "Not array"
+              : 0,
+            headers: result.headers,
+          });
+
+          // Add small delay between requests
+          await new Promise((resolve) => setTimeout(resolve, 200));
         }
 
-        async function makeRequest(endpoint, options = {}) {
-            const url = endpoint.startsWith('http') ? endpoint : `${API_CONFIG.BASE_URL}${endpoint}`;
-            console.log(`Testing endpoint: ${url}`);
-            
-            const defaultOptions = {
-                method: 'GET',
-                headers: getAuthHeaders(),
-                ...options
-            };
+        // Find successful endpoints
+        const successful = results.filter((r) => r.ok);
+        const errors = results.filter((r) => !r.ok);
 
-            console.log('Request options:', defaultOptions);
+        let summary = "=== ENDPOINT TEST RESULTS ===\n\n";
 
-            try {
-                const response = await fetch(url, defaultOptions);
-                console.log('Response status:', response.status);
-                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-                const responseData = {
-                    url: url,
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries()),
-                    ok: response.ok
-                };
-
-                if (response.ok) {
-                    try {
-                        const data = await response.json();
-                        responseData.data = data;
-                    } catch (e) {
-                        responseData.data = await response.text();
-                    }
-                } else {
-                    responseData.error = await response.text();
-                }
-
-                return responseData;
-            } catch (error) {
-                return {
-                    url: url,
-                    error: error.message,
-                    networkError: true
-                };
-            }
+        if (successful.length > 0) {
+          summary += "✅ SUCCESSFUL ENDPOINTS:\n";
+          successful.forEach((r) => {
+            summary += `  ${r.endpoint} - Status: ${r.status}, Data: ${r.dataCount} items\n`;
+          });
+          summary += "\n";
         }
 
-        // Global functions for buttons
-        window.testLogin = async function() {
-            try {
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
+        if (errors.length > 0) {
+          summary += "❌ FAILED ENDPOINTS:\n";
+          errors.forEach((r) => {
+            summary += `  ${r.endpoint} - Status: ${r.status}, Error: ${r.error}\n`;
+          });
+          summary += "\n";
+        }
 
-                if (!email || !password) {
-                    throw new Error('Please enter both email and password');
-                }
+        summary += "=== DETAILED RESULTS ===\n";
+        summary += JSON.stringify(results, null, 2);
 
-                const result = await login(email, password);
-                displayResponse('login-response', `Login successful!\n${JSON.stringify(result, null, 2)}`, 'success');
-            } catch (error) {
-                displayResponse('login-response', error.message, 'error');
-            }
-        };
+        const type = successful.length > 0 ? "success" : "error";
+        displayResponse("endpoints-test-response", summary, type);
+      };
 
-        window.testAllEndpoints = async function() {
-            const endpoints = [
-                '/orders/my-orders',
-                '/orders/user-orders', 
-                '/orders/user/orders',
-                '/user-orders',
-                '/users/orders',
-                '/users/me/orders',
-                '/orders?user=current',
-                '/orders'
-            ];
+      window.testCustomEndpoint = async function () {
+        try {
+          const endpoint = document.getElementById("customEndpoint").value;
+          if (!endpoint) {
+            throw new Error("Please enter an endpoint");
+          }
 
-            let results = [];
-            
-            for (const endpoint of endpoints) {
-                const result = await makeRequest(endpoint);
-                results.push({
-                    endpoint: endpoint,
-                    status: result.status,
-                    ok: result.ok,
-                    error: result.error,
-                    dataCount: result.data ? (Array.isArray(result.data) ? result.data.length : 'Not array') : 0,
-                    headers: result.headers
+          const result = await makeRequest(endpoint);
+          displayResponse(
+            "custom-endpoint-response",
+            result,
+            result.ok ? "success" : "error"
+          );
+        } catch (error) {
+          displayResponse("custom-endpoint-response", error.message, "error");
+        }
+      };
+
+      window.analyzeBackendRoutes = async function () {
+        try {
+          const baseUrl = API_CONFIG.BASE_URL;
+          let analysis = `Backend Analysis for: ${baseUrl}\n\n`;
+
+          // Test different HTTP methods on orders endpoint
+          const methods = ["GET", "POST", "HEAD", "OPTIONS"];
+          const endpoints = ["/orders", "/orders/my-orders"];
+
+          for (const endpoint of endpoints) {
+            analysis += `=== Testing ${endpoint} ===\n`;
+
+            for (const method of methods) {
+              try {
+                const response = await fetch(`${baseUrl}${endpoint}`, {
+                  method: method,
+                  headers: getAuthHeaders(),
                 });
-                
-                // Add small delay between requests
-                await new Promise(resolve => setTimeout(resolve, 200));
+
+                analysis += `${method}: ${response.status} ${response.statusText}\n`;
+
+                // Check for useful headers
+                const allowHeader = response.headers.get("allow");
+                if (allowHeader) {
+                  analysis += `  Allowed methods: ${allowHeader}\n`;
+                }
+              } catch (error) {
+                analysis += `${method}: ERROR - ${error.message}\n`;
+              }
             }
+            analysis += "\n";
+          }
 
-            // Find successful endpoints
-            const successful = results.filter(r => r.ok);
-            const errors = results.filter(r => !r.ok);
+          // Check if backend provides an API documentation endpoint
+          const docEndpoints = ["/docs", "/api-docs", "/swagger", "/api"];
+          analysis += "=== Checking for API Documentation ===\n";
 
-            let summary = "=== ENDPOINT TEST RESULTS ===\n\n";
-            
-            if (successful.length > 0) {
-                summary += "✅ SUCCESSFUL ENDPOINTS:\n";
-                successful.forEach(r => {
-                    summary += `  ${r.endpoint} - Status: ${r.status}, Data: ${r.dataCount} items\n`;
-                });
-                summary += "\n";
-            }
-
-            if (errors.length > 0) {
-                summary += "❌ FAILED ENDPOINTS:\n";
-                errors.forEach(r => {
-                    summary += `  ${r.endpoint} - Status: ${r.status}, Error: ${r.error}\n`;
-                });
-                summary += "\n";
-            }
-
-            summary += "=== DETAILED RESULTS ===\n";
-            summary += JSON.stringify(results, null, 2);
-
-            const type = successful.length > 0 ? 'success' : 'error';
-            displayResponse('endpoints-test-response', summary, type);
-        };
-
-        window.testCustomEndpoint = async function() {
+          for (const docEndpoint of docEndpoints) {
             try {
-                const endpoint = document.getElementById('customEndpoint').value;
-                if (!endpoint) {
-                    throw new Error('Please enter an endpoint');
-                }
-
-                const result = await makeRequest(endpoint);
-                displayResponse('custom-endpoint-response', result, result.ok ? 'success' : 'error');
+              const response = await fetch(`${baseUrl}${docEndpoint}`);
+              if (response.ok) {
+                analysis += `Found documentation at: ${docEndpoint} (${response.status})\n`;
+              }
             } catch (error) {
-                displayResponse('custom-endpoint-response', error.message, 'error');
+              // Ignore errors for doc endpoints
             }
-        };
+          }
 
-        window.analyzeBackendRoutes = async function() {
-            try {
-                const baseUrl = API_CONFIG.BASE_URL;
-                let analysis = `Backend Analysis for: ${baseUrl}\n\n`;
+          displayResponse("backend-analysis-response", analysis, "success");
+        } catch (error) {
+          displayResponse("backend-analysis-response", error.message, "error");
+        }
+      };
 
-                // Test different HTTP methods on orders endpoint
-                const methods = ['GET', 'POST', 'HEAD', 'OPTIONS'];
-                const endpoints = ['/orders', '/orders/my-orders'];
-
-                for (const endpoint of endpoints) {
-                    analysis += `=== Testing ${endpoint} ===\n`;
-                    
-                    for (const method of methods) {
-                        try {
-                            const response = await fetch(`${baseUrl}${endpoint}`, {
-                                method: method,
-                                headers: getAuthHeaders()
-                            });
-
-                            analysis += `${method}: ${response.status} ${response.statusText}\n`;
-                            
-                            // Check for useful headers
-                            const allowHeader = response.headers.get('allow');
-                            if (allowHeader) {
-                                analysis += `  Allowed methods: ${allowHeader}\n`;
-                            }
-                            
-                        } catch (error) {
-                            analysis += `${method}: ERROR - ${error.message}\n`;
-                        }
-                    }
-                    analysis += "\n";
-                }
-
-                // Check if backend provides an API documentation endpoint
-                const docEndpoints = ['/docs', '/api-docs', '/swagger', '/api'];
-                analysis += "=== Checking for API Documentation ===\n";
-                
-                for (const docEndpoint of docEndpoints) {
-                    try {
-                        const response = await fetch(`${baseUrl}${docEndpoint}`);
-                        if (response.ok) {
-                            analysis += `Found documentation at: ${docEndpoint} (${response.status})\n`;
-                        }
-                    } catch (error) {
-                        // Ignore errors for doc endpoints
-                    }
-                }
-
-                displayResponse('backend-analysis-response', analysis, 'success');
-            } catch (error) {
-                displayResponse('backend-analysis-response', error.message, 'error');
-            }
-        };
-
-        // Auto-check if user is logged in
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = sessionStorage.getItem('token');
-            if (token) {
-                displayResponse('login-response', 'Already logged in with existing token', 'success');
-            }
-        });
+      // Auto-check if user is logged in
+      document.addEventListener("DOMContentLoaded", function () {
+        const token = sessionStorage.getItem("token");
+        if (token) {
+          displayResponse(
+            "login-response",
+            "Already logged in with existing token",
+            "success"
+          );
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

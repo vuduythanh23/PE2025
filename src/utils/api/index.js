@@ -9,4 +9,9 @@ export * from "./carts.js";
 export * from "./ratings.js";
 
 // Export base utilities if needed
-export { rateLimiter, fetchWithTimeout, fetchWithRetry, getAuthHeaders } from "./base.js";
+export {
+  rateLimiter,
+  fetchWithTimeout,
+  fetchWithRetry,
+  getAuthHeaders,
+} from "./base.js";

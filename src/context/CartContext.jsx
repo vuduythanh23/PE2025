@@ -1,4 +1,11 @@
-import { createContext, useState, useContext, useEffect, useCallback, useMemo } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { getUserCart } from "../utils/api/carts";
 import { isAuthenticated } from "../utils";
 
@@ -22,16 +29,16 @@ export function CartProvider({ children }) {
         const cart = await getUserCart();
         const items = cart.items || [];
         setCartItems(items);
-        
+
         // Calculate total from cart items
         const total = items.reduce((sum, item) => {
           const price = item.salePrice || item.price || 0;
           const quantity = item.quantity || 0;
-          return sum + (price * quantity);
+          return sum + price * quantity;
         }, 0);
         setCartTotal(total);
       } catch (error) {
-        console.error('Error loading cart:', error);
+        console.error("Error loading cart:", error);
         // Fallback to empty cart if API fails
         setCartItems([]);
         setCartTotal(0);
@@ -43,7 +50,7 @@ export function CartProvider({ children }) {
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
-  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
+  const toggleCart = useCallback(() => setIsCartOpen((prev) => !prev), []);
 
   // Hiệu ứng bounce khi thêm sản phẩm
   const animateCart = useCallback(() => {
@@ -63,19 +70,19 @@ export function CartProvider({ children }) {
       const cart = await getUserCart();
       const items = cart.items || [];
       setCartItems(items);
-      
+
       // Calculate total from cart items
       const total = items.reduce((sum, item) => {
         const price = item.salePrice || item.price || 0;
         const quantity = item.quantity || 0;
-        return sum + (price * quantity);
+        return sum + price * quantity;
       }, 0);
       setCartTotal(total);
-      
+
       // Kích hoạt hiệu ứng bounce
       animateCart();
     } catch (error) {
-      console.error('Error updating cart:', error);
+      console.error("Error updating cart:", error);
     }
   }, [animateCart]);
 
@@ -88,29 +95,32 @@ export function CartProvider({ children }) {
   }, [cartItems]);
 
   // Memoize value để tránh re-render không cần thiết
-  const value = useMemo(() => ({
-    isCartOpen,
-    openCart,
-    closeCart,
-    toggleCart,
-    isCartBouncing,
-    animateCart,
-    cartItems,
-    cartTotal,
-    updateCartItems,
-    getTotalQuantity,
-  }), [
-    isCartOpen,
-    openCart,
-    closeCart,
-    toggleCart,
-    isCartBouncing,
-    animateCart,
-    cartItems,
-    cartTotal,
-    updateCartItems,
-    getTotalQuantity,
-  ]);
+  const value = useMemo(
+    () => ({
+      isCartOpen,
+      openCart,
+      closeCart,
+      toggleCart,
+      isCartBouncing,
+      animateCart,
+      cartItems,
+      cartTotal,
+      updateCartItems,
+      getTotalQuantity,
+    }),
+    [
+      isCartOpen,
+      openCart,
+      closeCart,
+      toggleCart,
+      isCartBouncing,
+      animateCart,
+      cartItems,
+      cartTotal,
+      updateCartItems,
+      getTotalQuantity,
+    ]
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

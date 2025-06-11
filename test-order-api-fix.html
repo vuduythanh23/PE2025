@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Status Update API Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f9f9f9;
+      }
+      .test-button {
+        background: #007cba;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .test-button:hover {
+        background: #005a87;
+      }
+      .test-button.admin {
+        background: #e74c3c;
+      }
+      .test-button.admin:hover {
+        background: #c0392b;
+      }
+      .success {
+        color: #27ae60;
+        font-weight: bold;
+      }
+      .error {
+        color: #e74c3c;
+        font-weight: bold;
+      }
+      .result {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+        background: #fff;
+        border-left: 4px solid #ddd;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .result.success {
+        border-left-color: #27ae60;
+        background: #f8fff8;
+      }
+      .result.error {
+        border-left-color: #e74c3c;
+        background: #fff8f8;
+      }
+      .config-section {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔧 Order Status Update API Test</h1>
+      <p>Test the corrected API calls with proper field names.</p>
+
+      <div class="config-section">
+        <h3>📋 Configuration</h3>
+        <label for="backendUrl">Backend URL:</label>
+        <input
+          type="text"
+          id="backendUrl"
+          value="http://localhost:3000"
+          style="width: 200px; margin: 0 10px; padding: 5px"
+        />
+        <br /><br />
+        <label for="adminToken">Admin JWT Token:</label>
+        <input
+          type="text"
+          id="adminToken"
+          placeholder="Admin Bearer token"
+          style="width: 400px; margin: 0 10px; padding: 5px"
+        />
+        <br /><br />
+        <label for="testOrderId">Test Order ID:</label>
+        <input
+          type="text"
+          id="testOrderId"
+          placeholder="Order ID to test with"
+          style="width: 300px; margin: 0 10px; padding: 5px"
+        />
+      </div>
+
+      <!-- Field Comparison Test -->
+      <div class="test-section">
+        <h3>🔍 Field Name Comparison Test</h3>
+        <p>Test different field names to see which backend expects:</p>
+
+        <button class="test-button admin" onclick="testFieldName('status')">
+          Test with "status" field
+        </button>
+        <button
+          class="test-button admin"
+          onclick="testFieldName('orderStatus')"
+        >
+          Test with "orderStatus" field
+        </button>
+        <button class="test-button admin" onclick="testFieldName('newStatus')">
+          Test with "newStatus" field
+        </button>
+
+        <div id="fieldTestResults"></div>
+      </div>
+
+      <!-- Status Update Test -->
+      <div class="test-section">
+        <h3>🔄 Status Update Test</h3>
+        <p>Test updating to different statuses with correct field:</p>
+
+        <button class="test-button admin" onclick="updateStatus('processing')">
+          → Processing
+        </button>
+        <button class="test-button admin" onclick="updateStatus('confirmed')">
+          → Confirmed
+        </button>
+        <button class="test-button admin" onclick="updateStatus('shipped')">
+          → Shipped
+        </button>
+        <button class="test-button admin" onclick="updateStatus('delivered')">
+          → Delivered
+        </button>
+        <button class="test-button admin" onclick="updateStatus('cancelled')">
+          → Cancelled
+        </button>
+
+        <div id="statusUpdateResults"></div>
+      </div>
+
+      <!-- API Debug Section -->
+      <div class="test-section">
+        <h3>🔍 API Debug Information</h3>
+        <button class="test-button" onclick="showAPIDebugInfo()">
+          Show API Request Details
+        </button>
+
+        <div id="debugResults"></div>
+      </div>
+
+      <div class="test-section">
+        <h3>📝 Test Log</h3>
+        <div
+          id="testLog"
+          style="
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      function log(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logElement = document.getElementById("testLog");
+        logElement.textContent += `[${timestamp}] ${message}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+        console.log(message);
+      }
+
+      function displayResult(
+        containerId,
+        testName,
+        success,
+        message,
+        details = ""
+      ) {
+        const container = document.getElementById(containerId);
+        const resultClass = success ? "success" : "error";
+        const icon = success ? "✅" : "❌";
+
+        const resultDiv = document.createElement("div");
+        resultDiv.className = `result ${resultClass}`;
+        resultDiv.innerHTML = `
+                <strong>${icon} ${testName}</strong><br>
+                ${message}
+                ${
+                  details
+                    ? `<br><small style="color: #666;">${details}</small>`
+                    : ""
+                }
+            `;
+
+        container.appendChild(resultDiv);
+      }
+
+      async function makeRequest(method, endpoint, body = null) {
+        const backendUrl = document.getElementById("backendUrl").value;
+        const adminToken = document.getElementById("adminToken").value;
+
+        const url = `${backendUrl}/api/orders${endpoint}`;
+
+        const options = {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+
+        if (adminToken) {
+          options.headers["Authorization"] = adminToken.startsWith("Bearer ")
+            ? adminToken
+            : `Bearer ${adminToken}`;
+        }
+
+        if (body) {
+          options.body = JSON.stringify(body);
+        }
+
+        log(`Making ${method} request to: ${url}`);
+        log(`Request body: ${JSON.stringify(body, null, 2)}`);
+
+        try {
+          const response = await fetch(url, options);
+          const responseText = await response.text();
+
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (e) {
+            data = { message: responseText };
+          }
+
+          log(`Response ${response.status}: ${JSON.stringify(data, null, 2)}`);
+
+          return {
+            status: response.status,
+            data,
+            success: response.ok,
+          };
+        } catch (error) {
+          log(`Request failed: ${error.message}`);
+          return {
+            status: 0,
+            data: { message: error.message },
+            success: false,
+          };
+        }
+      }
+
+      async function testFieldName(fieldName) {
+        const orderId = document.getElementById("testOrderId").value;
+
+        if (!orderId) {
+          alert("Please enter an Order ID");
+          return;
+        }
+
+        log(`🔍 Testing field name: ${fieldName}`);
+
+        const body = {};
+        body[fieldName] = "processing"; // Use dynamic field name
+
+        const response = await makeRequest("PATCH", `/${orderId}/status`, body);
+
+        const success = response.success;
+        const message = success
+          ? `✅ Backend accepts "${fieldName}" field`
+          : `❌ Backend rejected "${fieldName}" field: ${
+              response.data.message || "Unknown error"
+            }`;
+
+        displayResult(
+          "fieldTestResults",
+          `Field: ${fieldName}`,
+          success,
+          message,
+          `Status: ${response.status} | Request body: ${JSON.stringify(body)}`
+        );
+      }
+
+      async function updateStatus(newStatus) {
+        const orderId = document.getElementById("testOrderId").value;
+
+        if (!orderId) {
+          alert("Please enter an Order ID");
+          return;
+        }
+
+        log(`🔄 Updating order ${orderId} to status: ${newStatus}`);
+
+        // Use orderStatus based on our model schema
+        const response = await makeRequest("PATCH", `/${orderId}/status`, {
+          orderStatus: newStatus,
+        });
+
+        const success = response.success;
+        const message = success
+          ? `✅ Status updated to "${newStatus}"`
+          : `❌ Failed: ${response.data.message || "Unknown error"}`;
+
+        displayResult(
+          "statusUpdateResults",
+          `Update to ${newStatus}`,
+          success,
+          message,
+          `Order ID: ${orderId} | Status: ${response.status}`
+        );
+      }
+
+      function showAPIDebugInfo() {
+        const orderId =
+          document.getElementById("testOrderId").value || "YOUR_ORDER_ID";
+        const backendUrl = document.getElementById("backendUrl").value;
+
+        const debugInfo = `
+=== API Request Details ===
+
+Endpoint: ${backendUrl}/api/orders/${orderId}/status
+Method: PATCH
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer YOUR_ADMIN_TOKEN
+
+Request Body Options:
+1. Frontend Corrected (orderStatus):
+   { "orderStatus": "processing" }
+
+2. Old Format (status):
+   { "status": "processing" }
+
+3. Alternative Format:
+   { "newStatus": "processing" }
+
+=== Backend Controller Expects ===
+Based on model schema, backend should accept:
+- Field: "orderStatus" (matches MongoDB schema)
+- Valid values: pending, processing, confirmed, shipped, delivered, cancelled
+
+=== Route Information ===
+Route: PATCH /api/orders/:orderId/status
+Controller: updateOrderStatusController
+Expected Body: { orderStatus: "new_status" }
+
+=== Troubleshooting ===
+1. Verify order ID exists in database
+2. Ensure admin token is valid
+3. Check backend route order (status route before generic :orderId)
+4. Verify MongoDB schema field name matches request body
+            `;
+
+        document.getElementById("debugResults").innerHTML = `
+                <div class="result" style="border-left-color: #3498db; background: #f8fcff;">
+                    <pre>${debugInfo}</pre>
+                </div>
+            `;
+      }
+
+      // Initialize
+      log("Order Status Update API Test initialized");
+      log("1. Add your admin JWT token");
+      log("2. Enter a valid order ID");
+      log("3. Test field names to see what backend expects");
+      log("4. Try status updates");
+    </script>
+  </body>
+</html>

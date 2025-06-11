@@ -42,35 +42,39 @@ export default function OrderManagement() {
     try {
       setLoading(true);
       console.log("Fetching all orders for admin...");
-      
+
       const data = await getAllOrders();
       console.log("Received admin orders data:", data);
-      
+
       // Sort orders by creation date, newest first
       const sortedOrders = (data || []).sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
       setOrders(sortedOrders);
-      
+
       // Show success message if orders found
       if (sortedOrders.length > 0) {
-        console.log(`Successfully loaded ${sortedOrders.length} orders for admin`);
+        console.log(
+          `Successfully loaded ${sortedOrders.length} orders for admin`
+        );
       }
     } catch (error) {
       console.error("Error fetching admin orders:", error);
-      
+
       // Show user-friendly error message
-      const errorMessage = error.message.includes("Authentication") || error.message.includes("403")
-        ? "Admin access required to view all orders"
-        : error.message.includes("Invalid order ID")
-        ? "There seems to be an issue with the order system. Orders will appear here once available."
-        : error.message || "Failed to fetch orders";
-        
+      const errorMessage =
+        error.message.includes("Authentication") ||
+        error.message.includes("403")
+          ? "Admin access required to view all orders"
+          : error.message.includes("Invalid order ID")
+          ? "There seems to be an issue with the order system. Orders will appear here once available."
+          : error.message || "Failed to fetch orders";
+
       Swal.fire({
         title: "Unable to Load Orders",
         text: errorMessage,
         icon: "info",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
     } finally {
       setLoading(false);
@@ -350,33 +354,22 @@ export default function OrderManagement() {
                           className="text-gray-600 hover:text-gray-900 bg-gray-50 px-3 py-1 rounded text-xs"
                         >
                           View Details
-                        </button>
-                        {order.orderStatus === "pending" && (
+                        </button>                        {order.orderStatus === "pending" && (
                           <button
                             onClick={() =>
                               handleStatusUpdate(order._id, "processing")
-                            }
-                            className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded text-xs"
-                          >
-                            Process
-                          </button>
-                        )}
-                        {order.orderStatus === "processing" && (
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(order._id, "confirmed")
                             }
                             className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded text-xs"
                           >
                             Confirm
                           </button>
                         )}
-                        {order.orderStatus === "confirmed" && (
+                        {order.orderStatus === "processing" && (
                           <button
                             onClick={() =>
                               handleStatusUpdate(order._id, "shipped")
                             }
-                            className="text-purple-600 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded text-xs"
+                            className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded text-xs"
                           >
                             Ship
                           </button>
@@ -386,9 +379,9 @@ export default function OrderManagement() {
                             onClick={() =>
                               handleStatusUpdate(order._id, "delivered")
                             }
-                            className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded text-xs"
+                            className="text-purple-600 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded text-xs"
                           >
-                            Delivered
+                            Completed
                           </button>
                         )}
                         {(order.orderStatus === "pending" ||
@@ -650,22 +643,10 @@ export default function OrderManagement() {
                 <h4 className="font-medium text-gray-900 mb-3">
                   Quick Actions
                 </h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedOrder.orderStatus === "pending" && (
+                <div className="flex flex-wrap gap-2">                  {selectedOrder.orderStatus === "pending" && (
                     <button
                       onClick={() => {
                         handleStatusUpdate(selectedOrder._id, "processing");
-                        closeOrderDetails();
-                      }}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
-                    >
-                      Process Order
-                    </button>
-                  )}
-                  {selectedOrder.orderStatus === "processing" && (
-                    <button
-                      onClick={() => {
-                        handleStatusUpdate(selectedOrder._id, "confirmed");
                         closeOrderDetails();
                       }}
                       className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm"
@@ -673,15 +654,15 @@ export default function OrderManagement() {
                       Confirm Order
                     </button>
                   )}
-                  {selectedOrder.orderStatus === "confirmed" && (
+                  {selectedOrder.orderStatus === "processing" && (
                     <button
                       onClick={() => {
                         handleStatusUpdate(selectedOrder._id, "shipped");
                         closeOrderDetails();
                       }}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 text-sm"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
                     >
-                      Mark as Shipped
+                      Ship Order
                     </button>
                   )}
                   {selectedOrder.orderStatus === "shipped" && (
@@ -690,9 +671,9 @@ export default function OrderManagement() {
                         handleStatusUpdate(selectedOrder._id, "delivered");
                         closeOrderDetails();
                       }}
-                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm"
+                      className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 text-sm"
                     >
-                      Mark as Delivered
+                      Mark as Completed
                     </button>
                   )}
                   {(selectedOrder.orderStatus === "pending" ||

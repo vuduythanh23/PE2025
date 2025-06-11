@@ -15,35 +15,35 @@ export default function UserOrders() {
     try {
       setLoading(true);
       console.log("Fetching user orders...");
-      
+
       const data = await getUserOrders();
       console.log("Received orders data:", data);
-      
+
       // Sort orders by creation date, newest first
       const sortedOrders = (data || []).sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
       setOrders(sortedOrders);
-      
+
       // Show success message if orders found
       if (sortedOrders.length > 0) {
         console.log(`Successfully loaded ${sortedOrders.length} orders`);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
-      
+
       // Show user-friendly error message
-      const errorMessage = error.message.includes("Authentication") 
+      const errorMessage = error.message.includes("Authentication")
         ? "Please log in to view your orders"
         : error.message.includes("Invalid order ID")
         ? "There seems to be an issue with the order system. Your orders will appear here once available."
         : error.message || "Failed to fetch orders";
-        
+
       Swal.fire({
         title: "Unable to Load Orders",
         text: errorMessage,
         icon: "info",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
     } finally {
       setLoading(false);

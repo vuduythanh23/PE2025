@@ -22,13 +22,13 @@ export async function getUserCart() {
 
     return res.json();
   } catch (error) {
-    console.warn('Cart API not available, using fallback:', error.message);
+    console.warn("Cart API not available, using fallback:", error.message);
     // Return empty cart structure as fallback
     return {
-      _id: 'fallback-cart',
+      _id: "fallback-cart",
       user: null,
       items: [],
-      totalPrice: 0
+      totalPrice: 0,
     };
   }
 }
@@ -61,10 +61,12 @@ export async function addItemToCart(item) {
 
     return res.json();
   } catch (error) {
-    console.warn('Add to cart API failed, using fallback:', error.message);
-    
+    console.warn("Add to cart API failed, using fallback:", error.message);
+
     // For demo purposes, return success but notify it's fallback mode
-    throw new Error('Cart service temporarily unavailable. Please try again later.');
+    throw new Error(
+      "Cart service temporarily unavailable. Please try again later."
+    );
   }
 }
 

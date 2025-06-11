@@ -46,13 +46,14 @@ export default function ProductCard(props) {
         navigate("/login?redirect=/products");
       }
       return;
-    }    try {
+    }
+    try {
       // Add product to cart using backend API
       await addItemToCart({
         productId: _id,
         quantity: 1,
         selectedSize: sizes?.[0]?.size || null, // Use first available size or null
-        selectedColor: colors?.[0]?.color || null // Use first available color or null
+        selectedColor: colors?.[0]?.color || null, // Use first available color or null
       });
 
       // Update cart UI
@@ -100,7 +101,7 @@ export default function ProductCard(props) {
         productId: _id,
         quantity: 1,
         selectedSize: sizes?.[0]?.size || null,
-        selectedColor: colors?.[0]?.color || null
+        selectedColor: colors?.[0]?.color || null,
       });
 
       // Update cart UI
@@ -187,7 +188,8 @@ export default function ProductCard(props) {
             <p className="text-luxury-gold font-serif text-2xl">
               {formatCurrency(price || 0)}
             </p>
-          </div>          <div className="flex gap-2">
+          </div>{" "}
+          <div className="flex gap-2">
             <button
               onClick={handleBuyNow}
               className={`flex-1 py-3 px-3 transition-all duration-200 font-serif text-xs tracking-wider ${

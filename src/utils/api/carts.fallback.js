@@ -23,13 +23,13 @@ export async function getUserCart() {
 
     return res.json();
   } catch (error) {
-    console.warn('Cart API not available, using fallback:', error.message);
+    console.warn("Cart API not available, using fallback:", error.message);
     // Return empty cart structure as fallback
     return {
-      _id: 'fallback-cart',
+      _id: "fallback-cart",
       user: null,
       items: [],
-      totalPrice: 0
+      totalPrice: 0,
     };
   }
 }
@@ -57,13 +57,13 @@ export async function addItemToCart(item) {
 
     return res.json();
   } catch (error) {
-    console.warn('Add to cart API failed, using fallback:', error.message);
-    
+    console.warn("Add to cart API failed, using fallback:", error.message);
+
     // For now, just return a success message since we can't actually add to cart
     return {
       success: true,
-      message: 'Item added to cart (demo mode - backend unavailable)',
-      fallback: true
+      message: "Item added to cart (demo mode - backend unavailable)",
+      fallback: true,
     };
   }
 }
@@ -91,11 +91,11 @@ export async function updateItemQuantity(updateData) {
 
     return res.json();
   } catch (error) {
-    console.warn('Update quantity API failed, using fallback:', error.message);
+    console.warn("Update quantity API failed, using fallback:", error.message);
     return {
       success: true,
-      message: 'Quantity updated (demo mode - backend unavailable)',
-      fallback: true
+      message: "Quantity updated (demo mode - backend unavailable)",
+      fallback: true,
     };
   }
 }
@@ -123,11 +123,11 @@ export async function removeItemFromCart(removeData) {
 
     return res.json();
   } catch (error) {
-    console.warn('Remove item API failed, using fallback:', error.message);
+    console.warn("Remove item API failed, using fallback:", error.message);
     return {
       success: true,
-      message: 'Item removed (demo mode - backend unavailable)',
-      fallback: true
+      message: "Item removed (demo mode - backend unavailable)",
+      fallback: true,
     };
   }
 }
@@ -149,12 +149,12 @@ export async function clearUserCart() {
 
     return res.json();
   } catch (error) {
-    console.warn('Clear cart API failed, using fallback:', error.message);
+    console.warn("Clear cart API failed, using fallback:", error.message);
     return {
       success: true,
-      message: 'Cart cleared (demo mode - backend unavailable)',
+      message: "Cart cleared (demo mode - backend unavailable)",
       fallback: true,
-      items: []
+      items: [],
     };
   }
 }

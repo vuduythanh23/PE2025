@@ -100,11 +100,11 @@ export default function Cart({ isOpen, onClose }) {
         productId: productId,
         quantity: newQuantity,
         selectedSize: size,
-        selectedColor: color
+        selectedColor: color,
       });
       updateCartItems();
     } catch (error) {
-      console.error('Error updating quantity:', error);
+      console.error("Error updating quantity:", error);
       Swal.fire({
         title: "Error",
         text: "Failed to update quantity. Please try again.",
@@ -118,11 +118,11 @@ export default function Cart({ isOpen, onClose }) {
       await removeItemFromCart({
         productId: productId,
         selectedSize: size,
-        selectedColor: color
+        selectedColor: color,
       });
       updateCartItems();
     } catch (error) {
-      console.error('Error removing item:', error);
+      console.error("Error removing item:", error);
       Swal.fire({
         title: "Error",
         text: "Failed to remove item. Please try again.",
@@ -175,7 +175,8 @@ export default function Cart({ isOpen, onClose }) {
         paymentMethod: "credit_card",
         paymentStatus: "pending",
         orderStatus: "pending",
-      };      const order = await createOrder(cartItems);  // Send cart items array to use /from-cart endpoint
+      };
+      const order = await createOrder(cartItems); // Send cart items array to use /from-cart endpoint
       if (order) {
         await clearUserCart();
         updateCartItems();
@@ -248,13 +249,15 @@ export default function Cart({ isOpen, onClose }) {
                 </button>
               </div>
             ) : (
-              <div className="p-6 space-y-6">                {cartItems.map((item, index) => {
+              <div className="p-6 space-y-6">
+                {" "}
+                {cartItems.map((item, index) => {
                   // Handle backend cart structure: item might have product field
                   const product = item.product || item;
-                  const itemKey = `${product._id || item.productId}-${item.selectedSize || item.size || "no-size"}-${
-                    item.selectedColor || item.color || "no-color"
-                  }-${index}`;
-                  
+                  const itemKey = `${product._id || item.productId}-${
+                    item.selectedSize || item.size || "no-size"
+                  }-${item.selectedColor || item.color || "no-color"}-${index}`;
+
                   return (
                     <CartItem
                       key={itemKey}
@@ -264,7 +267,7 @@ export default function Cart({ isOpen, onClose }) {
                         size: item.selectedSize || item.size,
                         color: item.selectedColor || item.color,
                         price: item.price || product.price,
-                        salePrice: item.salePrice || product.salePrice
+                        salePrice: item.salePrice || product.salePrice,
                       }}
                       onQuantityChange={(newQuantity) =>
                         handleQuantityChange(
@@ -276,8 +279,8 @@ export default function Cart({ isOpen, onClose }) {
                       }
                       onRemove={() =>
                         handleRemoveItem(
-                          product._id || item.productId, 
-                          item.selectedSize || item.size, 
+                          product._id || item.productId,
+                          item.selectedSize || item.size,
                           item.selectedColor || item.color
                         )
                       }
