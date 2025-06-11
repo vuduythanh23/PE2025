@@ -71,6 +71,145 @@ export async function getProducts(filters = {}) {
 }
 
 /**
+ * Fetches products with server-side filtering and pagination
+ * @param {Object} params - Filter and pagination parameters
+ * @param {string} params.category - Category ID filter
+ * @param {string} params.brand - Brand ID filter
+ * @param {number} params.minPrice - Minimum price filter
+ * @param {number} params.maxPrice - Maximum price filter
+ * @param {string} params.sortBy - Sort criteria (newest, price_asc, price_desc, rating_desc)
+ * @param {number} params.page - Page number (1-based)
+ * @param {number} params.limit - Items per page
+ * @returns {Promise<Object>} Object containing products array and pagination info
+ * @throws {Error} If fetching fails or response is invalid
+ */
+export async function getProductsWithFilters(params = {}) {
+  try {
+    console.log("Fetching products with server-side filters:", params);
+    await rateLimiter.checkLimit("getProductsWithFilters");
+    
+    let fetchUrl = ENDPOINTS.PRODUCTS;
+    let products = [];
+
+    // Use specific endpoints based on filters to leverage existing server routes
+    if (params.category && params.category !== '') {
+      // Use category-specific endpoint
+      fetchUrl = `${ENDPOINTS.PRODUCTS}/category/${encodeURIComponent(params.category)}`;
+      console.log("Using category endpoint:", fetchUrl);
+    } else if (params.brand && params.brand !== '') {
+      // Use brand-specific endpoint
+      fetchUrl = `${ENDPOINTS.PRODUCTS}/brand/${encodeURIComponent(params.brand)}`;
+      console.log("Using brand endpoint:", fetchUrl);
+    } else {
+      // Use general products endpoint
+      fetchUrl = ENDPOINTS.PRODUCTS;
+      console.log("Using general products endpoint:", fetchUrl);
+    }
+
+    const res = await fetchWithTimeout(fetchUrl, {
+      headers: BASE_HEADERS,
+    });
+
+    if (!res.ok) {
+      const error = await res.text();
+      console.error("Server response error:", error);
+      throw new Error(`Failed to fetch products: ${error}`);
+    }
+    
+    const data = await res.json();
+    console.log("Received filtered products data:", data);
+
+    // Handle both array response and nested array
+    if (Array.isArray(data)) {
+      products = data.filter(item => item != null);
+    } else if (data && Array.isArray(data.products)) {
+      products = data.products.filter(item => item != null);
+    } else {
+      console.error("Invalid data format:", data);
+      throw new Error("Invalid response format: expected array of products");
+    }
+
+    // Client-side filtering for cases where server endpoint doesn't handle all filters
+    let filteredProducts = [...products];
+
+    // Apply brand filter if not already filtered by endpoint
+    if (params.brand && params.brand !== '' && !fetchUrl.includes('/brand/')) {
+      filteredProducts = filteredProducts.filter(product => {
+        const productBrand = typeof product.brand === 'object' ? product.brand._id : product.brand;
+        return productBrand && productBrand.toString() === params.brand.toString();
+      });
+    }
+
+    // Apply category filter if not already filtered by endpoint  
+    if (params.category && params.category !== '' && !fetchUrl.includes('/category/')) {
+      filteredProducts = filteredProducts.filter(product => {
+        const productCategory = typeof product.category === 'object' ? product.category._id : product.category;
+        return productCategory && productCategory.toString() === params.category.toString();
+      });
+    }
+
+    // Apply price range filter
+    if (params.minPrice !== null && params.minPrice !== undefined) {
+      filteredProducts = filteredProducts.filter(product => {
+        const price = Number(product.price);
+        return !isNaN(price) && price >= params.minPrice;
+      });
+    }
+
+    if (params.maxPrice !== null && params.maxPrice !== undefined && params.maxPrice !== Infinity) {
+      filteredProducts = filteredProducts.filter(product => {
+        const price = Number(product.price);
+        return !isNaN(price) && price <= params.maxPrice;
+      });
+    }
+
+    // Apply sorting
+    if (params.sortBy) {
+      filteredProducts.sort((a, b) => {
+        switch (params.sortBy) {
+          case "price_asc":
+            return (Number(a.price) || 0) - (Number(b.price) || 0);
+          case "price_desc":
+            return (Number(b.price) || 0) - (Number(a.price) || 0);
+          case "rating_desc":
+            return (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0);
+          case "newest":
+          default:
+            return (b._id || '').localeCompare(a._id || '');
+        }
+      });
+    }    // Apply pagination
+    const totalProducts = filteredProducts.length;
+    const page = Math.max(1, params.page || 1);
+    const limit = Math.max(1, params.limit || 9);
+    const totalPages = Math.ceil(totalProducts / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+    console.log(`🔍 Filter Summary:`);
+    console.log(`  - Original products: ${products.length}`);
+    console.log(`  - After filtering: ${totalProducts}`);
+    console.log(`  - Page ${page}/${totalPages} (${limit} per page)`);
+    console.log(`  - Showing: ${paginatedProducts.length} products`);
+    console.log(`  - Index range: ${startIndex}-${endIndex}`);
+
+    return {
+      products: paginatedProducts,
+      totalProducts: totalProducts,
+      currentPage: page,
+      totalPages: totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    };
+
+  } catch (error) {
+    console.error("Error in getProductsWithFilters:", error);
+    throw error;
+  }
+}
+
+/**
  * Fetches a product by ID
  * @param {string} id - Product ID
  * @returns {Promise<Object>} Product data
@@ -331,4 +470,39 @@ export async function deleteProduct(id) {
     throw new Error(`Failed to delete product: ${error}`);
   }
   return res.json();
+}
+
+/**
+ * Get filter options with product counts
+ * @returns {Promise<Object>} Object containing categories and brands with product counts
+ * @throws {Error} If fetching fails
+ */
+export async function getFilterOptions() {
+  try {
+    console.log("Fetching filter options with product counts");
+    await rateLimiter.checkLimit("getFilterOptions");
+    
+    const res = await fetchWithTimeout(`${ENDPOINTS.PRODUCTS}/filter-options`, {
+      headers: BASE_HEADERS,
+    });
+
+    if (!res.ok) {
+      const error = await res.text();
+      console.error("Server response error:", error);
+      throw new Error(`Failed to fetch filter options: ${error}`);
+    }
+    
+    const data = await res.json();
+    console.log("Received filter options:", data);
+
+    return {
+      categories: Array.isArray(data.categories) ? data.categories : [],
+      brands: Array.isArray(data.brands) ? data.brands : [],
+      priceRanges: Array.isArray(data.priceRanges) ? data.priceRanges : []
+    };
+
+  } catch (error) {
+    console.error("Error in getFilterOptions:", error);
+    throw error;
+  }
 }

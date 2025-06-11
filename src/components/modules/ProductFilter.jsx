@@ -9,6 +9,7 @@ export default function ProductFilter({
   onFilterChange,
   onApplyFilters,
   onResetFilters,
+  loading = false, // Add loading prop
 }) {
   // console.log("ProductFilter received categories:", categories.length);
   // console.log("ProductFilter received brands:", brands.length);
@@ -43,7 +44,7 @@ export default function ProductFilter({
   };
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
       {/* Category Filter */}      <div>
         <h3 className="text-lg font-serif text-luxury-dark mb-4">Category</h3>
         <select
@@ -63,6 +64,7 @@ export default function ProductFilter({
             handleFilterChange({ category: categoryId });
           }}
           className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
+          disabled={loading}
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
@@ -107,6 +109,7 @@ export default function ProductFilter({
             handleFilterChange({ brand: brandId });
           }}
           className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
+          disabled={loading}
         >          <option value="">All Brands</option>
           {brands.map((brand) => {
             // Make sure we have a valid brand ID
@@ -152,6 +155,7 @@ export default function ProductFilter({
             }
           }}
           className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
+          disabled={loading}
         >
           {priceRanges.map((range) => (
             <option key={range.id} value={range.id}>
@@ -164,19 +168,28 @@ export default function ProductFilter({
         <button
           onClick={onResetFilters}
           className="flex-1 px-6 py-3 border border-luxury-gold/30 text-luxury-dark/70 hover:border-luxury-gold hover:text-luxury-dark transition-colors font-serif text-sm tracking-wider"
+          disabled={loading}
         >
-          Reset
+          {loading ? 'Loading...' : 'Reset'}
         </button>        <button
           onClick={() => {
             console.log("Apply button clicked, current tempFilters:", tempFilters);
             // Only apply filters when button is clicked
             onApplyFilters();
           }}
-          className="flex-1 px-6 py-3 bg-luxury-gold text-white hover:bg-luxury-dark transition-colors font-serif text-sm tracking-wider"
+          className="flex-1 px-6 py-3 bg-luxury-gold text-white hover:bg-luxury-dark transition-colors font-serif text-sm tracking-wider disabled:opacity-50"
+          disabled={loading}
         >
-          Apply
+          {loading ? 'Applying...' : 'Apply'}
         </button>
       </div>
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="text-center text-luxury-gold/70 text-sm font-serif">
+          Updating filters...
+        </div>
+      )}
     </div>
   );
 }
