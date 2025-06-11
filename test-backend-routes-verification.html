@@ -573,12 +573,11 @@
           }`
         );
 
-        // Test update payment status
-        const paymentResponse = await makeRequest(
+        // Test update payment status        const paymentResponse = await makeRequest(
           "PATCH",
           `/${fakeOrderId}/payment-status`,
           {
-            paymentStatus: "paid",
+            paymentStatus: "success",
           }
         );
 

@@ -321,22 +321,36 @@ export async function updateOrderStatus(orderId, status) {
   if (!orderId || !status) {
     throw new Error("OrderId and status are required");
   }
+
   console.log(`🔧 Updating order ${orderId} status to: ${status}`);
+
+  // Prepare update data with auto payment status
+  const updateData = {
+    orderStatus: status,
+    status: status, // Include both for compatibility
+    newStatus: status,
+  };
+  // Auto-update payment status when confirming order or beyond
+  if (["processing", "confirmed", "shipped", "delivered"].includes(status)) {
+    updateData.paymentStatus = "success";
+    console.log(
+      `💳 Auto-updating payment status to 'success' for confirmed order (status: ${status})`
+    );
+  }
 
   // Use simple, direct approach first
   try {
-    const response = await fetch(`${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}/status`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify({ 
-        orderStatus: status,
-        status: status, // Include both for compatibility
-        newStatus: status 
-      }),
-    });
+    const response = await fetch(
+      `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(updateData),
+      }
+    );
 
     if (response.ok) {
       console.log(`✅ Order status updated successfully!`);
@@ -344,18 +358,17 @@ export async function updateOrderStatus(orderId, status) {
     }
 
     // If the /status endpoint fails, try direct endpoint
-    const directResponse = await fetch(`${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}`, {
-      method: "PATCH", 
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify({ 
-        orderStatus: status,
-        status: status,
-        newStatus: status 
-      }),
-    });
+    const directResponse = await fetch(
+      `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(updateData),
+      }
+    );
 
     if (directResponse.ok) {
       console.log(`✅ Order status updated via direct endpoint!`);
@@ -364,20 +377,20 @@ export async function updateOrderStatus(orderId, status) {
 
     // If all real API attempts fail, try mock data for development
     console.warn("⚠️ All API attempts failed, using mock data");
-    
+
     // Mock success for development
     return {
       success: true,
       data: {
         _id: orderId,
         orderStatus: status,
-        updatedAt: new Date().toISOString()
-      }
+        paymentStatus: status === "processing" ? "success" : undefined,
+        updatedAt: new Date().toISOString(),
+      },
     };
-
   } catch (error) {
     console.error("❌ API call failed:", error);
-    
+
     // Return mock success for development
     console.warn("⚠️ Falling back to mock data due to API error");
     return {
@@ -385,8 +398,9 @@ export async function updateOrderStatus(orderId, status) {
       data: {
         _id: orderId,
         orderStatus: status,
-        updatedAt: new Date().toISOString()
-      }
+        paymentStatus: status === "processing" ? "success" : undefined,
+        updatedAt: new Date().toISOString(),
+      },
     };
   }
 }

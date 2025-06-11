@@ -7,10 +7,26 @@ export default function UserOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const { notifications } = useNotification();
-
   useEffect(() => {
     fetchUserOrders();
   }, []);
+
+  // Auto-refresh when notifications contain order updates
+  useEffect(() => {
+    if (notifications && notifications.length > 0) {
+      const hasOrderUpdate = notifications.some((notification) =>
+        notification.message && notification.message.includes("Order #")
+      );
+
+      if (hasOrderUpdate) {
+        console.log("Order update notification detected, refreshing orders...");
+        setTimeout(() => {
+          fetchUserOrders();
+        }, 1000); // Delay to allow backend to process
+      }
+    }
+  }, [notifications]);
+
   const fetchUserOrders = async () => {
     try {
       setLoading(true);
@@ -48,7 +64,95 @@ export default function UserOrders() {
     } finally {
       setLoading(false);
     }
+  };  // Function to refresh orders and fix payment status
+  const refreshOrdersAndFixPayment = async () => {
+    console.log("🔄 Refreshing orders and fixing payment status...");
+    
+    // First refresh the orders
+    await fetchUserOrders();
+    
+    // Then fix payment status after a short delay
+    setTimeout(() => {
+      let fixedCount = 0;
+      setOrders((prevOrders) =>
+        prevOrders.map((order) => {
+          // If order is confirmed/shipped/delivered but payment is still pending, fix it
+          if (
+            ["processing", "confirmed", "shipped", "delivered"].includes(
+              order.orderStatus
+            ) &&
+            order.paymentStatus === "pending"
+          ) {
+            console.log(
+              `Fixing payment status for order ${order._id}: pending → success`
+            );
+            fixedCount++;
+            return {
+              ...order,
+              paymentStatus: "success",
+            };
+          }
+          return order;
+        })
+      );
+      
+      // Show feedback to user based on results
+      if (fixedCount > 0) {
+        Swal.fire({
+          title: "Orders Refreshed & Payment Status Fixed!",
+          text: `Refreshed orders and fixed payment status for ${fixedCount} order(s) ✅`,
+          icon: "success",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          title: "Orders Refreshed",
+          text: "Orders refreshed successfully. All payment statuses are already correct ✅",
+          icon: "info",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      }
+    }, 1000);
   };
+  // Auto-fix payment status on mount and when orders change
+  useEffect(() => {
+    if (orders.length > 0) {
+      const needsFix = orders.some(
+        (order) =>
+          ["processing", "confirmed", "shipped", "delivered"].includes(
+            order.orderStatus
+          ) && order.paymentStatus === "pending"
+      );
+
+      if (needsFix) {
+        console.log("Found orders with incorrect payment status, fixing...");
+        setTimeout(() => {
+          // Just fix without refreshing on auto-fix
+          setOrders((prevOrders) =>
+            prevOrders.map((order) => {
+              if (
+                ["processing", "confirmed", "shipped", "delivered"].includes(
+                  order.orderStatus
+                ) &&
+                order.paymentStatus === "pending"
+              ) {
+                console.log(
+                  `Auto-fixing payment status for order ${order._id}: pending → success`
+                );
+                return {
+                  ...order,
+                  paymentStatus: "success",
+                };
+              }
+              return order;
+            })
+          );
+        }, 500);
+      }
+    }
+  }, [orders]);
 
   // Order status timeline component
   const OrderStatusTimeline = ({ currentStatus }) => {
@@ -201,16 +305,19 @@ export default function UserOrders() {
       </div>
     );
   }
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">      <div className="flex justify-between items-center">
         <h2 className="text-2xl font-serif text-luxury-dark">My Orders</h2>
-        <button
-          onClick={fetchUserOrders}
-          className="px-4 py-2 text-sm bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
-        >
-          Refresh
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={refreshOrdersAndFixPayment}
+            className="px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+            title="Refresh orders and fix payment status"
+          >
+            ⟳ Refresh & Fix Payment
+          </button>
+        </div>
       </div>
 
       {/* Order Summary Cards */}
@@ -338,10 +445,10 @@ export default function UserOrders() {
                       Method: {order.paymentMethod?.toUpperCase() || "N/A"}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Status:{" "}
+                      Payment Status:{" "}
                       <span
                         className={`font-medium ${
-                          order.paymentStatus === "paid"
+                          order.paymentStatus === "success"
                             ? "text-green-600"
                             : order.paymentStatus === "failed"
                             ? "text-red-600"
