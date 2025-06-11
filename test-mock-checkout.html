@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Mock Checkout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .cart-item {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .order-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        #status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Mock Checkout Test</h1>
+        <p>This demo tests the mock order functionality while backend endpoints are being developed.</p>
+        
+        <div class="section info">
+            <h3>📋 System Status</h3>
+            <div id="status">Checking system status...</div>
+        </div>
+
+        <div class="section">
+            <h3>🛍️ Sample Cart Items</h3>
+            <div id="cartItems">
+                <div class="cart-item">
+                    <strong>Nike Air Max 90</strong><br>
+                    Price: $120<br>
+                    Size: 42<br>
+                    Color: White<br>
+                    Quantity: 1
+                </div>
+                <div class="cart-item">
+                    <strong>Adidas Ultraboost 22</strong><br>
+                    Price: $180<br>
+                    Size: 43<br>
+                    Color: Black<br>
+                    Quantity: 2
+                </div>
+            </div>
+            <p><strong>Total: $480</strong></p>
+        </div>
+
+        <div class="section">
+            <h3>🚀 Test Actions</h3>
+            <button onclick="testMockUser()">Setup Mock User</button>
+            <button onclick="testCreateOrder()">Test Create Order</button>
+            <button onclick="testGetUserOrders()">Test Get Orders</button>
+            <button onclick="clearMockData()">Clear Mock Data</button>
+        </div>
+
+        <div class="section">
+            <h3>📦 Results</h3>
+            <div id="results"></div>
+        </div>
+
+        <div class="section">
+            <h3>📋 User Orders</h3>
+            <div id="ordersList"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Mock user data for testing
+        const mockUser = {
+            _id: "user123",
+            name: "Test User",
+            email: "test@example.com",
+            address: "123 Test Street",
+            phone: "0123456789"
+        };
+
+        // Mock cart items
+        const mockCartItems = [
+            {
+                _id: "product1",
+                name: "Nike Air Max 90",
+                price: 120,
+                salePrice: null,
+                quantity: 1,
+                size: "42",
+                color: "White",
+                images: ["nike-air-max-90.jpg"]
+            },
+            {
+                _id: "product2",
+                name: "Adidas Ultraboost 22",
+                price: 180,
+                salePrice: null,
+                quantity: 2,
+                size: "43",
+                color: "Black",
+                images: ["adidas-ultraboost-22.jpg"]
+            }
+        ];
+
+        // Test functions
+        window.testMockUser = function() {
+            sessionStorage.setItem('user', JSON.stringify(mockUser));
+            sessionStorage.setItem('token', 'mock-jwt-token');
+            updateStatus('Mock user setup complete!', 'success');
+            displayResults('User data stored in sessionStorage');
+        };
+
+        window.testCreateOrder = async function() {
+            try {
+                updateStatus('Creating order...', 'info');
+                
+                // Simulate the createOrder function
+                const orderData = {
+                    items: mockCartItems.map(item => ({
+                        productId: item._id,
+                        name: item.name,
+                        price: item.salePrice || item.price,
+                        salePrice: item.salePrice || null,
+                        quantity: item.quantity,
+                        selectedSize: item.size || null,
+                        selectedColor: item.color || null,
+                        imageUrl: item.images?.[0] || null
+                    })),
+                    totalAmount: mockCartItems.reduce((total, item) => total + ((item.salePrice || item.price) * item.quantity), 0),
+                    shippingAddress: {
+                        street: mockUser.address || "123 Main Street",
+                        city: "Ho Chi Minh City", 
+                        state: "Ho Chi Minh",
+                        zipCode: "70000",
+                        country: "Vietnam"
+                    },
+                    paymentMethod: "credit_card",
+                    paymentStatus: "pending",
+                    orderStatus: "pending"
+                };
+
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Generate mock order response
+                const mockOrder = {
+                    _id: `order_${Date.now()}`,
+                    ...orderData,
+                    orderNumber: `ORD-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                // Store in localStorage
+                const existingOrders = JSON.parse(localStorage.getItem('user_orders') || '[]');
+                existingOrders.push(mockOrder);
+                localStorage.setItem('user_orders', JSON.stringify(existingOrders));
+
+                updateStatus('Order created successfully!', 'success');
+                displayResults(`
+                    <strong>Order Created:</strong><br>
+                    Order ID: ${mockOrder._id}<br>
+                    Order Number: ${mockOrder.orderNumber}<br>
+                    Total: $${mockOrder.totalAmount}<br>
+                    Status: ${mockOrder.orderStatus}<br>
+                    Created: ${new Date(mockOrder.createdAt).toLocaleString()}
+                `);
+                
+                // Refresh orders list
+                loadUserOrders();
+                
+            } catch (error) {
+                updateStatus(`Error creating order: ${error.message}`, 'error');
+                displayResults(`Error: ${error.message}`);
+            }
+        };
+
+        window.testGetUserOrders = async function() {
+            try {
+                updateStatus('Fetching user orders...', 'info');
+                
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Get orders from localStorage
+                const existingOrders = JSON.parse(localStorage.getItem('user_orders') || '[]');
+                
+                updateStatus(`Found ${existingOrders.length} orders`, 'success');
+                displayResults(`
+                    <strong>User Orders:</strong><br>
+                    Total Orders: ${existingOrders.length}<br>
+                    ${existingOrders.map(order => 
+                        `Order ${order.orderNumber}: $${order.totalAmount} (${order.orderStatus})`
+                    ).join('<br>')}
+                `);
+                
+                loadUserOrders();
+                
+            } catch (error) {
+                updateStatus(`Error fetching orders: ${error.message}`, 'error');
+                displayResults(`Error: ${error.message}`);
+            }
+        };
+
+        window.clearMockData = function() {
+            localStorage.removeItem('user_orders');
+            sessionStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            updateStatus('Mock data cleared', 'success');
+            displayResults('All mock data has been cleared');
+            document.getElementById('ordersList').innerHTML = '<p>No orders found</p>';
+        };
+
+        function updateStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = type;
+        }
+
+        function displayResults(html) {
+            document.getElementById('results').innerHTML = html;
+        }
+
+        function loadUserOrders() {
+            const orders = JSON.parse(localStorage.getItem('user_orders') || '[]');
+            const ordersListEl = document.getElementById('ordersList');
+            
+            if (orders.length === 0) {
+                ordersListEl.innerHTML = '<p>No orders found</p>';
+                return;
+            }
+            
+            ordersListEl.innerHTML = orders.map(order => `
+                <div class="order-item">
+                    <strong>Order #${order.orderNumber}</strong><br>
+                    <strong>Total:</strong> $${order.totalAmount}<br>
+                    <strong>Status:</strong> ${order.orderStatus}<br>
+                    <strong>Items:</strong> ${order.items.length}<br>
+                    <strong>Created:</strong> ${new Date(order.createdAt).toLocaleString()}<br>
+                    <strong>Shipping:</strong> ${order.shippingAddress.street}, ${order.shippingAddress.city}<br>
+                    <details>
+                        <summary>View Items</summary>
+                        ${order.items.map(item => `
+                            <div style="margin: 5px 0; padding: 5px; background: #f0f0f0; border-radius: 3px;">
+                                ${item.name} - $${item.price} x ${item.quantity}
+                                ${item.selectedSize ? `(Size: ${item.selectedSize})` : ''}
+                                ${item.selectedColor ? `(Color: ${item.selectedColor})` : ''}
+                            </div>
+                        `).join('')}
+                    </details>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('System ready for testing', 'info');
+            loadUserOrders();
+        });
+    </script>
+</body>
+</html>

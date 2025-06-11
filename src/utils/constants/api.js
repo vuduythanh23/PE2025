@@ -1,7 +1,8 @@
 // API Configuration Constants
 export const API_CONFIG = {
   BASE_URL:
-    import.meta.env.VITE_API_URL || "https://shoe-store-backend-api-88692812562.us-central1.run.app/api",
+    import.meta.env.VITE_API_URL ||
+    "https://shoe-store-backend-api-88692812562.us-central1.run.app/api",
   TIMEOUT_DURATION: parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000, // 15 seconds
   RETRY_ATTEMPTS: parseInt(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
   RATE_LIMIT: {
@@ -19,6 +20,7 @@ export const ENDPOINTS = {
   BRANDS: `${API_CONFIG.BASE_URL}/brands`,
   CATEGORIES: `${API_CONFIG.BASE_URL}/categories`,
   ORDERS: `${API_CONFIG.BASE_URL}/orders`,
+  CARTS: `${API_CONFIG.BASE_URL}/carts`,
   UPLOAD: `${API_CONFIG.BASE_URL}/upload`,
 };
 

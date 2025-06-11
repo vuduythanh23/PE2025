@@ -6,14 +6,17 @@ import {
 } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import { LoadingProvider } from "./context/LoadingContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
 import UserProfile from "./pages/UserProfile";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import Cart from "./components/modules/Cart";
 import NotificationBanner from "./components/modules/NotificationBanner";
+import BackendStatusIndicator from "./components/modules/BackendStatusIndicator";
 import { useCart } from "./context/CartContext";
 import { isAuthenticated } from "./utils";
 
@@ -26,12 +29,14 @@ function AppContent() {
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Register />} />{" "}
         <Route path="/admin" element={<Admin />} />
         <Route path="/profile" element={<UserProfile />} />
-        <Route path="/products" element={<Products />} />      </Routes>
+        <Route path="/products" element={<Products />} />
+        <Route path="/product/:id" element={<ProductDetail />} />{" "}      </Routes>
       <Cart isOpen={isCartOpen} onClose={closeCart} />
       {isAuthenticated() && <NotificationBanner />}
+      <BackendStatusIndicator />
     </div>
   );
 }
@@ -41,7 +46,9 @@ export default function App() {
     <LoadingProvider>
       <Router>
         <CartProvider>
-          <AppContent />
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
         </CartProvider>
       </Router>
     </LoadingProvider>

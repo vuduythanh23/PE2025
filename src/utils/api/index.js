@@ -5,6 +5,7 @@ export * from "./products.js";
 export * from "./brands.js";
 export * from "./categories.js";
 export * from "./orders.js";
+export * from "./carts.js";
 export * from "./ratings.js";
 
 // Export base utilities if needed

@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   formatCurrency,
-  removeFromCart,
-  updateCartItemQuantity,
-  clearCart,
   createOrder,
   isAuthenticated,
+  updateItemQuantity,
+  removeItemFromCart,
+  clearUserCart,
 } from "../../utils";
 import { useCart } from "../../context/CartContext";
 import Swal from "sweetalert2";
@@ -15,14 +15,14 @@ import Swal from "sweetalert2";
 const CartItem = ({ item, onQuantityChange, onRemove }) => {
   // Xử lý khi hình ảnh lỗi
   const handleImageError = (e) => {
-    e.target.src = '/images/product-placeholder.png';
+    e.target.src = "/images/product-placeholder.png";
     e.target.onerror = null;
   };
 
   return (
     <div className="flex gap-4 pb-4 border-b border-luxury-gold/10 last:border-0">
       <img
-        src={item.images?.[0] || '/images/product-placeholder.png'}
+        src={item.images?.[0] || "/images/product-placeholder.png"}
         alt={item.name}
         className="w-24 h-24 object-cover rounded-lg"
         onError={handleImageError}
@@ -32,7 +32,7 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
         <p className="text-sm text-luxury-dark/70 mt-1">
           {item.color && `Color: ${item.color}`}
           {item.size && ` | Size: ${item.size}`}
-        </p>
+        </p>{" "}
         <div className="flex justify-between items-center mt-2">
           <div className="flex items-center gap-2">
             <button
@@ -45,7 +45,9 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
               {item.quantity}
             </span>
             <button
-              onClick={() => onQuantityChange(Math.min(item.stock, item.quantity + 1))}
+              onClick={() =>
+                onQuantityChange(Math.min(item.stock, item.quantity + 1))
+              }
               className="text-luxury-dark/70 hover:text-luxury-gold transition-colors"
               disabled={item.quantity >= item.stock}
             >
@@ -53,9 +55,16 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
             </button>
           </div>
           <div className="flex items-center gap-4">
-            <span className="font-serif text-luxury-gold">
-              {formatCurrency(item.price * item.quantity)}
-            </span>
+            <div className="text-right">
+              <span className="font-serif text-luxury-gold">
+                {formatCurrency((item.salePrice || item.price) * item.quantity)}
+              </span>
+              {item.salePrice && item.salePrice < item.price && (
+                <div className="text-sm text-gray-500 line-through">
+                  {formatCurrency(item.price * item.quantity)}
+                </div>
+              )}
+            </div>
             <button
               onClick={onRemove}
               className="text-red-500 hover:text-red-600 transition-colors"
@@ -85,15 +94,41 @@ export default function Cart({ isOpen, onClose }) {
       return () => clearTimeout(timer);
     }
   }, [isOpen, updateCartItems]);
-
-  const handleQuantityChange = (productId, size, color, newQuantity) => {
-    updateCartItemQuantity(productId, size, color, newQuantity);
-    updateCartItems();
+  const handleQuantityChange = async (productId, size, color, newQuantity) => {
+    try {
+      await updateItemQuantity({
+        productId: productId,
+        quantity: newQuantity,
+        selectedSize: size,
+        selectedColor: color
+      });
+      updateCartItems();
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      Swal.fire({
+        title: "Error",
+        text: "Failed to update quantity. Please try again.",
+        icon: "error",
+      });
+    }
   };
 
-  const handleRemoveItem = (productId, size, color) => {
-    removeFromCart(productId, size, color);
-    updateCartItems();
+  const handleRemoveItem = async (productId, size, color) => {
+    try {
+      await removeItemFromCart({
+        productId: productId,
+        selectedSize: size,
+        selectedColor: color
+      });
+      updateCartItems();
+    } catch (error) {
+      console.error('Error removing item:', error);
+      Swal.fire({
+        title: "Error",
+        text: "Failed to remove item. Please try again.",
+        icon: "error",
+      });
+    }
   };
   const handleCheckout = async () => {
     if (!isAuthenticated()) {
@@ -116,18 +151,17 @@ export default function Cart({ isOpen, onClose }) {
 
     try {
       setLoading(true);
-      
       // Prepare order data matching the schema
       const orderData = {
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           productId: item._id,
           name: item.name,
-          price: item.price,
+          price: item.salePrice || item.price, // Use sale price if available
           salePrice: item.salePrice || null,
           quantity: item.quantity,
           selectedSize: item.size || null,
           selectedColor: item.color || null,
-          imageUrl: item.images?.[0] || null
+          imageUrl: item.images?.[0] || null,
         })),
         totalAmount: cartTotal,
         // Default shipping address - in a real app, user would provide this
@@ -136,16 +170,14 @@ export default function Cart({ isOpen, onClose }) {
           city: "Default City",
           state: "Default State",
           zipCode: "00000",
-          country: "Default Country"
+          country: "Default Country",
         },
         paymentMethod: "credit_card",
         paymentStatus: "pending",
-        orderStatus: "pending"
-      };
-
-      const order = await createOrder(orderData);
+        orderStatus: "pending",
+      };      const order = await createOrder(cartItems);  // Send cart items array to use /from-cart endpoint
       if (order) {
-        clearCart();
+        await clearUserCart();
         updateCartItems();
         onClose();
         Swal.fire({
@@ -171,7 +203,9 @@ export default function Cart({ isOpen, onClose }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+      className={`fixed inset-0 z-50 ${
+        isOpen ? "pointer-events-auto" : "pointer-events-none"
+      }`}
     >
       <div
         className={`absolute inset-0 bg-black transition-opacity duration-300 ${
@@ -179,7 +213,7 @@ export default function Cart({ isOpen, onClose }) {
         }`}
         onClick={onClose}
       />
-      
+
       <div
         className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transition-transform duration-300 ${
           isVisible ? "translate-x-0" : "translate-x-full"
@@ -187,7 +221,9 @@ export default function Cart({ isOpen, onClose }) {
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-luxury-gold/10 p-4">
-            <h2 className="font-serif text-2xl text-luxury-dark">Shopping Cart</h2>
+            <h2 className="font-serif text-2xl text-luxury-dark">
+              Shopping Cart
+            </h2>
             <button
               onClick={onClose}
               className="text-luxury-dark/70 hover:text-luxury-gold transition-colors"
@@ -212,18 +248,39 @@ export default function Cart({ isOpen, onClose }) {
                 </button>
               </div>
             ) : (
-              <div className="p-6 space-y-6">
-                {cartItems.map((item, index) => {
-                  // Tạo unique key bằng cách kết hợp nhiều thuộc tính
-                  const itemKey = `${item._id}-${item.size || 'no-size'}-${item.color || 'no-color'}-${index}`;
+              <div className="p-6 space-y-6">                {cartItems.map((item, index) => {
+                  // Handle backend cart structure: item might have product field
+                  const product = item.product || item;
+                  const itemKey = `${product._id || item.productId}-${item.selectedSize || item.size || "no-size"}-${
+                    item.selectedColor || item.color || "no-color"
+                  }-${index}`;
+                  
                   return (
                     <CartItem
                       key={itemKey}
-                      item={item}
+                      item={{
+                        ...product,
+                        quantity: item.quantity,
+                        size: item.selectedSize || item.size,
+                        color: item.selectedColor || item.color,
+                        price: item.price || product.price,
+                        salePrice: item.salePrice || product.salePrice
+                      }}
                       onQuantityChange={(newQuantity) =>
-                        handleQuantityChange(item._id, item.size, item.color, newQuantity)
+                        handleQuantityChange(
+                          product._id || item.productId,
+                          item.selectedSize || item.size,
+                          item.selectedColor || item.color,
+                          newQuantity
+                        )
                       }
-                      onRemove={() => handleRemoveItem(item._id, item.size, item.color)}
+                      onRemove={() =>
+                        handleRemoveItem(
+                          product._id || item.productId, 
+                          item.selectedSize || item.size, 
+                          item.selectedColor || item.color
+                        )
+                      }
                     />
                   );
                 })}
@@ -243,7 +300,11 @@ export default function Cart({ isOpen, onClose }) {
                 onClick={handleCheckout}
                 disabled={loading}
                 className={`w-full bg-luxury-gold text-white py-3 px-6 rounded-md font-serif
-                  ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-luxury-dark transition-colors'}`}
+                  ${
+                    loading
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-luxury-dark transition-colors"
+                  }`}
               >
                 {loading ? "Processing..." : "Proceed to Checkout"}
               </button>

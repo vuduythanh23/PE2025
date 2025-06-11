@@ -1,30 +1,127 @@
 import { useState, useEffect } from "react";
 import { getUserOrders, formatCurrency, formatDate } from "../../utils";
+import { useNotification } from "../../context/NotificationContext";
 import Swal from "sweetalert2";
 
 export default function UserOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { notifications } = useNotification();
 
   useEffect(() => {
     fetchUserOrders();
   }, []);
-
   const fetchUserOrders = async () => {
     try {
       setLoading(true);
+      console.log("Fetching user orders...");
+      
       const data = await getUserOrders();
-      setOrders(data || []);
+      console.log("Received orders data:", data);
+      
+      // Sort orders by creation date, newest first
+      const sortedOrders = (data || []).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      setOrders(sortedOrders);
+      
+      // Show success message if orders found
+      if (sortedOrders.length > 0) {
+        console.log(`Successfully loaded ${sortedOrders.length} orders`);
+      }
     } catch (error) {
       console.error("Error fetching orders:", error);
+      
+      // Show user-friendly error message
+      const errorMessage = error.message.includes("Authentication") 
+        ? "Please log in to view your orders"
+        : error.message.includes("Invalid order ID")
+        ? "There seems to be an issue with the order system. Your orders will appear here once available."
+        : error.message || "Failed to fetch orders";
+        
       Swal.fire({
-        title: "Error",
-        text: error.message || "Failed to fetch orders",
-        icon: "error",
+        title: "Unable to Load Orders",
+        text: errorMessage,
+        icon: "info",
+        confirmButtonText: "OK"
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Order status timeline component
+  const OrderStatusTimeline = ({ currentStatus }) => {
+    const statuses = [
+      { key: "pending", label: "Pending", icon: "🕐" },
+      { key: "processing", label: "Processing", icon: "⚙️" },
+      { key: "confirmed", label: "Confirmed", icon: "✅" },
+      { key: "shipped", label: "Shipped", icon: "🚚" },
+      { key: "delivered", label: "Delivered", icon: "📦" },
+    ];
+
+    const cancelledStatuses = ["cancelled"];
+
+    if (cancelledStatuses.includes(currentStatus)) {
+      return (
+        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center text-red-700">
+            <span className="text-lg mr-2">❌</span>
+            <span className="font-medium">Order Cancelled</span>
+          </div>
+        </div>
+      );
+    }
+
+    const currentIndex = statuses.findIndex(
+      (status) => status.key === currentStatus
+    );
+
+    return (
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+        <h6 className="text-sm font-medium text-gray-700 mb-3">
+          Order Progress
+        </h6>
+        <div className="flex items-center space-x-2">
+          {statuses.map((status, index) => {
+            const isCompleted = index <= currentIndex;
+            const isCurrent = index === currentIndex;
+
+            return (
+              <div key={status.key} className="flex items-center">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                    isCompleted
+                      ? "bg-green-500 border-green-500 text-white"
+                      : "bg-gray-200 border-gray-300 text-gray-500"
+                  } ${isCurrent ? "ring-2 ring-green-300" : ""}`}
+                >
+                  <span className="text-xs">{status.icon}</span>
+                </div>
+                <div className="ml-1 text-xs text-center">
+                  <div
+                    className={`${
+                      isCompleted
+                        ? "text-green-600 font-medium"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {status.label}
+                  </div>
+                </div>
+                {index < statuses.length - 1 && (
+                  <div
+                    className={`w-8 h-0.5 mx-2 ${
+                      index < currentIndex ? "bg-green-500" : "bg-gray-300"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   const getStatusColor = (status) => {
@@ -92,7 +189,8 @@ export default function UserOrders() {
         </div>
         <h3 className="text-lg font-serif text-gray-900 mb-2">No Orders Yet</h3>
         <p className="text-gray-600 mb-4">
-          You haven't placed any orders yet. Start shopping to see your orders here.
+          You haven't placed any orders yet. Start shopping to see your orders
+          here.
         </p>
         <a
           href="/products"
@@ -103,7 +201,6 @@ export default function UserOrders() {
       </div>
     );
   }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -116,6 +213,49 @@ export default function UserOrders() {
         </button>
       </div>
 
+      {/* Order Summary Cards */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="text-2xl font-bold text-blue-600">
+              {orders.length}
+            </div>
+            <div className="text-sm text-gray-600">Total Orders</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="text-2xl font-bold text-yellow-600">
+              {
+                orders.filter((o) =>
+                  ["pending", "processing"].includes(o.orderStatus)
+                ).length
+              }
+            </div>
+            <div className="text-sm text-gray-600">Pending Orders</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="text-2xl font-bold text-green-600">
+              {
+                orders.filter((o) =>
+                  ["confirmed", "shipped", "delivered"].includes(o.orderStatus)
+                ).length
+              }
+            </div>
+            <div className="text-sm text-gray-600">Active Orders</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="text-2xl font-bold text-luxury-gold">
+              {formatCurrency(
+                orders.reduce(
+                  (total, order) => total + (order.totalAmount || 0),
+                  0
+                )
+              )}
+            </div>
+            <div className="text-sm text-gray-600">Total Spent</div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {orders.map((order) => (
           <div
@@ -127,7 +267,7 @@ export default function UserOrders() {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-lg font-serif text-luxury-dark">
-                    Order #{order._id?.slice(-8) || 'N/A'}
+                    Order #{order._id?.slice(-8) || "N/A"}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
                     Placed on {formatDate(order.createdAt || new Date())}
@@ -155,19 +295,17 @@ export default function UserOrders() {
                 {order.items?.map((item, index) => (
                   <div key={index} className="flex items-center space-x-4">
                     <img
-                      src={item.imageUrl || '/images/placeholder-product.jpg'}
+                      src={item.imageUrl || "/images/placeholder-product.jpg"}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg"
                       onError={(e) => {
-                        e.target.src = '/images/placeholder-product.jpg';
+                        e.target.src = "/images/placeholder-product.jpg";
                       }}
                     />
                     <div className="flex-1">
                       <h5 className="font-medium text-gray-900">{item.name}</h5>
                       <div className="text-sm text-gray-600 space-y-1">
-                        {item.selectedSize && (
-                          <p>Size: {item.selectedSize}</p>
-                        )}
+                        {item.selectedSize && <p>Size: {item.selectedSize}</p>}
                         {item.selectedColor && (
                           <p>Color: {item.selectedColor}</p>
                         )}
@@ -176,7 +314,9 @@ export default function UserOrders() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">
-                        {formatCurrency((item.salePrice || item.price) * item.quantity)}
+                        {formatCurrency(
+                          (item.salePrice || item.price) * item.quantity
+                        )}
                       </p>
                       {item.salePrice && item.salePrice < item.price && (
                         <p className="text-sm text-gray-500 line-through">
@@ -187,30 +327,40 @@ export default function UserOrders() {
                   </div>
                 ))}
               </div>
-
               {/* Payment & Shipping Info */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Payment Information</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">
+                      Payment Information
+                    </h5>
                     <p className="text-sm text-gray-600">
-                      Method: {order.paymentMethod?.toUpperCase() || 'N/A'}
+                      Method: {order.paymentMethod?.toUpperCase() || "N/A"}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Status: <span className={`font-medium ${
-                        order.paymentStatus === 'paid' ? 'text-green-600' : 
-                        order.paymentStatus === 'failed' ? 'text-red-600' : 'text-yellow-600'
-                      }`}>
-                        {order.paymentStatus?.toUpperCase() || 'PENDING'}
+                      Status:{" "}
+                      <span
+                        className={`font-medium ${
+                          order.paymentStatus === "paid"
+                            ? "text-green-600"
+                            : order.paymentStatus === "failed"
+                            ? "text-red-600"
+                            : "text-yellow-600"
+                        }`}
+                      >
+                        {order.paymentStatus?.toUpperCase() || "PENDING"}
                       </span>
                     </p>
                   </div>
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Shipping Address</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">
+                      Shipping Address
+                    </h5>
                     <div className="text-sm text-gray-600 space-y-1">
                       <p>{order.shippingAddress?.street}</p>
                       <p>
-                        {order.shippingAddress?.city}, {order.shippingAddress?.state}{" "}
+                        {order.shippingAddress?.city},{" "}
+                        {order.shippingAddress?.state}{" "}
                         {order.shippingAddress?.zipCode}
                       </p>
                       <p>{order.shippingAddress?.country}</p>
@@ -218,39 +368,60 @@ export default function UserOrders() {
                   </div>
                 </div>
               </div>
-
               {/* Tracking Number */}
               {order.trackingNumber && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h5 className="font-medium text-blue-900 mb-1">Tracking Information</h5>
+                  <h5 className="font-medium text-blue-900 mb-1">
+                    Tracking Information
+                  </h5>
                   <p className="text-sm text-blue-700">
-                    Tracking Number: <span className="font-mono">{order.trackingNumber}</span>
+                    Tracking Number:{" "}
+                    <span className="font-mono">{order.trackingNumber}</span>
                   </p>
                 </div>
-              )}
-
+              )}{" "}
               {/* Order Status Updates */}
-              {(order.orderStatus === 'confirmed' || order.orderStatus === 'shipped' || order.orderStatus === 'delivered') && (
+              {(order.orderStatus === "confirmed" ||
+                order.orderStatus === "shipped" ||
+                order.orderStatus === "delivered") && (
                 <div className="mt-4 p-4 bg-green-50 rounded-lg">
                   <div className="flex items-center">
-                    <svg className="h-5 w-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-green-400 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <p className="text-sm text-green-700 font-medium">
-                      {order.orderStatus === 'confirmed' && 'Your order has been confirmed and is being prepared.'}
-                      {order.orderStatus === 'shipped' && 'Your order has been shipped and is on the way.'}
-                      {order.orderStatus === 'delivered' && 'Your order has been delivered successfully.'}
+                      {order.orderStatus === "confirmed" &&
+                        "Your order has been confirmed and is being prepared."}
+                      {order.orderStatus === "shipped" &&
+                        "Your order has been shipped and is on the way."}
+                      {order.orderStatus === "delivered" &&
+                        "Your order has been delivered successfully."}
                     </p>
                   </div>
                 </div>
               )}
-
               {/* Cancelled Status */}
-              {order.orderStatus === 'cancelled' && (
+              {order.orderStatus === "cancelled" && (
                 <div className="mt-4 p-4 bg-red-50 rounded-lg">
                   <div className="flex items-center">
-                    <svg className="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-red-400 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <p className="text-sm text-red-700 font-medium">
                       This order has been cancelled.
@@ -258,6 +429,8 @@ export default function UserOrders() {
                   </div>
                 </div>
               )}
+              {/* Order Status Timeline */}
+              <OrderStatusTimeline currentStatus={order.orderStatus} />
             </div>
           </div>
         ))}

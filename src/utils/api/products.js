@@ -87,18 +87,22 @@ export async function getProductsWithFilters(params = {}) {
   try {
     console.log("Fetching products with server-side filters:", params);
     await rateLimiter.checkLimit("getProductsWithFilters");
-    
+
     let fetchUrl = ENDPOINTS.PRODUCTS;
     let products = [];
 
     // Use specific endpoints based on filters to leverage existing server routes
-    if (params.category && params.category !== '') {
+    if (params.category && params.category !== "") {
       // Use category-specific endpoint
-      fetchUrl = `${ENDPOINTS.PRODUCTS}/category/${encodeURIComponent(params.category)}`;
+      fetchUrl = `${ENDPOINTS.PRODUCTS}/category/${encodeURIComponent(
+        params.category
+      )}`;
       console.log("Using category endpoint:", fetchUrl);
-    } else if (params.brand && params.brand !== '') {
+    } else if (params.brand && params.brand !== "") {
       // Use brand-specific endpoint
-      fetchUrl = `${ENDPOINTS.PRODUCTS}/brand/${encodeURIComponent(params.brand)}`;
+      fetchUrl = `${ENDPOINTS.PRODUCTS}/brand/${encodeURIComponent(
+        params.brand
+      )}`;
       console.log("Using brand endpoint:", fetchUrl);
     } else {
       // Use general products endpoint
@@ -115,49 +119,98 @@ export async function getProductsWithFilters(params = {}) {
       console.error("Server response error:", error);
       throw new Error(`Failed to fetch products: ${error}`);
     }
-    
     const data = await res.json();
     console.log("Received filtered products data:", data);
 
-    // Handle both array response and nested array
+    // Handle both array response, nested array, and object response
     if (Array.isArray(data)) {
-      products = data.filter(item => item != null);
+      products = data.filter((item) => item != null);
+
+      // Check if we have a nested array structure (e.g. [[{product}], [{product}]])
+      // This can happen in some API responses
+      if (products.length > 0 && Array.isArray(products[0])) {
+        console.log("Detected nested array structure, flattening response");
+        products = products.flat().filter((item) => item != null);
+      }
     } else if (data && Array.isArray(data.products)) {
-      products = data.products.filter(item => item != null);
+      products = data.products.filter((item) => item != null);
     } else {
       console.error("Invalid data format:", data);
       throw new Error("Invalid response format: expected array of products");
     }
 
-    // Client-side filtering for cases where server endpoint doesn't handle all filters
+    console.log(`📦 Processed ${products.length} products from API response`); // Client-side filtering for cases where server endpoint doesn't handle all filters
     let filteredProducts = [...products];
 
+    console.log(`🔍 Starting filtering process:`);
+    console.log(`  - Initial products: ${filteredProducts.length}`);
+    console.log(`  - Filters:`, {
+      category: params.category,
+      brand: params.brand,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice,
+      fetchUrl: fetchUrl,
+    });
+
     // Apply brand filter if not already filtered by endpoint
-    if (params.brand && params.brand !== '' && !fetchUrl.includes('/brand/')) {
-      filteredProducts = filteredProducts.filter(product => {
-        const productBrand = typeof product.brand === 'object' ? product.brand._id : product.brand;
-        return productBrand && productBrand.toString() === params.brand.toString();
+    if (params.brand && params.brand !== "" && !fetchUrl.includes("/brand/")) {
+      const beforeCount = filteredProducts.length;
+      filteredProducts = filteredProducts.filter((product) => {
+        const productBrand =
+          typeof product.brand === "object" ? product.brand._id : product.brand;
+        const matches =
+          productBrand && productBrand.toString() === params.brand.toString();
+        if (!matches && productBrand) {
+          console.log(`  Brand mismatch: ${productBrand} !== ${params.brand}`);
+        }
+        return matches;
       });
+      console.log(
+        `  - After brand filter: ${filteredProducts.length} (was ${beforeCount})`
+      );
     }
 
-    // Apply category filter if not already filtered by endpoint  
-    if (params.category && params.category !== '' && !fetchUrl.includes('/category/')) {
-      filteredProducts = filteredProducts.filter(product => {
-        const productCategory = typeof product.category === 'object' ? product.category._id : product.category;
-        return productCategory && productCategory.toString() === params.category.toString();
+    // Apply category filter if not already filtered by endpoint
+    if (
+      params.category &&
+      params.category !== "" &&
+      !fetchUrl.includes("/category/")
+    ) {
+      const beforeCount = filteredProducts.length;
+      filteredProducts = filteredProducts.filter((product) => {
+        const productCategory =
+          typeof product.category === "object"
+            ? product.category._id
+            : product.category;
+        const matches =
+          productCategory &&
+          productCategory.toString() === params.category.toString();
+        if (!matches && productCategory) {
+          console.log(
+            `  Category mismatch: ${productCategory} !== ${params.category}`
+          );
+        }
+        return matches;
       });
+      console.log(
+        `  - After category filter: ${filteredProducts.length} (was ${beforeCount})`
+      );
     }
 
     // Apply price range filter
     if (params.minPrice !== null && params.minPrice !== undefined) {
-      filteredProducts = filteredProducts.filter(product => {
+      filteredProducts = filteredProducts.filter((product) => {
         const price = Number(product.price);
         return !isNaN(price) && price >= params.minPrice;
       });
     }
 
-    if (params.maxPrice !== null && params.maxPrice !== undefined && params.maxPrice !== Infinity) {
-      filteredProducts = filteredProducts.filter(product => {
+    if (
+      params.maxPrice !== null &&
+      params.maxPrice !== undefined &&
+      params.maxPrice !== Infinity
+    ) {
+      filteredProducts = filteredProducts.filter((product) => {
         const price = Number(product.price);
         return !isNaN(price) && price <= params.maxPrice;
       });
@@ -172,13 +225,15 @@ export async function getProductsWithFilters(params = {}) {
           case "price_desc":
             return (Number(b.price) || 0) - (Number(a.price) || 0);
           case "rating_desc":
-            return (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0);
+            return (
+              (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0)
+            );
           case "newest":
           default:
-            return (b._id || '').localeCompare(a._id || '');
+            return (b._id || "").localeCompare(a._id || "");
         }
       });
-    }    // Apply pagination
+    } // Apply pagination
     const totalProducts = filteredProducts.length;
     const page = Math.max(1, params.page || 1);
     const limit = Math.max(1, params.limit || 9);
@@ -200,9 +255,8 @@ export async function getProductsWithFilters(params = {}) {
       currentPage: page,
       totalPages: totalPages,
       hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      hasPrevPage: page > 1,
     };
-
   } catch (error) {
     console.error("Error in getProductsWithFilters:", error);
     throw error;
@@ -481,7 +535,7 @@ export async function getFilterOptions() {
   try {
     console.log("Fetching filter options with product counts");
     await rateLimiter.checkLimit("getFilterOptions");
-    
+
     const res = await fetchWithTimeout(`${ENDPOINTS.PRODUCTS}/filter-options`, {
       headers: BASE_HEADERS,
     });
@@ -491,16 +545,15 @@ export async function getFilterOptions() {
       console.error("Server response error:", error);
       throw new Error(`Failed to fetch filter options: ${error}`);
     }
-    
+
     const data = await res.json();
     console.log("Received filter options:", data);
 
     return {
       categories: Array.isArray(data.categories) ? data.categories : [],
       brands: Array.isArray(data.brands) ? data.brands : [],
-      priceRanges: Array.isArray(data.priceRanges) ? data.priceRanges : []
+      priceRanges: Array.isArray(data.priceRanges) ? data.priceRanges : [],
     };
-
   } catch (error) {
     console.error("Error in getFilterOptions:", error);
     throw error;

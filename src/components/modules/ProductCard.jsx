@@ -1,5 +1,4 @@
-import { formatCurrency, addToCart, isAuthenticated } from "../../utils";
-import { useState } from "react";
+import { formatCurrency, isAuthenticated, addItemToCart } from "../../utils";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -18,18 +17,18 @@ export default function ProductCard(props) {
     stock = 0,
     averageRating = 0,
   } = props;
-
   const { animateCart, updateCartItems } = useCart();
-  const navigate = useNavigate();
-  const [selectedColor, setSelectedColor] = useState(
-    colors?.[0]?.color || null
-  );
-  const [selectedSize, setSelectedSize] = useState(sizes?.[0]?.size || null); // Get the first valid image URL or use a fallback
+  const navigate = useNavigate(); // Get the first valid image URL or use a fallback
   const productImage =
     images && images.length > 0
       ? images[0]
       : props.imageUrl || "/images/placeholder-product.jpg";
 
+  // Handle view more information - navigate to product detail page
+  const handleViewMore = (e) => {
+    e.stopPropagation();
+    navigate(`/product/${_id}`);
+  };
   const handleAddToCart = async () => {
     // First, check authentication status
     if (!isAuthenticated()) {
@@ -47,47 +46,19 @@ export default function ProductCard(props) {
         navigate("/login?redirect=/products");
       }
       return;
-    }
-
-    // Validate size if product has sizes
-    if (sizes?.length > 0 && !selectedSize) {
-      await Swal.fire({
-        title: "Please Select a Size",
-        text: "You need to select a size before adding to cart",
-        icon: "warning",
+    }    try {
+      // Add product to cart using backend API
+      await addItemToCart({
+        productId: _id,
+        quantity: 1,
+        selectedSize: sizes?.[0]?.size || null, // Use first available size or null
+        selectedColor: colors?.[0]?.color || null // Use first available color or null
       });
-      return;
-    }
 
-    // Validate color if product has colors
-    if (colors?.length > 0 && !selectedColor) {
-      await Swal.fire({
-        title: "Please Select a Color",
-        text: "You need to select a color before adding to cart",
-        icon: "warning",
-      });
-      return;
-    }
-
-    try {
-      // Thêm sản phẩm vào giỏ hàng
-      addToCart(
-        {
-          _id,
-          name,
-          price,
-          images,
-          stock,
-        },
-        1,
-        selectedSize,
-        selectedColor
-      );
-
-      // Cập nhật UI giỏ hàng
+      // Update cart UI
       updateCartItems();
 
-      // Hiển thị thông báo thành công
+      // Show success message
       await Swal.fire({
         title: "Added to Cart!",
         text: "Product has been added to your cart",
@@ -104,15 +75,65 @@ export default function ProductCard(props) {
       });
     }
   };
+  const handleBuyNow = async () => {
+    // First, check authentication status
+    if (!isAuthenticated()) {
+      const result = await Swal.fire({
+        title: "Login Required",
+        text: "You need to login before making a purchase",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Login",
+        cancelButtonText: "Cancel",
+        backdrop: "rgba(0, 0, 0, 0.7)",
+      });
 
+      if (result.isConfirmed) {
+        navigate("/login?redirect=/products");
+      }
+      return;
+    }
+
+    try {
+      // Add product to cart using backend API
+      await addItemToCart({
+        productId: _id,
+        quantity: 1,
+        selectedSize: sizes?.[0]?.size || null,
+        selectedColor: colors?.[0]?.color || null
+      });
+
+      // Update cart UI
+      updateCartItems();
+
+      // Show brief success message and redirect to cart
+      await Swal.fire({
+        title: "Added to Cart!",
+        text: "Redirecting to checkout...",
+        icon: "success",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+
+      // Navigate to cart or checkout
+      navigate("/checkout");
+    } catch (error) {
+      console.error("Error with buy now:", error);
+      await Swal.fire({
+        title: "Error",
+        text: "Failed to process purchase. Please try again.",
+        icon: "error",
+      });
+    }
+  };
   return (
-    <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-      <div className="relative">
-        {" "}
+    <div className="bg-white/80 backdrop-blur-sm group relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] h-[600px] flex flex-col">
+      {/* Image Container with Fixed Height */}
+      <div className="relative h-[300px] overflow-hidden">
         <img
           src={productImage}
           alt={name || "Product image"}
-          className="w-full h-[400px] object-cover transform transition-transform duration-700 group-hover:scale-105"
+          className="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-105"
           onError={(e) => {
             console.error("Image failed to load:", productImage);
             e.target.src = "/images/placeholder-product.jpg";
@@ -133,14 +154,20 @@ export default function ProductCard(props) {
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent h-32 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      <div className="p-6">
+      {/* Content Container */}
+      <div className="p-6 flex-1 flex flex-col">
+        {/* Header Section */}
         <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xl font-serif text-luxury-dark">{name}</h3>
-            <p className="text-sm text-luxury-gold font-medium mt-1">{brand}</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xl font-serif text-luxury-dark truncate">
+              {name}
+            </h3>
+            <p className="text-sm text-luxury-gold font-medium mt-1 truncate">
+              {brand}
+            </p>
           </div>
           {averageRating > 0 && (
-            <div className="flex items-center">
+            <div className="flex items-center ml-2">
               <span className="text-luxury-gold">★</span>
               <span className="text-sm text-luxury-dark/70 ml-1 font-serif">
                 {averageRating.toFixed(1)}
@@ -149,76 +176,49 @@ export default function ProductCard(props) {
           )}
         </div>
 
-        <p className="text-luxury-dark/70 text-sm mb-6 line-clamp-2">
+        {/* Description Section */}
+        <p className="text-luxury-dark/70 text-sm mb-4 line-clamp-2 flex-1">
           {description}
         </p>
 
-        {Array.isArray(colors) && colors.length > 0 && (
-          <div className="mb-6">
-            <p className="text-sm font-serif text-luxury-dark mb-3">
-              Color Options
+        {/* Price and Actions Section */}
+        <div className="mt-auto space-y-4">
+          <div className="text-center">
+            <p className="text-luxury-gold font-serif text-2xl">
+              {formatCurrency(price || 0)}
             </p>
-            <div className="flex gap-3">
-              {colors.map((c, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedColor(c.color)}
-                  className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
-                    selectedColor === c.color
-                      ? "border-luxury-gold ring-1 ring-luxury-gold"
-                      : "border-gray-200"
-                  }`}
-                  style={{ backgroundColor: c.hexCode }}
-                  title={c.color}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+          </div>          <div className="flex gap-2">
+            <button
+              onClick={handleBuyNow}
+              className={`flex-1 py-3 px-3 transition-all duration-200 font-serif text-xs tracking-wider ${
+                stock > 0
+                  ? "bg-luxury-gold text-white hover:bg-luxury-dark active:transform active:scale-95"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+              disabled={stock === 0}
+            >
+              {stock > 0 ? "Buy Now" : "Out of Stock"}
+            </button>
 
-        {Array.isArray(sizes) && sizes.length > 0 && (
-          <div className="mb-6">
-            <p className="text-sm font-serif text-luxury-dark mb-3">
-              Select Size
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              {sizes.map((s, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedSize(s.size)}
-                  className={`w-12 h-12 text-sm font-serif rounded-full border transition-all duration-200 ${
-                    selectedSize === s.size
-                      ? "bg-luxury-gold text-white border-luxury-gold"
-                      : "border-gray-200 text-luxury-dark hover:border-luxury-gold"
-                  } ${
-                    s.stock === 0
-                      ? "opacity-50 cursor-not-allowed"
-                      : "transform hover:scale-105"
-                  }`}
-                  disabled={s.stock === 0}
-                >
-                  {s.size}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+            <button
+              onClick={handleAddToCart}
+              className={`flex-1 py-3 px-3 transition-all duration-200 font-serif text-xs tracking-wider ${
+                stock > 0
+                  ? "border border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200"
+              }`}
+              disabled={stock === 0}
+            >
+              {stock > 0 ? "Add to Cart" : "Out of Stock"}
+            </button>
 
-        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-          <p className="text-luxury-gold font-serif text-xl">
-            {formatCurrency(price || 0)}
-          </p>
-          <button
-            onClick={handleAddToCart}
-            className={`px-6 py-3 transition-all duration-200 font-serif text-sm tracking-wider ${
-              stock > 0
-                ? "bg-luxury-gold text-white hover:bg-luxury-dark active:transform active:scale-95"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
-            disabled={stock === 0}
-          >
-            {stock > 0 ? "Add to Cart" : "Out of Stock"}
-          </button>
+            <button
+              onClick={handleViewMore}
+              className="flex-1 py-3 px-3 border border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white transition-all duration-200 font-serif text-xs tracking-wider"
+            >
+              View More
+            </button>
+          </div>
         </div>
       </div>
     </div>

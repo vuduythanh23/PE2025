@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { getCategories, getBrands, getProducts } from "../utils";
+import { getCategories, getBrands } from "../utils";
 import { getProductsWithFilters } from "../utils/api/products";
-import { FilterDebugger, DEBUG_FILTERS } from "../utils/helpers/filterDebug";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";
 import ProductFilter from "../components/modules/ProductFilter";
 import ProductSort from "../components/modules/ProductSort";
-import FilterSkeleton from "../components/modules/FilterSkeleton";
 import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 
@@ -20,8 +18,8 @@ export default function Products() {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filtersLoading, setFiltersLoading] = useState(true);
   const { handleAsyncOperation } = useLoading();
+
   // Active filters that trigger API calls
   const [activeProductFilters, setActiveProductFilters] = useState({
     category: "",
@@ -43,11 +41,11 @@ export default function Products() {
     page: 1,
     limit: 9,
   });
+
   // Fetch initial filter options (categories and brands)
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        setFiltersLoading(true);
         const [categoriesData, brandsData] = await handleAsyncOperation(
           async () => Promise.all([getCategories(), getBrands()]),
           "Failed to load filter data"
@@ -57,13 +55,12 @@ export default function Products() {
         setBrands(Array.isArray(brandsData) ? brandsData : []);
       } catch (error) {
         console.error("Error fetching initial data:", error);
-      } finally {
-        setFiltersLoading(false);
       }
     };
 
     fetchInitialData();
   }, [handleAsyncOperation]);
+
   // Fetch products whenever activeProductFilters or sortSettings change
   useEffect(() => {
     const fetchProducts = async () => {
@@ -78,14 +75,11 @@ export default function Products() {
         };
 
         // Add filters if they exist
-        if (
-          activeProductFilters.category &&
-          activeProductFilters.category !== ""
-        ) {
+        if (activeProductFilters.category) {
           apiParams.category = activeProductFilters.category;
         }
 
-        if (activeProductFilters.brand && activeProductFilters.brand !== "") {
+        if (activeProductFilters.brand) {
           apiParams.brand = activeProductFilters.brand;
         }
 
@@ -100,133 +94,16 @@ export default function Products() {
           apiParams.maxPrice = activeProductFilters.priceRange.max;
         }
 
-        console.log("🚀 Fetching products with params:", apiParams);
+        console.log("Fetching products with params:", apiParams);
 
-        if (DEBUG_FILTERS) {
-          FilterDebugger.logApiCall(apiParams, "getProductsWithFilters");
-        }
-        const result = await handleAsyncOperation(async () => {
-          try {
-            return await getProductsWithFilters(apiParams);
-          } catch (error) {
-            console.warn(
-              "⚠️ getProductsWithFilters failed, falling back to getProducts:",
-              error.message
-            );
-
-            // Fallback to original getProducts and apply filtering client-side
-            const allProducts = await getProducts();
-            console.log(
-              "📦 Fallback: Received products from getProducts:",
-              allProducts.length
-            );
-
-            // Apply client-side filtering
-            let filteredProducts = Array.isArray(allProducts)
-              ? allProducts
-              : [];
-
-            // Filter by category
-            if (apiParams.category) {
-              filteredProducts = filteredProducts.filter((product) => {
-                const productCategory =
-                  typeof product.category === "object"
-                    ? product.category._id
-                    : product.category;
-                return (
-                  productCategory &&
-                  productCategory.toString() === apiParams.category.toString()
-                );
-              });
-            }
-
-            // Filter by brand
-            if (apiParams.brand) {
-              filteredProducts = filteredProducts.filter((product) => {
-                const productBrand =
-                  typeof product.brand === "object"
-                    ? product.brand._id
-                    : product.brand;
-                return (
-                  productBrand &&
-                  productBrand.toString() === apiParams.brand.toString()
-                );
-              });
-            }
-
-            // Filter by price range
-            if (apiParams.minPrice !== undefined) {
-              filteredProducts = filteredProducts.filter((product) => {
-                const price = Number(product.price);
-                return !isNaN(price) && price >= apiParams.minPrice;
-              });
-            }
-
-            if (apiParams.maxPrice !== undefined) {
-              filteredProducts = filteredProducts.filter((product) => {
-                const price = Number(product.price);
-                return !isNaN(price) && price <= apiParams.maxPrice;
-              });
-            }
-
-            // Apply sorting
-            if (apiParams.sortBy) {
-              filteredProducts.sort((a, b) => {
-                switch (apiParams.sortBy) {
-                  case "price_asc":
-                    return (Number(a.price) || 0) - (Number(b.price) || 0);
-                  case "price_desc":
-                    return (Number(b.price) || 0) - (Number(a.price) || 0);
-                  case "rating_desc":
-                    return (
-                      (Number(b.averageRating) || 0) -
-                      (Number(a.averageRating) || 0)
-                    );
-                  case "newest":
-                  default:
-                    return (b._id || "").localeCompare(a._id || "");
-                }
-              });
-            }
-
-            // Apply pagination
-            const totalProducts = filteredProducts.length;
-            const page = Math.max(1, apiParams.page || 1);
-            const limit = Math.max(1, apiParams.limit || 9);
-            const totalPages = Math.ceil(totalProducts / limit);
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
-            const paginatedProducts = filteredProducts.slice(
-              startIndex,
-              endIndex
-            );
-
-            console.log(
-              `📊 Fallback results: ${paginatedProducts.length}/${totalProducts} products, page ${page}/${totalPages}`
-            );
-
-            return {
-              products: paginatedProducts,
-              totalProducts: totalProducts,
-              currentPage: page,
-              totalPages: totalPages,
-              hasNextPage: page < totalPages,
-              hasPrevPage: page > 1,
-            };
-          }
-        }, "Failed to load products");
+        const result = await handleAsyncOperation(
+          async () => getProductsWithFilters(apiParams),
+          "Failed to load products"
+        );
 
         console.log("Received products result:", result);
 
-        if (DEBUG_FILTERS) {
-          FilterDebugger.logApiResponse(result);
-          FilterDebugger.logPaginationState(
-            result.currentPage,
-            result.totalPages,
-            result.totalProducts,
-            apiParams.limit
-          );
-        } // Format products for display
+        // Format products for display
         const formattedProducts = result.products.map((product) => {
           // Handle category display
           let categoryName = "";
@@ -234,8 +111,11 @@ export default function Products() {
             if (typeof product.category === "object" && product.category.name) {
               categoryName = product.category.name;
             } else if (typeof product.category === "string") {
-              // For string IDs, we'll leave it empty and let ProductCard handle it
-              categoryName = "";
+              // Find category name from our categories list
+              const foundCategory = categories.find(
+                (cat) => cat._id.toString() === product.category
+              );
+              categoryName = foundCategory ? foundCategory.name : "";
             }
           }
 
@@ -245,8 +125,11 @@ export default function Products() {
             if (typeof product.brand === "object" && product.brand.name) {
               brandName = product.brand.name;
             } else if (typeof product.brand === "string") {
-              // For string IDs, we'll leave it empty and let ProductCard handle it
-              brandName = "";
+              // Find brand name from our brands list
+              const foundBrand = brands.find(
+                (brand) => brand._id.toString() === product.brand
+              );
+              brandName = foundBrand ? foundBrand.name : "";
             }
           }
 
@@ -282,31 +165,25 @@ export default function Products() {
         setCurrentPage(result.currentPage);
         setTotalPages(result.totalPages);
       } catch (error) {
-        console.error("🚨 Error fetching products:", error);
-        console.error("Error details:", {
-          message: error.message,
-          stack: error.stack,
-          apiParams: apiParams,
-        });
-
-        // Set empty state on error
-        setFilteredProducts([]);
-        setTotalFilteredProducts(0);
-        setCurrentPage(1);
-        setTotalPages(1);
-
+        console.error("Error fetching products:", error);
         Swal.fire({
           icon: "error",
-          title: "Error Loading Products",
-          text: `Failed to load products: ${error.message}`,
-          footer: "Please check the console for more details",
+          title: "Error",
+          text: "Failed to load products. Please try again.",
         });
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
-  }, [activeProductFilters, sortSettings, handleAsyncOperation]);
+  }, [
+    activeProductFilters,
+    sortSettings,
+    handleAsyncOperation,
+    categories,
+    brands,
+  ]);
 
   // Handler for temporary filter changes (doesn't apply until user clicks Apply)
   const handleTempFiltersChange = (newFilters) => {
@@ -315,6 +192,7 @@ export default function Products() {
       ...newFilters,
     }));
   };
+
   // Apply filters from temporary state to active filter state
   const handleApplyFilters = () => {
     const filtersToApply = JSON.parse(JSON.stringify(tempFilters));
@@ -330,13 +208,6 @@ export default function Products() {
 
     // Reset to page 1 when applying new filters
     filtersToApply.page = 1;
-
-    if (DEBUG_FILTERS) {
-      FilterDebugger.logFilterChange("Apply Filters", {
-        from: activeProductFilters,
-        to: filtersToApply,
-      });
-    }
 
     setActiveProductFilters(filtersToApply);
 
@@ -416,25 +287,19 @@ export default function Products() {
             {/* Filters Sidebar */}
             <aside className="lg:w-1/4">
               <div className="bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
-                {" "}
                 <h2 className="text-2xl font-serif text-luxury-dark mb-8">
                   Filters
                 </h2>
-                {filtersLoading ? (
-                  <FilterSkeleton />
-                ) : (
-                  <ProductFilter
-                    categories={categories}
-                    brands={brands}
-                    selectedCategory={tempFilters.category}
-                    selectedBrand={tempFilters.brand}
-                    selectedPriceRange={tempFilters.priceRange}
-                    onFilterChange={handleTempFiltersChange}
-                    onApplyFilters={handleApplyFilters}
-                    onResetFilters={handleResetFilters}
-                    loading={loading}
-                  />
-                )}
+                <ProductFilter
+                  categories={categories}
+                  brands={brands}
+                  selectedCategory={tempFilters.category}
+                  selectedBrand={tempFilters.brand}
+                  selectedPriceRange={tempFilters.priceRange}
+                  onFilterChange={handleTempFiltersChange}
+                  onApplyFilters={handleApplyFilters}
+                  onResetFilters={handleResetFilters}
+                />
               </div>
             </aside>
 

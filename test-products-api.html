@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Products API Test</title>
+  </head>
+  <body>
+    <h1>Products API Connection Test</h1>
+    <div id="results"></div>
+
+    <script>
+      const API_BASE =
+        "https://shoe-store-backend-api-88692812562.us-central1.run.app/api";
+
+      async function testAPI() {
+        const results = document.getElementById("results");
+        results.innerHTML = "<p>Testing API connections...</p>";
+
+        try {
+          // Test 1: Get all products
+          console.log("Testing /products");
+          const productsRes = await fetch(`${API_BASE}/products`);
+          const products = await productsRes.json();
+
+          results.innerHTML += `<h3>All Products:</h3>`;
+          results.innerHTML += `<p>Status: ${productsRes.status}</p>`;
+          results.innerHTML += `<p>Count: ${
+            Array.isArray(products) ? products.length : "Not an array"
+          }</p>`;
+          results.innerHTML += `<p>First product: <pre>${JSON.stringify(
+            products[0] || "None",
+            null,
+            2
+          )}</pre></p>`;
+
+          // Test 2: Get categories
+          console.log("Testing /categories");
+          const categoriesRes = await fetch(`${API_BASE}/categories`);
+          const categories = await categoriesRes.json();
+
+          results.innerHTML += `<h3>Categories:</h3>`;
+          results.innerHTML += `<p>Status: ${categoriesRes.status}</p>`;
+          results.innerHTML += `<p>Count: ${
+            Array.isArray(categories) ? categories.length : "Not an array"
+          }</p>`;
+          results.innerHTML += `<p>Categories: <pre>${JSON.stringify(
+            categories,
+            null,
+            2
+          )}</pre></p>`;
+
+          // Test 3: Get brands
+          console.log("Testing /brands");
+          const brandsRes = await fetch(`${API_BASE}/brands`);
+          const brands = await brandsRes.json();
+
+          results.innerHTML += `<h3>Brands:</h3>`;
+          results.innerHTML += `<p>Status: ${brandsRes.status}</p>`;
+          results.innerHTML += `<p>Count: ${
+            Array.isArray(brands) ? brands.length : "Not an array"
+          }</p>`;
+          results.innerHTML += `<p>Brands: <pre>${JSON.stringify(
+            brands,
+            null,
+            2
+          )}</pre></p>`;
+
+          // Test 4: Test category filtering
+          if (Array.isArray(categories) && categories.length > 0) {
+            const firstCategory = categories[0];
+            console.log(`Testing /products/category/${firstCategory._id}`);
+            const categoryProductsRes = await fetch(
+              `${API_BASE}/products/category/${firstCategory._id}`
+            );
+            const categoryProducts = await categoryProductsRes.json();
+
+            results.innerHTML += `<h3>Products by Category (${firstCategory.name}):</h3>`;
+            results.innerHTML += `<p>Status: ${categoryProductsRes.status}</p>`;
+            results.innerHTML += `<p>Count: ${
+              Array.isArray(categoryProducts)
+                ? categoryProducts.length
+                : "Not an array"
+            }</p>`;
+          }
+        } catch (error) {
+          results.innerHTML += `<h3>Error:</h3><p style="color: red;">${error.message}</p>`;
+          console.error("API test error:", error);
+        }
+      }
+
+      // Run test when page loads
+      testAPI();
+    </script>
+  </body>
+</html>

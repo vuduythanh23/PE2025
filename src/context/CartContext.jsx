@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback, useMemo } from "react";
-import { getCart, calculateCartTotal } from "../utils";
+import { getUserCart } from "../utils/api/carts";
+import { isAuthenticated } from "../utils";
 
 const CartContext = createContext();
 
@@ -8,12 +9,36 @@ export function CartProvider({ children }) {
   const [isCartBouncing, setIsCartBouncing] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [cartTotal, setCartTotal] = useState(0);
-
-  // Khởi tạo giỏ hàng từ localStorage
+  // Load cart từ backend API khi component mount
   useEffect(() => {
-    const items = getCart();
-    setCartItems(items);
-    setCartTotal(calculateCartTotal(items));
+    const loadCart = async () => {
+      if (!isAuthenticated()) {
+        setCartItems([]);
+        setCartTotal(0);
+        return;
+      }
+
+      try {
+        const cart = await getUserCart();
+        const items = cart.items || [];
+        setCartItems(items);
+        
+        // Calculate total from cart items
+        const total = items.reduce((sum, item) => {
+          const price = item.salePrice || item.price || 0;
+          const quantity = item.quantity || 0;
+          return sum + (price * quantity);
+        }, 0);
+        setCartTotal(total);
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        // Fallback to empty cart if API fails
+        setCartItems([]);
+        setCartTotal(0);
+      }
+    };
+
+    loadCart();
   }, []);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
@@ -26,14 +51,32 @@ export function CartProvider({ children }) {
     const timer = setTimeout(() => setIsCartBouncing(false), 500);
     return () => clearTimeout(timer);
   }, []);
+  // Cập nhật giỏ hàng từ backend
+  const updateCartItems = useCallback(async () => {
+    if (!isAuthenticated()) {
+      setCartItems([]);
+      setCartTotal(0);
+      return;
+    }
 
-  // Cập nhật giỏ hàng
-  const updateCartItems = useCallback(() => {
-    const items = getCart();
-    setCartItems(items);
-    setCartTotal(calculateCartTotal(items));
-    // Kích hoạt hiệu ứng bounce
-    animateCart();
+    try {
+      const cart = await getUserCart();
+      const items = cart.items || [];
+      setCartItems(items);
+      
+      // Calculate total from cart items
+      const total = items.reduce((sum, item) => {
+        const price = item.salePrice || item.price || 0;
+        const quantity = item.quantity || 0;
+        return sum + (price * quantity);
+      }, 0);
+      setCartTotal(total);
+      
+      // Kích hoạt hiệu ứng bounce
+      animateCart();
+    } catch (error) {
+      console.error('Error updating cart:', error);
+    }
   }, [animateCart]);
 
   // Lấy tổng số lượng sản phẩm trong giỏ

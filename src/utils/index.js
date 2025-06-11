@@ -56,14 +56,20 @@ export {
   createCategory,
   updateCategory,
   deleteCategory,
-  
-  // Order functions
+    // Order functions
   createOrder,
   getOrderById,
   getUserOrders,
   getAllOrders,
   updateOrderStatus,
   deleteOrder,
+  
+  // Cart API functions
+  addItemToCart,
+  getUserCart,
+  updateItemQuantity,
+  removeItemFromCart,
+  clearUserCart,
   
   // Rating functions
   addRating,

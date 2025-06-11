@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Routes Verification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #005a87;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #fff;
+            border-left: 4px solid #ddd;
+        }
+        .result.success {
+            border-left-color: #27ae60;
+            background: #f8fff8;
+        }
+        .result.error {
+            border-left-color: #e74c3c;
+            background: #fff8f8;
+        }
+        .result.warning {
+            border-left-color: #f39c12;
+            background: #fffcf8;
+        }
+        .config-section {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #27ae60; }
+        .status-error { background: #e74c3c; }
+        .status-warning { background: #f39c12; }
+        .status-pending { background: #95a5a6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Backend Routes Verification Test</h1>
+        <p>This tool verifies that the backend route fixes have been deployed correctly and resolves the "Invalid order ID" error.</p>
+        
+        <div class="config-section">
+            <h3>📋 Configuration</h3>
+            <label for="backendUrl">Backend URL:</label>
+            <input type="text" id="backendUrl" value="http://localhost:3000" style="width: 200px; margin: 0 10px; padding: 5px;">
+            <br><br>
+            <label for="authToken">JWT Token:</label>
+            <input type="text" id="authToken" placeholder="Bearer token for authentication" style="width: 400px; margin: 0 10px; padding: 5px;">
+            <br><br>
+            <label for="adminToken">Admin JWT Token:</label>
+            <input type="text" id="adminToken" placeholder="Admin token for admin tests" style="width: 400px; margin: 0 10px; padding: 5px;">
+        </div>
+
+        <!-- Test Results Summary -->
+        <div id="testSummary" class="test-section">
+            <h3>📊 Test Results Summary</h3>
+            <div id="summaryContent">Ready to run tests...</div>
+        </div>
+
+        <!-- Core Route Tests -->
+        <div class="test-section">
+            <h3>🎯 Core Route Tests (CRITICAL)</h3>
+            <p>These tests verify the main route conflict fix.</p>
+            
+            <button class="test-button" onclick="testMyOrdersRoute()">
+                Test /my-orders Route (CRITICAL)
+            </button>
+            <button class="test-button" onclick="testSingleOrderRoute()">
+                Test /:orderId Route
+            </button>
+            <button class="test-button" onclick="testAllOrdersRoute()">
+                Test Admin / Route
+            </button>
+            
+            <div id="coreTestResults"></div>
+        </div>
+
+        <!-- Full Route Coverage Tests -->
+        <div class="test-section">
+            <h3>🔧 Full Route Coverage Tests</h3>
+            <p>Comprehensive testing of all endpoints.</p>
+            
+            <button class="test-button" onclick="testAllRoutes()">
+                Run All Route Tests
+            </button>
+            <button class="test-button" onclick="testCreateRoutes()">
+                Test POST Routes
+            </button>
+            <button class="test-button" onclick="testAdminRoutes()">
+                Test Admin Routes
+            </button>
+            
+            <div id="fullTestResults"></div>
+        </div>
+
+        <!-- Frontend Integration Test -->
+        <div class="test-section">
+            <h3>🌐 Frontend Integration Test</h3>
+            <p>Simulate frontend API calls to verify integration.</p>
+            
+            <button class="test-button" onclick="simulateFrontendCalls()">
+                Simulate Frontend Order Loading
+            </button>
+            <button class="test-button" onclick="testErrorScenarios()">
+                Test Error Scenarios
+            </button>
+            
+            <div id="integrationTestResults"></div>
+        </div>
+
+        <!-- Route Order Verification -->
+        <div class="test-section">
+            <h3>🔍 Route Order Verification</h3>
+            <p>Verify the routes are processed in the correct order.</p>
+            
+            <button class="test-button" onclick="verifyRouteOrder()">
+                Verify Route Processing Order
+            </button>
+            
+            <div id="routeOrderResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Test Log</h3>
+            <div id="testLog" style="background: #f0f0f0; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            myOrders: null,
+            singleOrder: null,
+            allOrders: null,
+            userSpecific: null,
+            createFromCart: null,
+            createDirect: null,
+            updateStatus: null,
+            updatePayment: null,
+            deleteOrder: null
+        };
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('testLog');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function updateSummary() {
+            const summaryElement = document.getElementById('summaryContent');
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const failed = Object.values(testResults).filter(r => r === false).length;
+            const pending = Object.values(testResults).filter(r => r === null).length;
+            
+            summaryElement.innerHTML = `
+                <div>
+                    <span class="status-indicator status-success"></span>Passed: ${passed}
+                    <span class="status-indicator status-error"></span>Failed: ${failed}
+                    <span class="status-indicator status-pending"></span>Pending: ${pending}
+                </div>
+                <div style="margin-top: 10px;">
+                    ${failed === 0 && pending === 0 ? '<span class="success">✅ All tests passed! Backend is ready.</span>' : 
+                      failed > 0 ? '<span class="error">❌ Some tests failed. Check results below.</span>' :
+                      '<span class="warning">⏳ Tests in progress...</span>'}
+                </div>
+            `;
+        }
+
+        function displayResult(containerId, testName, success, message, details = '') {
+            const container = document.getElementById(containerId);
+            const resultClass = success ? 'success' : 'error';
+            const icon = success ? '✅' : '❌';
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${resultClass}`;
+            resultDiv.innerHTML = `
+                <strong>${icon} ${testName}</strong><br>
+                ${message}
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            
+            container.appendChild(resultDiv);
+            
+            // Update test results tracking
+            const testKey = testName.toLowerCase().replace(/[^a-z]/g, '');
+            testResults[testKey] = success;
+            updateSummary();
+        }
+
+        async function makeRequest(method, endpoint, body = null) {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const authToken = document.getElementById('authToken').value;
+            const adminToken = document.getElementById('adminToken').value;
+            
+            const url = `${backendUrl}/api/orders${endpoint}`;
+            
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            // Add auth token if available
+            if (authToken) {
+                options.headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+            }
+
+            // Use admin token for admin routes
+            if (endpoint === '/' || endpoint.includes('/user/') || endpoint.includes('/status') || endpoint.includes('/payment-status')) {
+                if (adminToken) {
+                    options.headers['Authorization'] = adminToken.startsWith('Bearer ') ? adminToken : `Bearer ${adminToken}`;
+                }
+            }
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            log(`Making ${method} request to: ${url}`);
+            
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                log(`Response ${response.status}: ${JSON.stringify(data, null, 2)}`);
+                
+                return {
+                    status: response.status,
+                    data,
+                    success: response.ok
+                };
+            } catch (error) {
+                log(`Request failed: ${error.message}`);
+                return {
+                    status: 0,
+                    data: { message: error.message },
+                    success: false
+                };
+            }
+        }
+
+        async function testMyOrdersRoute() {
+            log('🎯 Testing CRITICAL /my-orders route...');
+            
+            const response = await makeRequest('GET', '/my-orders');
+            
+            if (response.status === 401) {
+                displayResult('coreTestResults', 'My Orders Route', false, 
+                    'Authentication required - please provide JWT token', 
+                    'Add your JWT token in the configuration section above');
+                return;
+            }
+            
+            if (response.status === 400 && response.data.message?.includes('Invalid order ID')) {
+                displayResult('coreTestResults', 'My Orders Route', false, 
+                    'CRITICAL: Still getting "Invalid order ID" error!', 
+                    'The backend route fix has not been deployed correctly. Check BACKEND_DEPLOYMENT_GUIDE.md');
+                return;
+            }
+            
+            const success = response.success;
+            const message = success ? 
+                `✅ Route working correctly! Returned ${response.data.count || 0} orders` :
+                `❌ Route failed: ${response.data.message}`;
+                
+            displayResult('coreTestResults', 'My Orders Route', success, message, 
+                success ? 'The route conflict has been fixed!' : 'Check server logs for details');
+        }
+
+        async function testSingleOrderRoute() {
+            log('🎯 Testing /:orderId route...');
+            
+            // Test with a fake but valid-format order ID
+            const fakeOrderId = '507f1f77bcf86cd799439011';
+            const response = await makeRequest('GET', `/${fakeOrderId}`);
+            
+            // We expect 404 (order not found) not 400 (invalid ID format)
+            if (response.status === 400 && response.data.message?.includes('Invalid order ID')) {
+                displayResult('coreTestResults', 'Single Order Route', false, 
+                    'Route is incorrectly catching /my-orders requests', 
+                    'The route ordering fix needs to be applied');
+                return;
+            }
+            
+            const success = response.status === 404 || response.status === 401 || response.success;
+            const message = success ? 
+                `✅ Route working correctly (status: ${response.status})` :
+                `❌ Unexpected response: ${response.data.message}`;
+                
+            displayResult('coreTestResults', 'Single Order Route', success, message);
+        }
+
+        async function testAllOrdersRoute() {
+            log('🎯 Testing admin / route...');
+            
+            const response = await makeRequest('GET', '/');
+            
+            if (response.status === 401) {
+                displayResult('coreTestResults', 'All Orders Route', true, 
+                    'Authentication required (expected for admin route)', 
+                    'Provide admin JWT token to test further');
+                return;
+            }
+            
+            if (response.status === 403) {
+                displayResult('coreTestResults', 'All Orders Route', true, 
+                    'Admin privileges required (expected)', 
+                    'Route is properly protected');
+                return;
+            }
+            
+            const success = response.success;
+            const message = success ? 
+                `✅ Admin route working! Returned ${response.data.count || 0} orders` :
+                `❌ Admin route failed: ${response.data.message}`;
+                
+            displayResult('coreTestResults', 'All Orders Route', success, message);
+        }
+
+        async function testAllRoutes() {
+            log('🔧 Running comprehensive route tests...');
+            
+            // Clear previous results
+            document.getElementById('fullTestResults').innerHTML = '';
+            
+            // Test all routes systematically
+            await testMyOrdersRoute();
+            await testSingleOrderRoute();
+            await testAllOrdersRoute();
+            
+            // Test user-specific route (admin)
+            const userResponse = await makeRequest('GET', '/user/507f1f77bcf86cd799439011');
+            displayResult('fullTestResults', 'User Specific Route', 
+                userResponse.status === 401 || userResponse.status === 403 || userResponse.success,
+                `Status: ${userResponse.status} - ${userResponse.data.message || 'Success'}`);
+        }
+
+        async function testCreateRoutes() {
+            log('📝 Testing POST routes...');
+            
+            document.getElementById('fullTestResults').innerHTML = '';
+            
+            // Test create from cart
+            const cartResponse = await makeRequest('POST', '/from-cart', {
+                shippingAddress: { street: 'Test St', city: 'Test City' },
+                paymentMethod: 'credit_card'
+            });
+            
+            displayResult('fullTestResults', 'Create From Cart', 
+                cartResponse.status === 401 || cartResponse.success,
+                `Status: ${cartResponse.status} - ${cartResponse.data.message || 'Success'}`);
+            
+            // Test direct order
+            const directResponse = await makeRequest('POST', '/direct', {
+                productId: '507f1f77bcf86cd799439011',
+                quantity: 1,
+                shippingAddress: { street: 'Test St', city: 'Test City' },
+                paymentMethod: 'credit_card'
+            });
+            
+            displayResult('fullTestResults', 'Create Direct Order', 
+                directResponse.status === 401 || directResponse.success,
+                `Status: ${directResponse.status} - ${directResponse.data.message || 'Success'}`);
+        }
+
+        async function testAdminRoutes() {
+            log('👑 Testing admin routes...');
+            
+            document.getElementById('fullTestResults').innerHTML = '';
+            
+            const fakeOrderId = '507f1f77bcf86cd799439011';
+            
+            // Test update status
+            const statusResponse = await makeRequest('PATCH', `/${fakeOrderId}/status`, {
+                status: 'shipped'
+            });
+            
+            displayResult('fullTestResults', 'Update Order Status', 
+                statusResponse.status === 401 || statusResponse.status === 403 || statusResponse.status === 404 || statusResponse.success,
+                `Status: ${statusResponse.status} - ${statusResponse.data.message || 'Success'}`);
+            
+            // Test update payment status
+            const paymentResponse = await makeRequest('PATCH', `/${fakeOrderId}/payment-status`, {
+                paymentStatus: 'paid'
+            });
+            
+            displayResult('fullTestResults', 'Update Payment Status', 
+                paymentResponse.status === 401 || paymentResponse.status === 403 || paymentResponse.status === 404 || paymentResponse.success,
+                `Status: ${paymentResponse.status} - ${paymentResponse.data.message || 'Success'}`);
+        }
+
+        async function simulateFrontendCalls() {
+            log('🌐 Simulating frontend API calls...');
+            
+            document.getElementById('integrationTestResults').innerHTML = '';
+            
+            // Simulate UserOrders component call
+            const userOrdersResponse = await makeRequest('GET', '/my-orders');
+            
+            const userOrdersSuccess = userOrdersResponse.status !== 400 || !userOrdersResponse.data.message?.includes('Invalid order ID');
+            
+            displayResult('integrationTestResults', 'UserOrders Component Simulation', 
+                userOrdersSuccess,
+                userOrdersSuccess ? 
+                    '✅ Frontend will successfully load user orders' : 
+                    '❌ Frontend will still encounter "Invalid order ID" error',
+                userOrdersSuccess ? 
+                    'The route conflict has been resolved' : 
+                    'Backend route fix needs to be deployed');
+            
+            // Simulate OrderManagement component call (admin)
+            const adminOrdersResponse = await makeRequest('GET', '/');
+            
+            displayResult('integrationTestResults', 'OrderManagement Component Simulation', 
+                adminOrdersResponse.status === 401 || adminOrdersResponse.status === 403 || adminOrdersResponse.success,
+                `Admin component will work correctly (status: ${adminOrdersResponse.status})`);
+        }
+
+        async function testErrorScenarios() {
+            log('⚠️ Testing error scenarios...');
+            
+            document.getElementById('integrationTestResults').innerHTML = '';
+            
+            // Test invalid order ID format
+            const invalidResponse = await makeRequest('GET', '/invalid-id');
+            
+            displayResult('integrationTestResults', 'Invalid Order ID Format', 
+                invalidResponse.status === 400 && invalidResponse.data.message?.includes('Invalid order ID format'),
+                invalidResponse.status === 400 ? 
+                    '✅ Proper validation for invalid order ID' : 
+                    `❌ Expected 400 error, got ${invalidResponse.status}`,
+                'Error handling is working correctly');
+        }
+
+        async function verifyRouteOrder() {
+            log('🔍 Verifying route processing order...');
+            
+            document.getElementById('routeOrderResults').innerHTML = '';
+            
+            // Test that /my-orders is not caught by /:orderId
+            const myOrdersResponse = await makeRequest('GET', '/my-orders');
+            const routeOrderCorrect = myOrdersResponse.status !== 400 || !myOrdersResponse.data.message?.includes('Invalid order ID');
+            
+            displayResult('routeOrderResults', 'Route Order Verification', 
+                routeOrderCorrect,
+                routeOrderCorrect ? 
+                    '✅ Routes are processed in correct order' : 
+                    '❌ Route order is incorrect - /my-orders is being caught by /:orderId',
+                routeOrderCorrect ? 
+                    'Fixed paths come before parameterized paths' : 
+                    'Deploy the fixed route order from BACKEND_DEPLOYMENT_GUIDE.md');
+        }
+
+        // Initialize
+        updateSummary();
+        log('Backend Routes Verification Test initialized');
+    </script>
+</body>
+</html>
