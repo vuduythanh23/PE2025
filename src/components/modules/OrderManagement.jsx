@@ -16,65 +16,6 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const { addNotification } = useNotification();
-  // Helper function to extract phone number from user object
-  const extractPhoneNumber = (user) => {
-    if (!user) {
-      console.log("🔍 PHONE DEBUG - No user object provided");
-      return null;
-    }
-    
-    console.log("🔍 PHONE DEBUG - Starting phone extraction for user:", Object.keys(user));
-    
-    const phoneFields = [
-      'phoneNumber', 'phone', 'mobile', 'cellphone', 
-      'telephone', 'contactNumber', 'mobileNumber',
-      'contact', 'phoneNo', 'contactPhone', 'tel'
-    ];
-    
-    // Check direct user fields
-    console.log("🔍 PHONE DEBUG - Checking direct user fields...");
-    for (const field of phoneFields) {
-      if (user[field]) {
-        const value = user[field].toString().trim();
-        if (value) {
-          console.log(`✅ PHONE FOUND in direct field '${field}':`, value);
-          return value;
-        }
-      }
-    }
-    
-    // Check nested objects
-    console.log("🔍 PHONE DEBUG - Checking nested objects...");
-    const nestedObjects = ['address', 'profile', 'contactInfo', 'personalInfo', 'details'];
-    for (const objField of nestedObjects) {
-      if (user[objField] && typeof user[objField] === 'object') {
-        console.log(`🔍 PHONE DEBUG - Checking nested object '${objField}':`, Object.keys(user[objField]));
-        for (const field of phoneFields) {
-          if (user[objField][field]) {
-            const value = user[objField][field].toString().trim();
-            if (value) {
-              console.log(`✅ PHONE FOUND in nested field '${objField}.${field}':`, value);
-              return value;
-            }
-          }
-        }
-      }
-    }
-    
-    // Final check: look for any field containing "phone" in the name
-    console.log("🔍 PHONE DEBUG - Doing flexible field name search...");
-    for (const [key, value] of Object.entries(user)) {
-      if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('tel') || key.toLowerCase().includes('mobile')) {
-        if (value && value.toString().trim()) {
-          console.log(`✅ PHONE FOUND in flexible search '${key}':`, value);
-          return value.toString().trim();
-        }
-      }
-    }
-    
-    console.log("❌ PHONE DEBUG - No phone number found anywhere");
-    return null;
-  };
 
   useEffect(() => {
     fetchOrders();
@@ -139,24 +80,8 @@ export default function OrderManagement() {
     } finally {
       setLoading(false);
     }
-  };  const handleViewOrderDetails = (order) => {
-    console.log("📋 Order details:", order);
-    console.log("👤 User data in order:", order.user);
-    
-    // Enhanced debug phone fields
-    if (order.user) {
-      console.log("🔍 PHONE DEBUG - Available user fields:", Object.keys(order.user));
-      
-      // Show all user data for debugging
-      console.log("🔍 PHONE DEBUG - Complete user object:", order.user);
-      
-      // Test phone extraction
-      const extractedPhone = extractPhoneNumber(order.user);
-      console.log("📞 FINAL PHONE EXTRACTION RESULT:", extractedPhone);
-    } else {
-      console.log("❌ PHONE DEBUG - No user data available in order");
-    }
-    
+  };
+  const handleViewOrderDetails = (order) => {
     setSelectedOrder(order);
     setShowOrderDetails(true);
   };
@@ -164,33 +89,57 @@ export default function OrderManagement() {
     setShowOrderDetails(false);
     setSelectedOrder(null);
   };
-
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      await updateOrderStatus(orderId, newStatus);
-      
-      // Update local state
+      console.log(`🔧 Admin updating order ${orderId} to status: ${newStatus}`);
+
+      // Call API to update status
+      const result = await updateOrderStatus(orderId, newStatus);
+      console.log(`✅ Status update result:`, result);
+
+      // Update local state based on API response or fallback logic
       setOrders(
         orders.map((order) => {
           if (order._id === orderId) {
-            const updatedOrder = { ...order, orderStatus: newStatus };
-            // Auto-update payment status when order is confirmed or beyond
-            if (["processing", "confirmed", "shipped", "delivered"].includes(newStatus)) {
-              updatedOrder.paymentStatus = "success";
+            // Use API result if available, otherwise use our logic
+            let updatedOrder;
+            if (result && result.data) {
+              updatedOrder = { ...order, ...result.data };
+            } else {
+              updatedOrder = { ...order, orderStatus: newStatus };
+              // Auto-update payment status when order is confirmed or beyond
+              if (
+                ["processing", "confirmed", "shipped", "delivered"].includes(
+                  newStatus
+                )
+              ) {
+                updatedOrder.paymentStatus = "paid";
+                console.log(
+                  `💳 Frontend: Auto-updating payment status to 'paid' for order ${orderId}`
+                );
+              }
             }
-            
+
             return updatedOrder;
           }
-          return order;        })
+          return order;
+        })
       );
-      
+
       // Add notification for successful status update
-      const statusMessage = newStatus === "processing" 
-        ? "Order confirmed and payment marked as successful"
-        : ["confirmed", "shipped", "delivered"].includes(newStatus)
-        ? `Order ${newStatus} and payment marked as successful`
-        : `Order status updated to ${newStatus}`;
-        
+      const shouldUpdatePayment = [
+        "processing",
+        "confirmed",
+        "shipped",
+        "delivered",
+      ].includes(newStatus);
+      const statusMessage =
+        newStatus === "processing"
+          ? "Order confirmed and payment marked as paid"
+          : shouldUpdatePayment
+          ? `Order ${newStatus} and payment marked as paid`
+          : `Order status updated to ${newStatus}`;
+
       addNotification(
         `Order #${orderId.slice(-8)} ${statusMessage}`,
         "success"
@@ -204,6 +153,7 @@ export default function OrderManagement() {
         showConfirmButton: false,
       });
     } catch (error) {
+      console.error(`❌ Error updating order status:`, error);
       Swal.fire({
         title: "Error",
         text: error.message || "Failed to update order status",
@@ -383,15 +333,15 @@ export default function OrderManagement() {
                           {formatDate(order.createdAt)}
                         </div>
                       </div>
-                    </td>                    <td className="px-6 py-4 whitespace-nowrap">
+                    </td>{" "}
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         {order.user?.email || "Unknown User"}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {order.user?.firstName && order.user?.lastName 
+                        {order.user?.firstName && order.user?.lastName
                           ? `${order.user.firstName} ${order.user.lastName}`
-                          : order.user?.username || "No name available"
-                        }
+                          : order.user?.username || "No name available"}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -444,7 +394,8 @@ export default function OrderManagement() {
                           className="text-gray-600 hover:text-gray-900 bg-gray-50 px-3 py-1 rounded text-xs"
                         >
                           View Details
-                        </button>                        {order.orderStatus === "pending" && (
+                        </button>{" "}
+                        {order.orderStatus === "pending" && (
                           <button
                             onClick={() =>
                               handleStatusUpdate(order._id, "processing")
@@ -483,7 +434,8 @@ export default function OrderManagement() {
                             className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded text-xs"
                           >
                             Cancel
-                          </button>                        )}
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteOrder(order._id)}
                           className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded text-xs"
@@ -556,11 +508,12 @@ export default function OrderManagement() {
                       <span>
                         {selectedOrder.paymentMethod?.toUpperCase() || "N/A"}
                       </span>
-                    </div>
+                    </div>{" "}
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Payment Status:</span>                      <span
+                      <span className="text-gray-600">Payment Status:</span>
+                      <span
                         className={`font-medium ${
-                          selectedOrder.paymentStatus === "success"
+                          selectedOrder.paymentStatus === "paid"
                             ? "text-green-600"
                             : selectedOrder.paymentStatus === "failed"
                             ? "text-red-600"
@@ -575,108 +528,19 @@ export default function OrderManagement() {
                 </div>
 
                 <div>
+                  {" "}
                   <h4 className="font-medium text-gray-900 mb-3">
                     Customer Information
-                  </h4>                  <div className="space-y-2 text-sm">
+                  </h4>
+                  <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Name:</span>
-                      <span>
-                        {selectedOrder.user?.firstName && selectedOrder.user?.lastName 
-                          ? `${selectedOrder.user.firstName} ${selectedOrder.user.lastName}`
-                          : selectedOrder.user?.username || "N/A"
-                        }
-                      </span>
+                      <span className="text-gray-600">Username:</span>
+                      <span>{selectedOrder.user?.username || "N/A"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Email:</span>
                       <span>{selectedOrder.user?.email || "Unknown"}</span>
-                    </div>                    <div className="flex justify-between">
-                      <span className="text-gray-600">Phone:</span>
-                      <span>
-                        {(() => {
-                          if (!selectedOrder.user) {
-                            console.log("❌ No user object available for phone extraction");
-                            return "N/A";
-                          }
-                          
-                          const phoneNumber = extractPhoneNumber(selectedOrder.user);
-                          
-                          console.log("📞 Phone extraction result:", {
-                            found: phoneNumber,
-                            userFields: Object.keys(selectedOrder.user),
-                            hasPhoneNumber: !!selectedOrder.user.phoneNumber,
-                            hasPhone: !!selectedOrder.user.phone,
-                            rawUser: selectedOrder.user
-                          });
-                          
-                          return phoneNumber || "N/A";
-                        })()}
-                      </span>
-                    </div>{/* Enhanced Debug info - shows all available user fields */}
-                    {selectedOrder.user && Object.keys(selectedOrder.user).length > 0 && (
-                      <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                        <details>
-                          <summary className="cursor-pointer text-yellow-800 font-medium">
-                            🔍 Debug: Available User Data (Click to expand)
-                          </summary>
-                          <div className="mt-2">
-                            <div className="mb-2 p-2 bg-blue-50 rounded">
-                              <strong>Available Fields ({Object.keys(selectedOrder.user).length}):</strong> 
-                              <div className="mt-1 grid grid-cols-3 gap-1">
-                                {Object.keys(selectedOrder.user).map(field => (
-                                  <span key={field} className="text-xs bg-blue-100 px-1 py-0.5 rounded">
-                                    {field}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <div className="mb-2 p-2 bg-green-50 rounded">
-                              <strong>Phone Search Result:</strong>
-                              <div className="mt-1">
-                                <span className={`font-medium ${extractPhoneNumber(selectedOrder.user) ? 'text-green-600' : 'text-red-600'}`}>
-                                  {extractPhoneNumber(selectedOrder.user) || "❌ No phone number found"}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="mb-2 p-2 bg-purple-50 rounded">
-                              <strong>Phone Field Analysis:</strong>
-                              <div className="grid grid-cols-2 gap-1 mt-1">
-                                {['phoneNumber', 'phone', 'mobile', 'cellphone', 'telephone', 'contactNumber', 'tel', 'mobileNumber'].map(field => (
-                                  <div key={field} className="text-xs">
-                                    <span className="font-mono">{field}:</span> 
-                                    <span className={selectedOrder.user[field] ? 'text-green-600 font-medium' : 'text-gray-400'}>
-                                      {selectedOrder.user[field] ? `✅ ${selectedOrder.user[field]}` : "❌"}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <div className="mb-2 p-2 bg-orange-50 rounded">
-                              <strong>Backend Population Check:</strong>
-                              <div className="mt-1 text-xs">
-                                <div>Backend populated: {selectedOrder.user._id ? "✅ Yes" : "❌ No"}</div>
-                                <div>Has email: {selectedOrder.user.email ? "✅ Yes" : "❌ No"}</div>
-                                <div>Has username: {selectedOrder.user.username ? "✅ Yes" : "❌ No"}</div>
-                                <div>Has firstName: {selectedOrder.user.firstName ? "✅ Yes" : "❌ No"}</div>
-                                <div>Has lastName: {selectedOrder.user.lastName ? "✅ Yes" : "❌ No"}</div>
-                              </div>
-                            </div>
-                            
-                            <details className="mt-2">
-                              <summary className="cursor-pointer text-gray-600 text-xs">Complete User Object (Raw JSON)</summary>
-                              <div className="p-2 bg-gray-50 rounded mt-1">
-                                <pre className="text-gray-700 whitespace-pre-wrap text-xs max-h-40 overflow-y-auto">
-                                  {JSON.stringify(selectedOrder.user, null, 2)}
-                                </pre>
-                              </div>
-                            </details>
-                          </div>
-                        </details>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -814,7 +678,9 @@ export default function OrderManagement() {
                 <h4 className="font-medium text-gray-900 mb-3">
                   Quick Actions
                 </h4>
-                <div className="flex flex-wrap gap-2">                  {selectedOrder.orderStatus === "pending" && (
+                <div className="flex flex-wrap gap-2">
+                  {" "}
+                  {selectedOrder.orderStatus === "pending" && (
                     <button
                       onClick={() => {
                         handleStatusUpdate(selectedOrder._id, "processing");
@@ -855,8 +721,11 @@ export default function OrderManagement() {
                         closeOrderDetails();
                       }}
                       className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm"
-                    >                      Cancel Order
-                    </button>                  )}
+                    >
+                      {" "}
+                      Cancel Order
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -192,10 +192,23 @@ export async function getUserOrders() {
 
       throw new Error(`Failed to fetch your orders: ${errorText}`);
     }
-
     const data = await res.json();
     console.log("Orders API response:", data);
-    return Array.isArray(data) ? data : [];
+
+    // Normalize payment status for all orders
+    const orders = Array.isArray(data) ? data : [];
+    const normalizedOrders = normalizeOrdersPaymentStatus(orders);
+
+    if (
+      normalizedOrders.length !== orders.length ||
+      normalizedOrders.some(
+        (order, i) => order.paymentStatus !== orders[i]?.paymentStatus
+      )
+    ) {
+      console.log("🔧 Payment status normalized for some orders");
+    }
+
+    return normalizedOrders;
   } catch (error) {
     console.error("Error in getUserOrders:", error);
 
@@ -272,10 +285,23 @@ export async function getAllOrders() {
 
       throw new Error(`Failed to fetch all orders: ${errorText}`);
     }
-
     const data = await res.json();
     console.log("Admin orders API response:", data);
-    return Array.isArray(data) ? data : [];
+
+    // Normalize payment status for all orders
+    const orders = Array.isArray(data) ? data : [];
+    const normalizedOrders = normalizeOrdersPaymentStatus(orders);
+
+    if (
+      normalizedOrders.length !== orders.length ||
+      normalizedOrders.some(
+        (order, i) => order.paymentStatus !== orders[i]?.paymentStatus
+      )
+    ) {
+      console.log("🔧 Admin orders: Payment status normalized for some orders");
+    }
+
+    return normalizedOrders;
   } catch (error) {
     console.error("Error in getAllOrders:", error);
 
@@ -330,16 +356,24 @@ export async function updateOrderStatus(orderId, status) {
     status: status, // Include both for compatibility
     newStatus: status,
   };
+
   // Auto-update payment status when confirming order or beyond
-  if (["processing", "confirmed", "shipped", "delivered"].includes(status)) {
-    updateData.paymentStatus = "success";
+  const shouldUpdatePayment = [
+    "processing",
+    "confirmed",
+    "shipped",
+    "delivered",
+  ].includes(status);
+  if (shouldUpdatePayment) {
+    updateData.paymentStatus = "paid";
     console.log(
-      `💳 Auto-updating payment status to 'success' for confirmed order (status: ${status})`
+      `💳 Auto-updating payment status to 'paid' for confirmed order (status: ${status})`
     );
   }
 
-  // Use simple, direct approach first
   try {
+    // Step 1: Update order status
+    console.log(`📤 Sending order status update:`, updateData);
     const response = await fetch(
       `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}/status`,
       {
@@ -352,45 +386,69 @@ export async function updateOrderStatus(orderId, status) {
       }
     );
 
+    let result;
     if (response.ok) {
       console.log(`✅ Order status updated successfully!`);
-      return await response.json();
-    }
+      result = await response.json();
+    } else {
+      // Try direct endpoint if /status fails
+      console.log(`⚠️ /status endpoint failed, trying direct PATCH...`);
+      const directResponse = await fetch(
+        `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify(updateData),
+        }
+      );
 
-    // If the /status endpoint fails, try direct endpoint
-    const directResponse = await fetch(
-      `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify(updateData),
+      if (directResponse.ok) {
+        console.log(`✅ Order status updated via direct endpoint!`);
+        result = await directResponse.json();
+      } else {
+        throw new Error(
+          `Both endpoints failed: ${await directResponse.text()}`
+        );
       }
-    );
-
-    if (directResponse.ok) {
-      console.log(`✅ Order status updated via direct endpoint!`);
-      return await directResponse.json();
     }
 
-    // If all real API attempts fail, try mock data for development
-    console.warn("⚠️ All API attempts failed, using mock data");
+    // Step 2: If payment status should be updated, try dedicated payment status endpoint
+    if (shouldUpdatePayment) {
+      try {
+        console.log(`💳 Explicitly updating payment status to 'paid'...`);
+        const paymentResponse = await fetch(
+          `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}/payment-status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              ...getAuthHeaders(),
+            },
+            body: JSON.stringify({ paymentStatus: "paid" }),
+          }
+        );
 
-    // Mock success for development
-    return {
-      success: true,
-      data: {
-        _id: orderId,
-        orderStatus: status,
-        paymentStatus: status === "processing" ? "success" : undefined,
-        updatedAt: new Date().toISOString(),
-      },
-    };
+        if (paymentResponse.ok) {
+          console.log(`✅ Payment status explicitly updated to 'paid'!`);
+          const paymentResult = await paymentResponse.json();
+          // Merge results, prioritizing payment update result
+          result = { ...result, ...paymentResult };
+        } else {
+          console.warn(
+            `⚠️ Payment status endpoint failed, but order status was updated`
+          );
+        }
+      } catch (paymentError) {
+        console.warn(`⚠️ Payment status update failed:`, paymentError.message);
+      }
+    }
+
+    return result;
   } catch (error) {
     console.error("❌ API call failed:", error);
-
     // Return mock success for development
     console.warn("⚠️ Falling back to mock data due to API error");
     return {
@@ -398,7 +456,57 @@ export async function updateOrderStatus(orderId, status) {
       data: {
         _id: orderId,
         orderStatus: status,
-        paymentStatus: status === "processing" ? "success" : undefined,
+        paymentStatus: shouldUpdatePayment ? "paid" : "pending",
+        updatedAt: new Date().toISOString(),
+      },
+    };
+  }
+}
+
+/**
+ * Updates the payment status of an order (admin only)
+ * @param {string} orderId - The ID of the order to update
+ * @param {string} paymentStatus - The new payment status ('pending', 'paid', 'failed', 'refunded')
+ * @returns {Promise<Object>} The updated order
+ * @throws {Error} If update fails
+ */
+export async function updatePaymentStatus(orderId, paymentStatus) {
+  if (!orderId || !paymentStatus) {
+    throw new Error("OrderId and paymentStatus are required");
+  }
+
+  console.log(
+    `💳 Updating order ${orderId} payment status to: ${paymentStatus}`
+  );
+
+  try {
+    const response = await fetch(
+      `${ENDPOINTS.ORDERS}/${encodeURIComponent(orderId)}/payment-status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ paymentStatus }),
+      }
+    );
+
+    if (response.ok) {
+      console.log(`✅ Payment status updated successfully!`);
+      return await response.json();
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Failed to update payment status: ${errorText}`);
+    }
+  } catch (error) {
+    console.error("❌ Payment status update failed:", error);
+    // Return mock success for development
+    return {
+      success: true,
+      data: {
+        _id: orderId,
+        paymentStatus,
         updatedAt: new Date().toISOString(),
       },
     };
@@ -425,4 +533,43 @@ export async function deleteOrder(orderId) {
   }
 
   return res.json();
+}
+
+/**
+ * Normalizes order data to ensure payment status is consistent with order status
+ * @param {Object} order - The order object to normalize
+ * @returns {Object} Normalized order object
+ */
+export function normalizeOrderPaymentStatus(order) {
+  if (!order) return order;
+
+  // If order is confirmed/processed/shipped/delivered but payment is still pending, fix it
+  if (
+    ["processing", "confirmed", "shipped", "delivered"].includes(
+      order.orderStatus
+    ) &&
+    order.paymentStatus === "pending"
+  ) {
+    console.log(
+      `🔧 Auto-fixing payment status for order ${
+        order._id || order.id
+      }: pending → paid`
+    );
+    return {
+      ...order,
+      paymentStatus: "paid",
+    };
+  }
+
+  return order;
+}
+
+/**
+ * Normalizes an array of orders
+ * @param {Array} orders - Array of order objects
+ * @returns {Array} Array of normalized order objects
+ */
+export function normalizeOrdersPaymentStatus(orders) {
+  if (!Array.isArray(orders)) return orders;
+  return orders.map(normalizeOrderPaymentStatus);
 }

@@ -55,14 +55,16 @@ export {
   getCategoryById,
   createCategory,
   updateCategory,
-  deleteCategory,
-  // Order functions
+  deleteCategory, // Order functions
   createOrder,
   getOrderById,
   getUserOrders,
   getAllOrders,
   updateOrderStatus,
+  updatePaymentStatus,
   deleteOrder,
+  normalizeOrderPaymentStatus,
+  normalizeOrdersPaymentStatus,
 
   // Cart API functions
   addItemToCart,

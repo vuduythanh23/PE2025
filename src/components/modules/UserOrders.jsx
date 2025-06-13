@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { getUserOrders, formatCurrency, formatDate } from "../../utils";
+import {
+  getUserOrders,
+  formatCurrency,
+  formatDate,
+  normalizeOrdersPaymentStatus,
+} from "../../utils";
 import { useNotification } from "../../context/NotificationContext";
 import Swal from "sweetalert2";
 
@@ -14,8 +19,9 @@ export default function UserOrders() {
   // Auto-refresh when notifications contain order updates
   useEffect(() => {
     if (notifications && notifications.length > 0) {
-      const hasOrderUpdate = notifications.some((notification) =>
-        notification.message && notification.message.includes("Order #")
+      const hasOrderUpdate = notifications.some(
+        (notification) =>
+          notification.message && notification.message.includes("Order #")
       );
 
       if (hasOrderUpdate) {
@@ -64,38 +70,23 @@ export default function UserOrders() {
     } finally {
       setLoading(false);
     }
-  };  // Function to refresh orders and fix payment status
+  }; // Function to refresh orders and fix payment status
   const refreshOrdersAndFixPayment = async () => {
     console.log("🔄 Refreshing orders and fixing payment status...");
-    
-    // First refresh the orders
-    await fetchUserOrders();
-    
-    // Then fix payment status after a short delay
-    setTimeout(() => {
-      let fixedCount = 0;
-      setOrders((prevOrders) =>
-        prevOrders.map((order) => {
-          // If order is confirmed/shipped/delivered but payment is still pending, fix it
-          if (
-            ["processing", "confirmed", "shipped", "delivered"].includes(
-              order.orderStatus
-            ) &&
-            order.paymentStatus === "pending"
-          ) {
-            console.log(
-              `Fixing payment status for order ${order._id}: pending → success`
-            );
-            fixedCount++;
-            return {
-              ...order,
-              paymentStatus: "success",
-            };
-          }
-          return order;
-        })
-      );
-      
+
+    try {
+      // Fetch fresh orders (which will already be normalized by the API)
+      const data = await getUserOrders();
+
+      // Count how many orders have been auto-fixed
+      const beforeNormalization = data.length;
+      const afterNormalization = normalizeOrdersPaymentStatus(data);
+      const fixedCount = afterNormalization.filter(
+        (order, i) => order.paymentStatus !== data[i]?.paymentStatus
+      ).length;
+
+      setOrders(afterNormalization);
+
       // Show feedback to user based on results
       if (fixedCount > 0) {
         Swal.fire({
@@ -114,7 +105,14 @@ export default function UserOrders() {
           showConfirmButton: false,
         });
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Error refreshing orders:", error);
+      Swal.fire({
+        title: "Refresh Failed",
+        text: "Failed to refresh orders. Please try again.",
+        icon: "error",
+      });
+    }
   };
   // Auto-fix payment status on mount and when orders change
   useEffect(() => {
@@ -139,11 +137,11 @@ export default function UserOrders() {
                 order.paymentStatus === "pending"
               ) {
                 console.log(
-                  `Auto-fixing payment status for order ${order._id}: pending → success`
+                  `Auto-fixing payment status for order ${order._id}: pending → paid`
                 );
                 return {
                   ...order,
-                  paymentStatus: "success",
+                  paymentStatus: "paid",
                 };
               }
               return order;
@@ -307,7 +305,9 @@ export default function UserOrders() {
   }
 
   return (
-    <div className="space-y-6">      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      {" "}
+      <div className="flex justify-between items-center">
         <h2 className="text-2xl font-serif text-luxury-dark">My Orders</h2>
         <div className="flex gap-2">
           <button
@@ -319,7 +319,6 @@ export default function UserOrders() {
           </button>
         </div>
       </div>
-
       {/* Order Summary Cards */}
       {orders.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -362,7 +361,6 @@ export default function UserOrders() {
           </div>
         </div>
       )}
-
       <div className="space-y-4">
         {orders.map((order) => (
           <div
@@ -448,7 +446,7 @@ export default function UserOrders() {
                       Payment Status:{" "}
                       <span
                         className={`font-medium ${
-                          order.paymentStatus === "success"
+                          order.paymentStatus === "paid"
                             ? "text-green-600"
                             : order.paymentStatus === "failed"
                             ? "text-red-600"
