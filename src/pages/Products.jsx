@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getCategories, getBrands, getProducts } from "../utils";
 import { getProductsWithFilters } from "../utils/api/products";
 import { FilterDebugger, DEBUG_FILTERS } from "../utils/helpers/filterDebug";
+import { doesProductMatchCategory } from "../utils/helpers";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";
@@ -68,13 +69,12 @@ export default function Products() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
-
-        // Build API parameters
+        setLoading(true); // Build API parameters
         const apiParams = {
           page: activeProductFilters.page,
           limit: activeProductFilters.limit,
           sortBy: sortSettings.sortBy,
+          categories: categories, // Pass categories for hierarchy handling
         };
 
         // Add filters if they exist
@@ -124,18 +124,13 @@ export default function Products() {
             // Apply client-side filtering
             let filteredProducts = Array.isArray(allProducts)
               ? allProducts
-              : [];
-
-            // Filter by category
+              : []; // Filter by category with hierarchy support
             if (apiParams.category) {
               filteredProducts = filteredProducts.filter((product) => {
-                const productCategory =
-                  typeof product.category === "object"
-                    ? product.category._id
-                    : product.category;
-                return (
-                  productCategory &&
-                  productCategory.toString() === apiParams.category.toString()
+                return doesProductMatchCategory(
+                  product,
+                  apiParams.category,
+                  categories
                 );
               });
             }

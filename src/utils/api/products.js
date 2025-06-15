@@ -1,5 +1,10 @@
 import { ENDPOINTS, BASE_HEADERS } from "../constants/api.js";
 import { rateLimiter, fetchWithTimeout, getAuthHeaders } from "./base.js";
+import {
+  getSubcategoryIds,
+  doesProductMatchCategory,
+  isMainCategory,
+} from "../helpers/index.js";
 
 /**
  * Fetches products with optional filters
@@ -80,6 +85,7 @@ export async function getProducts(filters = {}) {
  * @param {string} params.sortBy - Sort criteria (newest, price_asc, price_desc, rating_desc)
  * @param {number} params.page - Page number (1-based)
  * @param {number} params.limit - Items per page
+ * @param {Array} params.categories - All categories array for hierarchy handling
  * @returns {Promise<Object>} Object containing products array and pagination info
  * @throws {Error} If fetching fails or response is invalid
  */
@@ -90,14 +96,27 @@ export async function getProductsWithFilters(params = {}) {
 
     let fetchUrl = ENDPOINTS.PRODUCTS;
     let products = [];
+    let useClientSideFiltering = false;
 
-    // Use specific endpoints based on filters to leverage existing server routes
-    if (params.category && params.category !== "") {
-      // Use category-specific endpoint
-      fetchUrl = `${ENDPOINTS.PRODUCTS}/category/${encodeURIComponent(
-        params.category
-      )}`;
-      console.log("Using category endpoint:", fetchUrl);
+    // Check if this is a main category that needs special handling
+    if (params.category && params.category !== "" && params.categories) {
+      const selectedCategory = params.categories.find(
+        (cat) => cat._id.toString() === params.category.toString()
+      );
+
+      if (selectedCategory && isMainCategory(selectedCategory)) {
+        console.log(
+          "🏷️ Main category detected, will use client-side filtering for subcategories"
+        );
+        useClientSideFiltering = true;
+        fetchUrl = ENDPOINTS.PRODUCTS; // Get all products first
+      } else {
+        // Use category-specific endpoint for subcategories
+        fetchUrl = `${ENDPOINTS.PRODUCTS}/category/${encodeURIComponent(
+          params.category
+        )}`;
+        console.log("Using category endpoint:", fetchUrl);
+      }
     } else if (params.brand && params.brand !== "") {
       // Use brand-specific endpoint
       fetchUrl = `${ENDPOINTS.PRODUCTS}/brand/${encodeURIComponent(
@@ -168,33 +187,47 @@ export async function getProductsWithFilters(params = {}) {
       console.log(
         `  - After brand filter: ${filteredProducts.length} (was ${beforeCount})`
       );
-    }
-
-    // Apply category filter if not already filtered by endpoint
+    } // Apply category filter with hierarchy support
     if (
       params.category &&
       params.category !== "" &&
-      !fetchUrl.includes("/category/")
+      (!fetchUrl.includes("/category/") || useClientSideFiltering)
     ) {
       const beforeCount = filteredProducts.length;
-      filteredProducts = filteredProducts.filter((product) => {
-        const productCategory =
-          typeof product.category === "object"
-            ? product.category._id
-            : product.category;
-        const matches =
-          productCategory &&
-          productCategory.toString() === params.category.toString();
-        if (!matches && productCategory) {
-          console.log(
-            `  Category mismatch: ${productCategory} !== ${params.category}`
+
+      if (params.categories && Array.isArray(params.categories)) {
+        // Use advanced category matching with hierarchy support
+        filteredProducts = filteredProducts.filter((product) => {
+          return doesProductMatchCategory(
+            product,
+            params.category,
+            params.categories
           );
-        }
-        return matches;
-      });
-      console.log(
-        `  - After category filter: ${filteredProducts.length} (was ${beforeCount})`
-      );
+        });
+        console.log(
+          `  - After advanced category filter: ${filteredProducts.length} (was ${beforeCount})`
+        );
+      } else {
+        // Fallback to simple category matching
+        filteredProducts = filteredProducts.filter((product) => {
+          const productCategory =
+            typeof product.category === "object"
+              ? product.category._id
+              : product.category;
+          const matches =
+            productCategory &&
+            productCategory.toString() === params.category.toString();
+          if (!matches && productCategory) {
+            console.log(
+              `  Category mismatch: ${productCategory} !== ${params.category}`
+            );
+          }
+          return matches;
+        });
+        console.log(
+          `  - After simple category filter: ${filteredProducts.length} (was ${beforeCount})`
+        );
+      }
     }
 
     // Apply price range filter
