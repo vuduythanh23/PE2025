@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CategoryDropdown from "./CategoryDropdown";
 
 export default function ProductFilter({
   categories,
@@ -53,40 +54,24 @@ export default function ProductFilter({
     <div
       className={`space-y-8 ${loading ? "opacity-60 pointer-events-none" : ""}`}
     >
-      {/* Category Filter */}{" "}
+      {" "}
+      {/* Category Filter */}
       <div>
         <h3 className="text-lg font-serif text-luxury-dark mb-4">Category</h3>
-        <select
-          value={tempFilters.category}
-          onChange={(e) => {
-            const categoryId = e.target.value;
+        <CategoryDropdown
+          categories={categories}
+          selectedCategory={tempFilters.category}
+          onCategoryChange={(categoryId) => {
             console.log("Selected category ID:", categoryId);
             const selectedCategory = categories.find(
               (cat) => cat._id.toString() === categoryId
             );
             console.log("Selected category:", selectedCategory);
 
-            // Log all available categories for debugging
-            console.log(
-              "Available categories:",
-              categories.map((cat) => ({
-                id: cat._id.toString(),
-                name: cat.name,
-              }))
-            );
-
             handleFilterChange({ category: categoryId });
           }}
-          className="w-full p-3 border-b border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif"
           disabled={loading}
-        >
-          <option value="">All Categories</option>
-          {categories.map((category) => (
-            <option key={category._id} value={category._id.toString()}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       {/* Brand Filter */}{" "}
       <div>

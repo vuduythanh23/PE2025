@@ -34,9 +34,9 @@ function AppContent() {
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetail />} />{" "}
-      </Routes>
+      </Routes>{" "}
       <Cart isOpen={isCartOpen} onClose={closeCart} />
-      {isAuthenticated() && <NotificationBanner />}
+      <NotificationBanner />
       <BackendStatusIndicator />
     </div>
   );

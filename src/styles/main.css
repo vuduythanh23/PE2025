@@ -2,6 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* SweetAlert2 Custom Styling */
+.swal2-container {
+  z-index: 10000 !important;
+}
+
+.swal2-popup {
+  font-family: "Georgia", serif !important;
+  border-radius: 0 !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.swal2-title {
+  color: #2c3e50 !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+}
+
+.swal2-content {
+  color: #5a6c7d !important;
+  font-size: 1rem !important;
+}
+
+.swal2-confirm {
+  background-color: #a4863d !important;
+  border: none !important;
+  font-family: "Georgia", serif !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.swal2-confirm:hover {
+  background-color: #2c3e50 !important;
+}
+
+.swal2-cancel {
+  background-color: transparent !important;
+  border: 1px solid #a4863d !important;
+  color: #a4863d !important;
+  font-family: "Georgia", serif !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.swal2-cancel:hover {
+  background-color: #a4863d !important;
+  color: white !important;
+}
+
 .loader {
   width: 48px;
   height: 48px;
@@ -48,4 +102,143 @@
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 3D Transform Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-y-12 {
+  transform: rotateY(12deg);
+}
+
+.translate-z-4 {
+  transform: translateZ(4px);
+}
+
+/* Product Card 3D Effects */
+.product-card-3d {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center center;
+}
+
+.product-card-3d:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-10px)
+    translateZ(20px);
+}
+
+/* Image container 3D effect */
+.product-image-3d {
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center center;
+}
+
+.product-image-3d:hover {
+  transform: scale(1.1) rotateY(15deg) translateZ(30px);
+}
+
+/* Button 3D effects */
+.btn-3d {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center center;
+}
+
+.btn-3d:hover {
+  transform: translateY(-3px) translateZ(10px) scale(1.05);
+  box-shadow: 0 10px 20px rgba(164, 134, 61, 0.3);
+}
+
+/* Smooth hover transitions for better UX */
+@media (hover: hover) {
+  .group:hover .group-hover\:scale-110 {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .group:hover .group-hover\:rotate-y-12 {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+}
+
+/* Category Dropdown Animations */
+.category-dropdown-enter {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.category-dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.category-dropdown-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.category-dropdown-exit-active {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Custom scrollbar for dropdown */
+.category-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.category-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #a4863d;
+  border-radius: 3px;
+}
+
+.category-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #8b7035;
+}
+
+/* Category item hover effects */
+.category-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.category-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(164, 134, 61, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.category-item:hover::before {
+  left: 100%;
 }

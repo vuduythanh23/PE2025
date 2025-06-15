@@ -64,13 +64,12 @@ const NotificationBanner = () => {
         );
     }
   };
-
   return (
-    <div className="fixed top-20 right-4 z-50 space-y-2">
+    <div className="fixed top-20 right-4 z-[9998] space-y-2 max-w-sm">
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`max-w-sm p-4 rounded-lg shadow-lg ${getNotificationStyle(
+          className={`w-full p-4 rounded-lg shadow-lg ${getNotificationStyle(
             notification.type
           )} animate-slide-in transform transition-all duration-300 ease-in-out`}
         >

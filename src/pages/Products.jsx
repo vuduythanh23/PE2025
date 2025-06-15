@@ -469,9 +469,16 @@ export default function Products() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredProducts.map((product) => (
-                    <div key={product._id} className="group">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr">
+                  {filteredProducts.map((product, index) => (
+                    <div
+                      key={product._id}
+                      className="transform transition-all duration-300 hover:z-10"
+                      style={{
+                        animationDelay: `${index * 0.1}s`,
+                        animation: "fadeInUp 0.6s ease-out forwards",
+                      }}
+                    >
                       <ProductCard {...product} />
                     </div>
                   ))}
