@@ -30,9 +30,9 @@ export default function ProductCard(props) {
   const handleViewMore = (e) => {
     e.stopPropagation();
     navigate(`/product/${_id}`);
-  };
+  };  // Handle add to cart
   const handleAddToCart = async () => {
-    console.log("🛒 Add to cart clicked for product:", name);
+    console.log(`🛒 Add to cart clicked for product: ${_id}`);
 
     // First, check authentication status
     if (!isAuthenticated()) {
@@ -112,9 +112,9 @@ export default function ProductCard(props) {
           container: "z-[9999]",
           popup: "z-[9999]",
         },
-      });
-    }
+      });    }
   };
+
   const handleBuyNow = async () => {
     // First, check authentication status
     if (!isAuthenticated()) {
@@ -163,8 +163,20 @@ export default function ProductCard(props) {
         },
       });
 
-      // Navigate to cart or checkout
-      navigate("/checkout");
+      // Navigate to checkout with product data
+      navigate("/checkout", {
+        state: {
+          product: {
+            id: _id,
+            name,
+            price,
+            image: productImage,
+            selectedSize: sizes?.[0]?.size || null,
+            selectedColor: colors?.[0]?.color || null,
+          },
+          quantity: 1
+        }
+      });
     } catch (error) {
       console.error("Error with buy now:", error);
       await Swal.fire({
@@ -178,6 +190,7 @@ export default function ProductCard(props) {
       });
     }
   };
+
   return (
     <div className="group relative overflow-hidden transition-all duration-500 ease-out transform hover:-translate-y-2 hover:rotate-1 h-[600px] flex flex-col perspective-1000">
       {/* 3D Card Container */}
@@ -248,13 +261,10 @@ export default function ProductCard(props) {
 
           {/* Price and Actions Section with 3D effects */}
           <div className="mt-auto space-y-4">
-            <div className="text-center transform transition-all duration-300 group-hover:scale-105">
-              <p className="text-luxury-gold font-serif text-2xl font-bold group-hover:text-3xl transition-all duration-300">
+            <div className="text-center transform transition-all duration-300 group-hover:scale-105">              <p className="text-luxury-gold font-serif text-2xl font-bold group-hover:text-3xl transition-all duration-300">
                 {formatCurrency(price || 0)}
               </p>
-            </div>
-
-            <div className="flex gap-2">
+            </div>            <div className="flex gap-2">
               <button
                 onClick={handleBuyNow}
                 className={`flex-1 py-3 px-3 transition-all duration-300 font-serif text-xs tracking-wider transform hover:scale-105 hover:-translate-y-1 shadow-md hover:shadow-lg ${
@@ -285,9 +295,7 @@ export default function ProductCard(props) {
               >
                 View More
               </button>
-            </div>
-          </div>
-        </div>
+            </div></div>        </div>
       </div>
     </div>
   );

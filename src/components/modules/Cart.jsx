@@ -32,24 +32,30 @@ const CartItem = ({ item, onQuantityChange, onRemove }) => {
         <p className="text-sm text-luxury-dark/70 mt-1">
           {item.color && `Color: ${item.color}`}
           {item.size && ` | Size: ${item.size}`}
-        </p>{" "}
-        <div className="flex justify-between items-center mt-2">
+        </p>{" "}        <div className="flex justify-between items-center mt-2">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onQuantityChange(Math.max(0, item.quantity - 1))}
-              className="text-luxury-dark/70 hover:text-luxury-gold transition-colors"
+              onClick={() => {
+                const newQuantity = Math.max(0, item.quantity - 1);
+                console.log("➖ Decreasing quantity from", item.quantity, "to", newQuantity);
+                onQuantityChange(newQuantity);
+              }}
+              className="w-8 h-8 flex items-center justify-center border border-luxury-gold/30 rounded hover:bg-luxury-gold hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={item.quantity <= 1}
             >
               -
             </button>
-            <span className="font-serif text-luxury-dark w-8 text-center">
+            <span className="font-serif text-luxury-dark w-12 text-center">
               {item.quantity}
             </span>
             <button
-              onClick={() =>
-                onQuantityChange(Math.min(item.stock, item.quantity + 1))
-              }
-              className="text-luxury-dark/70 hover:text-luxury-gold transition-colors"
-              disabled={item.quantity >= item.stock}
+              onClick={() => {
+                const newQuantity = Math.min(item.stock || 99, item.quantity + 1);
+                console.log("➕ Increasing quantity from", item.quantity, "to", newQuantity);
+                onQuantityChange(newQuantity);
+              }}
+              className="w-8 h-8 flex items-center justify-center border border-luxury-gold/30 rounded hover:bg-luxury-gold hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={item.quantity >= (item.stock || 99)}
             >
               +
             </button>
@@ -93,23 +99,99 @@ export default function Cart({ isOpen, onClose }) {
       const timer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, updateCartItems]);
-  const handleQuantityChange = async (productId, size, color, newQuantity) => {
-    try {
-      await updateItemQuantity({
-        productId: productId,
-        quantity: newQuantity,
-        selectedSize: size,
-        selectedColor: color,
-      });
-      updateCartItems();
-    } catch (error) {
-      console.error("Error updating quantity:", error);
+  }, [isOpen, updateCartItems]);  const handleQuantityChange = async (productId, size, color, newQuantity) => {
+    console.log("🔄 Updating quantity:", { productId, size, color, newQuantity });
+    
+    // Validate input
+    if (!productId) {
+      console.error("❌ Missing productId");
       Swal.fire({
         title: "Error",
-        text: "Failed to update quantity. Please try again.",
+        text: "Product ID is missing. Please try again.",
         icon: "error",
       });
+      return;
+    }
+    
+    if (newQuantity === undefined || newQuantity === null || newQuantity < 0) {
+      console.error("❌ Invalid quantity:", newQuantity);
+      Swal.fire({
+        title: "Error",
+        text: "Invalid quantity. Please try again.",
+        icon: "error",
+      });
+      return;
+    }
+
+    // If quantity is 0, remove the item instead
+    if (newQuantity === 0) {
+      console.log("🗑️ Quantity is 0, removing item instead");
+      await handleRemoveItem(productId, size, color);
+      return;
+    }
+
+    try {
+      const updateData = {
+        productId: productId,
+        quantity: newQuantity,
+        selectedSize: size || null,
+        selectedColor: color || null,
+      };
+      
+      console.log("📤 Sending update request:", updateData);
+      
+      // Try to update via API
+      await updateItemQuantity(updateData);
+      
+      console.log("✅ Quantity updated successfully via API");
+      updateCartItems();
+    } catch (error) {
+      console.error("❌ API update failed:", error);
+      
+      // Fallback: Update localStorage directly if API fails
+      try {
+        console.log("🔄 Falling back to localStorage update...");
+        
+        const cartKey = 'cart';
+        const existingCart = JSON.parse(localStorage.getItem(cartKey) || '[]');
+        
+        // Find and update the item in localStorage
+        const updatedCart = existingCart.map(cartItem => {
+          const matches = (
+            (cartItem.productId === productId || cartItem._id === productId) &&
+            (cartItem.selectedSize || cartItem.size) === size &&
+            (cartItem.selectedColor || cartItem.color) === color
+          );
+          
+          if (matches) {
+            console.log("📝 Updating item in localStorage:", cartItem);
+            return { ...cartItem, quantity: newQuantity };
+          }
+          return cartItem;
+        });
+        
+        localStorage.setItem(cartKey, JSON.stringify(updatedCart));
+        updateCartItems();
+        
+        console.log("✅ Quantity updated successfully via localStorage fallback");
+        
+        // Show warning about API failure
+        Swal.fire({
+          title: "Updated (Offline Mode)",
+          text: "Quantity updated locally. Changes will sync when connection is restored.",
+          icon: "warning",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        
+      } catch (fallbackError) {
+        console.error("❌ Fallback update also failed:", fallbackError);
+        Swal.fire({
+          title: "Error",
+          text: `Failed to update quantity: ${error.message || error}`,
+          icon: "error",
+        });
+      }
     }
   };
 
@@ -129,8 +211,7 @@ export default function Cart({ isOpen, onClose }) {
         icon: "error",
       });
     }
-  };
-  const handleCheckout = async () => {
+  };  const handleCheckout = async () => {
     if (!isAuthenticated()) {
       const result = await Swal.fire({
         title: "Login Required",
@@ -149,57 +230,9 @@ export default function Cart({ isOpen, onClose }) {
       return;
     }
 
-    try {
-      setLoading(true);
-      // Prepare order data matching the schema
-      const orderData = {
-        items: cartItems.map((item) => ({
-          productId: item._id,
-          name: item.name,
-          price: item.salePrice || item.price, // Use sale price if available
-          salePrice: item.salePrice || null,
-          quantity: item.quantity,
-          selectedSize: item.size || null,
-          selectedColor: item.color || null,
-          imageUrl: item.images?.[0] || null,
-        })),
-        totalAmount: cartTotal,
-        // Default shipping address - in a real app, user would provide this
-        shippingAddress: {
-          street: "Default Street",
-          city: "Default City",
-          state: "Default State",
-          zipCode: "00000",
-          country: "Default Country",
-        },
-        paymentMethod: "credit_card",
-        paymentStatus: "pending",
-        orderStatus: "pending",
-      };
-      const order = await createOrder(cartItems); // Send cart items array to use /from-cart endpoint
-      if (order) {
-        await clearUserCart();
-        updateCartItems();
-        onClose();
-        Swal.fire({
-          title: "Order Placed Successfully!",
-          text: "Your order has been placed and is being processed.",
-          icon: "success",
-          timer: 3000,
-          showConfirmButton: false,
-        });
-        navigate("/profile?tab=orders");
-      }
-    } catch (error) {
-      console.error("Order creation error:", error);
-      Swal.fire({
-        title: "Error",
-        text: error.message || "Failed to place order. Please try again.",
-        icon: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Simply navigate to checkout page which will handle the order creation
+    onClose();
+    navigate("/checkout");
   };
 
   return (

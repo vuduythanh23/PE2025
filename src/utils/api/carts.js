@@ -81,22 +81,41 @@ export async function addItemToCart(item) {
  * @throws {Error} If update fails
  */
 export async function updateItemQuantity(updateData) {
+  console.log("🔄 updateItemQuantity called with:", updateData);
+  
   if (!updateData.productId || updateData.quantity === undefined) {
-    throw new Error("Product ID and quantity are required");
+    const error = "Product ID and quantity are required";
+    console.error("❌ Validation error:", error);
+    throw new Error(error);
   }
 
-  const res = await fetchWithTimeout(`${ENDPOINTS.CARTS}/items`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(updateData),
-  });
+  try {
+    console.log("📤 Making PUT request to:", `${ENDPOINTS.CARTS}/items`);
+    console.log("📤 Request body:", JSON.stringify(updateData));
+    console.log("📤 Request headers:", getAuthHeaders());
+    
+    const res = await fetchWithTimeout(`${ENDPOINTS.CARTS}/items`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updateData),
+    });
 
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Failed to update item quantity: ${error}`);
+    console.log("📥 Response status:", res.status);
+    console.log("📥 Response ok:", res.ok);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("❌ API Error Response:", errorText);
+      throw new Error(`Failed to update item quantity: ${errorText}`);
+    }
+
+    const result = await res.json();
+    console.log("✅ Update successful:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ updateItemQuantity error:", error);
+    throw error;
   }
-
-  return res.json();
 }
 
 /**
