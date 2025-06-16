@@ -87,7 +87,10 @@ export async function updateItemQuantity(updateData) {
       selectedColor: updateData.selectedColor,
     };
 
-    console.log("Updating cart item quantity with payload (fallback):", payload);
+    console.log(
+      "Updating cart item quantity with payload (fallback):",
+      payload
+    );
 
     const res = await fetchWithTimeout(`${ENDPOINTS.CARTS}/items`, {
       method: "PUT",

@@ -1,10 +1,9 @@
 import { formatCurrency, isAuthenticated } from "../../utils";
 import { useNotification } from "../../context/NotificationContext";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import AddToCartModal from "./AddToCartModal";
-import { saveProductsState } from "../../utils/helpers/productsState";
 
 export default function ProductCard(props) {
   const {
@@ -23,8 +22,6 @@ export default function ProductCard(props) {
 
   const { addNotification } = useNotification();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
   const [showAddToCartModal, setShowAddToCartModal] = useState(false);
 
   // Get the first valid image URL or use a fallback
@@ -32,31 +29,19 @@ export default function ProductCard(props) {
     images && images.length > 0
       ? images[0]
       : props.imageUrl || "/images/placeholder-product.jpg";
+
   // Handle view more information - navigate to product detail page
   const handleViewMore = (e) => {
     e.stopPropagation();
-
-    // Save current products page state before navigating
-    if (location.pathname === "/products") {
-      const currentState = {
-        category: searchParams.get("category") || "",
-        brand: searchParams.get("brand") || "",
-        priceRange: {
-          min: searchParams.get("minPrice") || "",
-          max: searchParams.get("maxPrice") || "",
-        },
-        searchQuery: searchParams.get("search") || "",
-        currentPage: parseInt(searchParams.get("page")) || 1,
-        sortBy: searchParams.get("sort") || "",
-      };
-      saveProductsState(currentState);
-    }
-
     navigate(`/product/${_id}`);
   };
+
   const handleAddToCart = async () => {
+    console.log("🛒 Add to cart clicked for product:", name);
+
     // First, check authentication status
     if (!isAuthenticated()) {
+      console.log("🔒 User not authenticated, showing login modal");
       const result = await Swal.fire({
         title: "Login Required",
         text: "You need to login before adding items to your cart",
@@ -178,7 +163,8 @@ export default function ProductCard(props) {
             </div>
           </div>
         </div>
-      </div>{" "}
+      </div>
+
       {/* Add to Cart Modal */}
       <AddToCartModal
         isOpen={showAddToCartModal}
@@ -186,6 +172,7 @@ export default function ProductCard(props) {
         product={props}
         onSuccess={() => {
           // Optional: Add any additional success handling
+          console.log("Product successfully added to cart");
         }}
       />
     </div>

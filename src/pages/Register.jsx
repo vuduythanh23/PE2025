@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import AuthCard from "../components/modules/AuthCard";
-import { registerUser } from "../utils";
+import { registerUser, loginUser } from "../utils";
 import Swal from "sweetalert2";
 
 // Brand logos array using URL constructor
@@ -31,18 +32,40 @@ const brandLogos = [
 
 export default function Register() {
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   const handleRegister = async (formData) => {
     setLoading(true);
     try {
       const { confirmPassword, ...registrationData } = formData;
       const response = await registerUser(registrationData);
-      Swal.fire({
+      
+      // Hiển thị thông báo đăng ký thành công
+      await Swal.fire({
         title: "Registration Successful!",
-        text: `Welcome, ${response.user.username}!`,
+        text: `Welcome, ${response.user.username}! You will be automatically logged in.`,
         icon: "success",
         confirmButtonText: "OK",
       });
+
+      // Tự động đăng nhập sau khi đăng ký thành công
+      try {
+        const loginResponse = await loginUser(registrationData.email, registrationData.password);
+          if (loginResponse?.user) {
+          // Lưu thông tin user vào sessionStorage
+          const isAdmin = loginResponse.user.role === "admin";
+          sessionStorage.setItem("userRole", isAdmin ? "admin" : "user");
+          sessionStorage.setItem("user", JSON.stringify(loginResponse.user));
+          
+          // Chuyển hướng tới trang phù hợp
+          const redirectPath = isAdmin ? "/admin" : "/products";
+          navigate(redirectPath);
+        }
+      } catch (loginError) {
+        console.error("Auto-login failed:", loginError);
+        // Nếu auto-login thất bại, chuyển về trang login
+        navigate("/login");
+      }
+      
     } catch (error) {
       let errorMsg = error.message;
       try {
@@ -74,8 +97,7 @@ export default function Register() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-160px)] flex flex-col md:flex-row">
-        {/* Registration form - appears on top on mobile, left side on desktop */}
+      <div className="min-h-[calc(100vh-160px)] flex flex-col md:flex-row">        {/* Registration form - appears on top on mobile, left side on desktop */}
         <div className="w-full md:w-1/2 p-8">
           <AuthCard
             type="register"
@@ -83,6 +105,16 @@ export default function Register() {
             loading={loading}
             fields={formFields}
           />
+          
+          {/* Back to Login link */}
+          <div className="text-center mt-6">
+            <Link
+              to="/login"
+              className="inline-block text-luxury-gold hover:text-luxury-dark font-serif text-sm tracking-wider transition-colors underline"
+            >
+              Already have an account? Sign in
+            </Link>
+          </div>
         </div>
 
         {/* Brand logos - appears below on mobile, right side on desktop */}

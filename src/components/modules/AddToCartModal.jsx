@@ -5,17 +5,17 @@ import { useCart } from "../../context/CartContext";
 import { useNotification } from "../../context/NotificationContext";
 import Swal from "sweetalert2";
 
-export default function AddToCartModal({ 
-  isOpen, 
-  onClose, 
+export default function AddToCartModal({
+  isOpen,
+  onClose,
   product,
-  onSuccess 
+  onSuccess,
 }) {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
-  
+
   const { animateCart, updateCartItems } = useCart();
   const { addNotification } = useNotification();
 
@@ -39,9 +39,8 @@ export default function AddToCartModal({
   }, [isOpen, product, sizes, colors]);
 
   // Get the first valid image URL or use a fallback
-  const productImage = images && images.length > 0 
-    ? images[0] 
-    : "/images/placeholder-product.jpg";
+  const productImage =
+    images && images.length > 0 ? images[0] : "/images/placeholder-product.jpg";
 
   const handleAddToCart = async () => {
     try {
@@ -59,7 +58,7 @@ export default function AddToCartModal({
 
       if (colors.length > 0 && !selectedColor) {
         await Swal.fire({
-          title: "Color Required", 
+          title: "Color Required",
           text: "Please select a color",
           icon: "warning",
         });
@@ -73,7 +72,7 @@ export default function AddToCartModal({
           icon: "warning",
         });
         return;
-      }      // Add product to cart using backend API
+      } // Add product to cart using backend API
       await addItemToCart({
         productId: _id,
         quantity: parseInt(quantity),
@@ -91,10 +90,9 @@ export default function AddToCartModal({
       // Close modal and call success callback
       onClose();
       if (onSuccess) onSuccess();
-
     } catch (error) {
       console.error("❌ Add to cart error:", error);
-      
+
       await Swal.fire({
         title: "Error",
         text: "Failed to add product to cart. Please try again.",
@@ -103,20 +101,25 @@ export default function AddToCartModal({
     } finally {
       setLoading(false);
     }
-  };  if (!isOpen || !product) {
+  };
+  if (!isOpen || !product) {
     return null;
   }
   const modalContent = (
-    <div 
+    <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-300"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto relative transform transition-all duration-300 scale-100 animate-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
-      >        {/* Header */}
+      >
+        {" "}
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-serif text-luxury-dark font-semibold">Add to Cart</h2>
+          <h2 className="text-xl font-serif text-luxury-dark font-semibold">
+            Add to Cart
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
@@ -124,7 +127,6 @@ export default function AddToCartModal({
             ×
           </button>
         </div>
-
         {/* Product Info */}
         <div className="p-6">
           <div className="flex gap-4 mb-6">
@@ -138,9 +140,7 @@ export default function AddToCartModal({
               <p className="text-luxury-gold font-serif text-xl font-bold">
                 {formatCurrency(price)}
               </p>
-              <p className="text-sm text-gray-600">
-                {stock} in stock
-              </p>
+              <p className="text-sm text-gray-600">{stock} in stock</p>
             </div>
           </div>
 
@@ -251,7 +251,8 @@ export default function AddToCartModal({
               disabled={loading || stock === 0}
             >
               {loading ? "Adding..." : "Add to Cart"}
-            </button>          </div>
+            </button>{" "}
+          </div>
         </div>
       </div>
     </div>

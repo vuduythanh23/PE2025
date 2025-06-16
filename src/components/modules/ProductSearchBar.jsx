@@ -46,26 +46,26 @@ export default function ProductSearchBar() {
     try {
       setIsLoading(true);
       setIsSearching(true);
-      
+
       // Use the search API endpoint
       const results = await getProductsBySearch(query);
-      
+
       // Validate and sanitize results
       let validResults = [];
       if (Array.isArray(results)) {
         validResults = results
-          .filter(product => product && typeof product === 'object')
-          .map(product => ({
+          .filter((product) => product && typeof product === "object")
+          .map((product) => ({
             _id: product._id || product.id || Math.random().toString(36),
-            name: String(product.name || 'Unnamed Product'),
-            brand: String(product.brand || 'Unknown Brand'),
+            name: String(product.name || "Unnamed Product"),
+            brand: String(product.brand || "Unknown Brand"),
             price: Number(product.price) || 0,
             stock: Number(product.stock) || 0,
-            images: Array.isArray(product.images) ? product.images : []
+            images: Array.isArray(product.images) ? product.images : [],
           }))
           .slice(0, 6); // Limit to 6 results
       }
-      
+
       setSearchResults(validResults);
       setShowResults(true);
     } catch (error) {
@@ -118,7 +118,7 @@ export default function ProductSearchBar() {
             placeholder="Search for shoes, brands, categories..."
             className="w-full px-6 py-4 text-lg border-2 border-luxury-gold/20 rounded-full focus:border-luxury-gold focus:outline-none bg-white/90 backdrop-blur-sm shadow-lg placeholder-gray-500 transition-all duration-300"
           />
-          
+
           {/* Search Icon */}
           <button
             type="submit"
@@ -128,8 +128,18 @@ export default function ProductSearchBar() {
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             )}
           </button>
@@ -144,9 +154,10 @@ export default function ProductSearchBar() {
         >
           <div className="p-2">
             <div className="text-sm text-gray-500 px-3 py-2 border-b">
-              Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+              Found {searchResults.length} result
+              {searchResults.length !== 1 ? "s" : ""}
             </div>
-              {searchResults.map((product, index) => (
+            {searchResults.map((product, index) => (
               <div
                 key={product._id || product.id || index}
                 onClick={() => handleProductClick(product._id || product.id)}
@@ -156,12 +167,13 @@ export default function ProductSearchBar() {
                   src={product.images?.[0] || "/images/placeholder-product.jpg"}
                   alt={product.name}
                   className="w-12 h-12 object-cover rounded-lg"
-                />                <div className="flex-1 min-w-0">
+                />{" "}
+                <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-gray-900 truncate">
-                    {product.name || 'Unnamed Product'}
+                    {product.name || "Unnamed Product"}
                   </h4>
                   <p className="text-sm text-gray-500 truncate">
-                    {product.brand || 'Unknown Brand'} • ${product.price || 0}
+                    {product.brand || "Unknown Brand"} • ${product.price || 0}
                   </p>
                 </div>
                 <div className="text-right">
@@ -174,14 +186,12 @@ export default function ProductSearchBar() {
                     </div>
                   )}
                   {product.stock === 0 && (
-                    <div className="text-xs text-red-600">
-                      Out of stock
-                    </div>
+                    <div className="text-xs text-red-600">Out of stock</div>
                   )}
                 </div>
               </div>
             ))}
-            
+
             <div className="border-t pt-2 mt-2">
               <button
                 onClick={handleSearchSubmit}
@@ -195,20 +205,35 @@ export default function ProductSearchBar() {
       )}
 
       {/* No Results */}
-      {showResults && searchResults.length === 0 && !isLoading && searchQuery.trim().length >= 2 && (
-        <div
-          ref={resultsRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 z-50"
-        >
-          <div className="p-4 text-center text-gray-500">
-            <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <p>No products found for "{searchQuery}"</p>
-            <p className="text-sm mt-1">Try different keywords or browse our categories</p>
+      {showResults &&
+        searchResults.length === 0 &&
+        !isLoading &&
+        searchQuery.trim().length >= 2 && (
+          <div
+            ref={resultsRef}
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 z-50"
+          >
+            <div className="p-4 text-center text-gray-500">
+              <svg
+                className="w-12 h-12 mx-auto mb-2 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <p>No products found for "{searchQuery}"</p>
+              <p className="text-sm mt-1">
+                Try different keywords or browse our categories
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }

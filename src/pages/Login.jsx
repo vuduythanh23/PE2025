@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import AuthCard from "../components/modules/AuthCard";
 import { loginUser } from "../utils";
 import Swal from "sweetalert2";
@@ -36,11 +36,9 @@ export default function Login() {
       const isAdmin = response.user.role === "admin";
 
       sessionStorage.setItem("userRole", isAdmin ? "admin" : "user");
-      sessionStorage.setItem("user", JSON.stringify(response.user));
-
-      // Check if there's a redirect parameter in the URL
+      sessionStorage.setItem("user", JSON.stringify(response.user));      // Check if there's a redirect parameter in the URL
       const params = new URLSearchParams(window.location.search);
-      const redirectPath = params.get("redirect") || (isAdmin ? "/admin" : "/");
+      const redirectPath = params.get("redirect") || (isAdmin ? "/admin" : "/products");
 
       await Swal.fire({
         title: isAdmin ? "Admin Login Successful!" : "Login Successful!",
@@ -97,8 +95,7 @@ export default function Login() {
   };
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-      <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Header />      <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <AuthCard
             type="login"
@@ -106,6 +103,16 @@ export default function Login() {
             loading={loading}
             fields={["email", "password"]}
           />
+          
+          {/* Register new account button */}
+          <div className="text-center mt-6">
+            <Link
+              to="/register"
+              className="inline-block bg-luxury-forest text-luxury-gold py-3 px-6 rounded-lg font-serif text-sm tracking-wider transition-all transform hover:scale-[1.02] hover:shadow-lg hover:bg-luxury-dark border border-luxury-gold"
+            >
+              Register new account
+            </Link>
+          </div>
         </div>
       </div>
       <Footer />

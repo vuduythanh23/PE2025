@@ -4,7 +4,11 @@ import { getCategories, getBrands, getProducts } from "../utils";
 import { getProductsWithFilters } from "../utils/api/products";
 import { FilterDebugger, DEBUG_FILTERS } from "../utils/helpers/filterDebug";
 import { doesProductMatchCategory } from "../utils/helpers";
-import { saveProductsState, getProductsState, updateProductsState } from "../utils/helpers/productsState";
+import {
+  saveProductsState,
+  getProductsState,
+  updateProductsState,
+} from "../utils/helpers/productsState";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";
@@ -19,7 +23,7 @@ export default function Products() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   // Remove allProducts state as we'll fetch from server each time
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [totalFilteredProducts, setTotalFilteredProducts] = useState(0);
@@ -47,7 +51,8 @@ export default function Products() {
   const [tempFilters, setTempFilters] = useState({
     category: "",
     brand: "",
-    priceRange: { min: null, max: null },    page: 1,
+    priceRange: { min: null, max: null },
+    page: 1,
     limit: 9,
   });
 
@@ -55,16 +60,24 @@ export default function Products() {
   useEffect(() => {
     const initializeState = () => {
       // Get state from URL params first
-      const category = searchParams.get('category') || '';
-      const brand = searchParams.get('brand') || '';
-      const search = searchParams.get('search') || '';
-      const minPrice = searchParams.get('minPrice') || '';
-      const maxPrice = searchParams.get('maxPrice') || '';
-      const sort = searchParams.get('sort') || '';
-      const page = parseInt(searchParams.get('page')) || 1;
+      const category = searchParams.get("category") || "";
+      const brand = searchParams.get("brand") || "";
+      const search = searchParams.get("search") || "";
+      const minPrice = searchParams.get("minPrice") || "";
+      const maxPrice = searchParams.get("maxPrice") || "";
+      const sort = searchParams.get("sort") || "";
+      const page = parseInt(searchParams.get("page")) || 1;
 
       // If URL has params, use them
-      if (category || brand || search || minPrice || maxPrice || sort || page > 1) {
+      if (
+        category ||
+        brand ||
+        search ||
+        minPrice ||
+        maxPrice ||
+        sort ||
+        page > 1
+      ) {
         setActiveProductFilters({
           category,
           brand,
@@ -75,23 +88,26 @@ export default function Products() {
         });
         setCurrentPage(page);
         if (sort) {
-          setSortSettings(prevSort => ({ ...prevSort, sortBy: sort }));
+          setSortSettings((prevSort) => ({ ...prevSort, sortBy: sort }));
         }
       } else {
         // If no URL params, try to restore from saved state
         const savedState = getProductsState();
         if (savedState) {
           setActiveProductFilters({
-            category: savedState.category || '',
-            brand: savedState.brand || '',
+            category: savedState.category || "",
+            brand: savedState.brand || "",
             priceRange: savedState.priceRange || { min: null, max: null },
-            searchQuery: savedState.searchQuery || '',
+            searchQuery: savedState.searchQuery || "",
             page: savedState.currentPage || 1,
             limit: 9,
           });
           setCurrentPage(savedState.currentPage || 1);
           if (savedState.sortBy) {
-            setSortSettings(prevSort => ({ ...prevSort, sortBy: savedState.sortBy }));
+            setSortSettings((prevSort) => ({
+              ...prevSort,
+              sortBy: savedState.sortBy,
+            }));
           }
         }
       }
@@ -473,10 +489,13 @@ export default function Products() {
     totalFilteredProducts
   );
 
-  return (    <>
+  return (
+    <>
       <Header />
       <main className="bg-gradient-to-b from-luxury-forest/10 to-luxury-light/8 min-h-screen">
-        <div className="container mx-auto px-4 py-12">          {/* Category Quick Filter */}
+        <div className="container mx-auto px-4 py-12">
+          {" "}
+          {/* Category Quick Filter */}
           <div className="text-center mb-16 py-8 bg-white/30 backdrop-blur-sm rounded-xl">
             <h1 className="text-4xl font-serif text-luxury-gold mb-8">
               Shop by Category
@@ -484,7 +503,6 @@ export default function Products() {
             <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>
             <CategoryQuickFilter />
           </div>
-
           <div className="flex flex-col lg:flex-row gap-12">
             {/* Filters Sidebar */}
             <aside className="lg:w-1/4">

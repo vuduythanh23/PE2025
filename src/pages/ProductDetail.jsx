@@ -243,7 +243,8 @@ export default function ProductDetail() {
           </h1>
           <p className="text-luxury-dark/70 mb-8">
             {error || "The product you're looking for doesn't exist."}
-          </p>          <button
+          </p>{" "}
+          <button
             onClick={() => navigateToProducts(navigate)}
             className="bg-luxury-gold text-white px-6 py-3 rounded-md font-serif text-sm tracking-wider hover:bg-luxury-dark transition-colors"
           >
@@ -428,7 +429,8 @@ export default function ProductDetail() {
                 }`}
               >
                 {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
-              </button>              <button
+              </button>{" "}
+              <button
                 onClick={() => navigateToProducts(navigate)}
                 className="px-6 py-4 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
               >

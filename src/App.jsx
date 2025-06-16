@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import { LoadingProvider } from "./context/LoadingContext";
@@ -22,6 +23,10 @@ import { isAuthenticated } from "./utils";
 
 function AppContent() {
   const { isCartOpen, closeCart } = useCart();
+  const location = useLocation();
+  
+  // Chỉ hiển thị BackendStatusIndicator trong trang admin
+  const showBackendStatus = location.pathname === "/admin";
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-luxury-forest/10 to-luxury-light/5">
@@ -37,7 +42,7 @@ function AppContent() {
       </Routes>{" "}
       <Cart isOpen={isCartOpen} onClose={closeCart} />
       <NotificationBanner />
-      <BackendStatusIndicator />
+      {showBackendStatus && <BackendStatusIndicator />}
     </div>
   );
 }

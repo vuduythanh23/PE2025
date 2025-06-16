@@ -336,16 +336,16 @@ export async function getProductsBySearch(q) {
       throw new Error(`Search failed: ${error}`);
     }
     const data = await res.json();
-    
+
     // Ensure we return an array
     if (Array.isArray(data)) {
       return data;
     } else if (data && Array.isArray(data.products)) {
       return data.products;
-    } else if (data && typeof data === 'object') {
+    } else if (data && typeof data === "object") {
       return [data]; // Single product result
     }
-    
+
     return [];
   } catch (error) {
     console.error("Search API error:", error);
