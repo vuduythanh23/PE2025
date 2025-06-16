@@ -93,21 +93,52 @@ export default function Cart({ isOpen, onClose }) {
       const timer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, updateCartItems]);
-  const handleQuantityChange = async (productId, size, color, newQuantity) => {
+  }, [isOpen, updateCartItems]);  const handleQuantityChange = async (productId, size, color, newQuantity) => {
     try {
+      // Validate inputs
+      if (!productId) {
+        throw new Error("Product ID is required");
+      }
+      
+      if (!newQuantity || newQuantity < 1) {
+        throw new Error("Quantity must be at least 1");
+      }
+
+      console.log("Attempting to update quantity:", {
+        productId,
+        size,
+        color,
+        newQuantity,
+      });
+
       await updateItemQuantity({
         productId: productId,
-        quantity: newQuantity,
+        quantity: parseInt(newQuantity), // Ensure it's a number
         selectedSize: size,
         selectedColor: color,
       });
+      
       updateCartItems();
+      
+      console.log("Quantity updated successfully");
     } catch (error) {
       console.error("Error updating quantity:", error);
+      
+      // More detailed error message
+      let errorMessage = "Failed to update quantity. Please try again.";
+      if (error.message.includes("required")) {
+        errorMessage = "Missing required information. Please refresh and try again.";
+      } else if (error.message.includes("timeout") || error.message.includes("network")) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      } else if (error.message.includes("401") || error.message.includes("unauthorized")) {
+        errorMessage = "Session expired. Please login again.";
+      } else if (error.message.includes("least 1")) {
+        errorMessage = "Quantity must be at least 1.";
+      }
+      
       Swal.fire({
         title: "Error",
-        text: "Failed to update quantity. Please try again.",
+        text: errorMessage,
         icon: "error",
       });
     }
