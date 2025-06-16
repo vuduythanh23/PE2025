@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Debug Test</title>
+</head>
+<body>
+    <h1>Category API Debug Test</h1>
+    <button onclick="testCategoryAPI()">Test Category API</button>
+    <div id="results"></div>
+
+    <script>
+        async function testCategoryAPI() {
+            try {
+                // Replace with your actual API endpoint
+                const response = await fetch('http://localhost:5000/api/categories');
+                const categories = await response.json();
+                
+                console.log('=== RAW CATEGORIES DATA ===');
+                console.log(categories);
+                
+                // Analyze the data structure
+                const results = document.getElementById('results');
+                results.innerHTML = '<h2>Raw Category Data:</h2><pre>' + JSON.stringify(categories, null, 2) + '</pre>';
+                
+                // Organize categories
+                const parentCategories = [];
+                const childCategories = [];
+                
+                categories.forEach(category => {
+                    const parentId = category.parent || category.parentId;
+                    if (!parentId) {
+                        parentCategories.push(category);
+                    } else {
+                        childCategories.push(category);
+                    }
+                });
+                
+                console.log('=== PARENT CATEGORIES ===');
+                parentCategories.forEach(parent => {
+                    console.log(`${parent.name}:`, {
+                        id: parent._id || parent.id,
+                        productCount: parent.productCount,
+                        directProductCount: parent.directProductCount
+                    });
+                    
+                    const children = childCategories.filter(child => {
+                        const childParentId = child.parent || child.parentId;
+                        return childParentId === parent._id || childParentId === parent.id;
+                    });
+                    
+                    console.log(`  Children:`, children.map(c => ({
+                        name: c.name,
+                        productCount: c.productCount
+                    })));
+                    
+                    const childrenSum = children.reduce((sum, child) => sum + (child.productCount || 0), 0);
+                    console.log(`  Children sum: ${childrenSum}`);
+                    console.log(`  Expected total: ${(parent.directProductCount || parent.productCount || 0) + childrenSum}`);
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = '<h2>Error:</h2><pre>' + error.message + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

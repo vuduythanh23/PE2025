@@ -11,11 +11,13 @@ import { isAdmin } from "../../utils/storage/auth.js";
 import { checkAndRefreshAdminStatus } from "../../utils/helpers/adminAuth.js";
 import Swal from "sweetalert2";
 import UserTable from "./UserTable";
+import UserEditModal from "./UserEditModal";
 import { useLoading } from "../../context/LoadingContext";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { handleAsyncOperation } = useLoading();
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   useEffect(() => {
@@ -115,83 +117,32 @@ export default function UserManagement() {
       }
     }
   };
-
   const handleEdit = (user) => {
-    setEditingUser({
-      ...user,
-      username: user.username || "",
-      email: user.email || "",
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      address: user.address || "",
-      phoneNumber: user.phoneNumber || "",
-    });
+    setEditingUser(user);
+    setIsModalOpen(true);
   };
 
-  const handleCancelEdit = () => {
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
     setEditingUser(null);
   };
-
-  const handleChange = (e) => {
-    setEditingUser((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-  const handleSave = async () => {
+  const handleCancelEdit = () => {
+    handleCloseModal();
+  };const handleSave = async (userId, updateData) => {
     try {
       // Verify admin access before updating user
       if (!isAdmin()) {
         throw new Error("Unauthorized: Administrator access required");
       }
 
-      if (!editingUser || !editingUser._id) {
+      if (!userId) {
         throw new Error("No user selected for editing");
       }
 
-      // Extract fields that should not be sent to the API
-      const {
-        _id,
-        createdAt,
-        updatedAt,
-        failedLoginAttempts,
-        lockUntil,
-        isPermanentlyLocked,
-        lastFailedAttemptAt,
-        __v,
-        ...updates
-      } = editingUser;
-
-      // Remove any undefined, null or empty values
-      const cleanUpdates = Object.fromEntries(
-        Object.entries(updates).filter(
-          ([key, value]) =>
-            value !== undefined &&
-            value !== null &&
-            (typeof value !== "string" || value.trim() !== "")
-        )
-      );
-
-      // Validate email if it's being updated
-      if (
-        cleanUpdates.email &&
-        !cleanUpdates.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
-      ) {
-        throw new Error("Please enter a valid email address");
-      }
-
-      // Validate phone number if it's being updated
-      if (
-        cleanUpdates.phoneNumber &&
-        !cleanUpdates.phoneNumber.match(/^\d{10,15}$/)
-      ) {
-        throw new Error("Please enter a valid phone number (10-15 digits)");
-      }
-
-      console.log("Updating user with ID:", _id, "Updates:", cleanUpdates);
+      console.log("Updating user with ID:", userId, "Updates:", updateData);
 
       const updatedUser = await handleAsyncOperation(
-        () => adminUpdateUser(_id, cleanUpdates),
+        () => adminUpdateUser(userId, updateData),
         "Updating user"
       );
 
@@ -200,10 +151,9 @@ export default function UserManagement() {
       // If the API call succeeded, update the UI state
       setUsers(
         users.map((user) =>
-          user._id === _id ? { ...user, ...cleanUpdates } : user
+          user._id === userId ? { ...user, ...updateData } : user
         )
       );
-      setEditingUser(null);
 
       Swal.fire({
         title: "Success",
@@ -231,6 +181,9 @@ export default function UserManagement() {
         icon: "error",
         confirmButtonText: "OK",
       });
+      
+      // Re-throw error to prevent modal from closing if there was an error
+      throw error;
     }
   };
   const handleDelete = async (userId) => {
@@ -402,8 +355,7 @@ export default function UserManagement() {
         confirmButtonText: "OK",
       });
     }
-  };
-  return (
+  };  return (
     <div className="overflow-x-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-medium text-gray-700">User Accounts</h2>
@@ -431,13 +383,21 @@ export default function UserManagement() {
 
       <UserTable
         users={users}
-        editingUser={editingUser}
+        editingUser={null} // No longer using inline editing
         onEdit={handleEdit}
-        onSave={handleSave}
-        onChange={handleChange}
-        onCancel={handleCancelEdit}
+        onSave={null} // No longer using inline save
+        onChange={null} // No longer using inline editing
+        onCancel={null} // No longer using inline cancel
         onDelete={handleDelete}
         onUnlock={handleUnlock}
+      />
+
+      {/* User Edit Modal */}
+      <UserEditModal
+        user={editingUser}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSave}
       />
     </div>
   );

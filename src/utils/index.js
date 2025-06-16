@@ -110,9 +110,7 @@ export {
   truncateText,
   formatDate,
   formatNumber,
-  formatPercentage,
-
-  // Validation helpers
+  formatPercentage,  // Validation helpers
   validateRequired,
   validateEmail,
   validatePassword,
@@ -121,4 +119,8 @@ export {
   validateCreditCard,
   validateUrl,
   validateNumberRange,
+  validateAddress,
+  validateCity,
+  validateState,
+  validatePostalCode,
 } from "./helpers/index.js";

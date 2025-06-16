@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCategories } from "../../utils/api/categories";
 
-export default function CategoryQuickFilter() {
+export default function CategoryQuickFilter({ 
+  onParentCategorySelect, 
+  selectedParentCategory 
+}) {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate(); // Main category configuration
@@ -107,8 +110,12 @@ export default function CategoryQuickFilter() {
       setIsLoading(false);
     }
   };
-
   const handleCategoryClick = (categoryKey) => {
+    // Notify parent component about parent category selection
+    if (onParentCategorySelect) {
+      onParentCategorySelect(categoryKey);
+    }
+
     // Find main category by name (case insensitive)
     const mainCategory = categories.find((cat) => {
       const categoryName = cat.name?.toLowerCase() || "";
@@ -189,27 +196,29 @@ export default function CategoryQuickFilter() {
   }
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10">
-        {mainCategories.map((category) => (
-          <button
-            key={category.key}
-            onClick={() => handleCategoryClick(category.key)}
-            className={`
-              group relative overflow-hidden
-              bg-gradient-to-br ${category.color} ${category.hoverColor}
-              text-white font-serif
-              px-8 py-6 md:px-10 md:py-8
-              rounded-lg
-              transform transition-all duration-500 ease-out
-              hover:scale-[1.03] ${category.shadowColor}
-              shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.18)]
-              focus:outline-none focus:ring-3 focus:ring-luxury-gold/50
-              active:scale-[0.98]
-              border ${category.borderColor} hover:border-luxury-gold/40
-              backdrop-blur-sm
-              hover:-translate-y-1
-            `}
-          >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10">        {mainCategories.map((category) => {
+          const isSelected = selectedParentCategory === category.key;
+          return (
+            <button
+              key={category.key}
+              onClick={() => handleCategoryClick(category.key)}
+              className={`
+                group relative overflow-hidden
+                bg-gradient-to-br ${category.color} ${category.hoverColor}
+                text-white font-serif
+                px-8 py-6 md:px-10 md:py-8
+                rounded-lg
+                transform transition-all duration-500 ease-out
+                hover:scale-[1.03] ${category.shadowColor}
+                shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.18)]
+                focus:outline-none focus:ring-3 focus:ring-luxury-gold/50
+                active:scale-[0.98]
+                border ${category.borderColor} hover:border-luxury-gold/40
+                backdrop-blur-sm
+                hover:-translate-y-1
+                ${isSelected ? 'ring-4 ring-luxury-gold/60 scale-[1.02] border-luxury-gold shadow-[0_16px_40px_rgb(0,0,0,0.2)]' : ''}
+              `}
+            >
             {" "}
             {/* Luxury Background Pattern */}
             <div className="absolute inset-0 opacity-[0.1]">
@@ -222,14 +231,14 @@ export default function CategoryQuickFilter() {
             {/* Content */}
             <div className="relative z-10 flex flex-col items-center justify-center space-y-4">
               <div className="text-white/95 group-hover:text-luxury-gold transition-all duration-300 transform group-hover:scale-110">
-                {category.icon}
-              </div>
+                {category.icon}              </div>
               <span className="text-lg md:text-xl font-serif font-medium tracking-wide">
                 {category.name}
               </span>
             </div>
           </button>
-        ))}
+          );
+        })}
       </div>{" "}
       {/* Subtitle */}
       <div className="text-center mt-8">

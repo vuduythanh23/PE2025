@@ -366,8 +366,7 @@ const CatalogManagement = () => {
       console.error("Error deleting brand:", err);
       Swal.fire("Error", "Failed to delete brand", "error");
     }
-  };
-  // ========== CATEGORY FUNCTIONS ==========
+  };  // ========== CATEGORY FUNCTIONS ==========
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -378,15 +377,35 @@ const CatalogManagement = () => {
           () => getProducts(),
           "Fetching products for counts"
         ),
-      ]);
-
-      // Validate and normalize categories data
+      ]);      // Validate and normalize categories data
       const categoriesArray = Array.isArray(categoriesData)
         ? categoriesData
         : [];
 
+      console.log("=== DEBUGGING CATEGORY DATA ===");
+      console.log("Raw categories data:", categoriesArray);
+      console.log("Sample category structure:", categoriesArray[0]);
+      
+      // Fix category hierarchy based on actual API data
+      const fixedCategories = fixCategoryHierarchy(categoriesArray);
+      
+      // Detailed analysis of each category
+      fixedCategories.forEach((cat, index) => {
+        console.log(`Category ${index + 1}: ${cat.name}`, {
+          id: cat._id,
+          parent: cat.parent,
+          parentType: typeof cat.parent,
+          parentId: cat.parentId,
+          parentCategory: cat.parentCategory?.name,
+          type: cat.type,
+          slug: cat.slug
+        });
+      });
+
+      console.log("Debug - Products data:", productsData);
+
       // Process products to count by category
-      const productsByCategory = {};
+      const directProductsByCategory = {};
       if (Array.isArray(productsData)) {
         productsData.forEach((product) => {
           if (product && product.category) {
@@ -398,23 +417,72 @@ const CatalogManagement = () => {
 
             if (categoryId) {
               // Initialize counter if needed
-              if (!productsByCategory[categoryId]) {
-                productsByCategory[categoryId] = 0;
+              if (!directProductsByCategory[categoryId]) {
+                directProductsByCategory[categoryId] = 0;
               }
               // Increment the counter
-              productsByCategory[categoryId]++;
+              directProductsByCategory[categoryId]++;
             }
           }
         });
-      }
+      }      // Helper function to get all child category IDs recursively
+      const getAllChildCategoryIds = (parentId, categories) => {
+        const childIds = [];
+        const directChildren = categories.filter((cat) => {
+          const pId = cat.parent || cat.parentId;
+          return pId === parentId;
+        });
 
-      // Add product count to each category
-      const categoriesWithCounts = categoriesArray.map((category) => {
+        directChildren.forEach((child) => {
+          const childId = child._id || child.id;
+          childIds.push(childId);
+          // Recursively get children of this child
+          childIds.push(...getAllChildCategoryIds(childId, categories));
+        });
+
+        return childIds;
+      };
+
+      // Calculate total product count for each category (including children)
+      const categoriesWithCounts = fixedCategories.map((category) => {
         const categoryId = category._id || category.id;
+        
+        // Get direct products of this category
+        const directCount = directProductsByCategory[categoryId] || 0;
+          // Get all child category IDs
+        const childCategoryIds = getAllChildCategoryIds(categoryId, fixedCategories);
+        
+        // Sum up products from all child categories
+        const childrenCount = childCategoryIds.reduce((sum, childId) => {
+          return sum + (directProductsByCategory[childId] || 0);
+        }, 0);
+
+        const totalCount = directCount + childrenCount;
+
+        console.log(`Debug - Category ${category.name} (${categoryId}):`, {
+          directCount,
+          childCategoryIds,
+          childrenCount,
+          totalCount,
+          parentField: category.parent,
+          parentIdField: category.parentId
+        });
+
         return {
           ...category,
-          productCount: productsByCategory[categoryId] || 0,
+          productCount: totalCount,
+          directProductCount: directCount,
         };
+      });
+
+      console.log("=== FINAL PROCESSED CATEGORIES ===");
+      categoriesWithCounts.forEach(cat => {
+        console.log(`${cat.name}:`, {
+          id: cat._id,
+          parent: cat.parent,
+          productCount: cat.productCount,
+          directProductCount: cat.directProductCount
+        });
       });
 
       setCategories(categoriesWithCounts);
@@ -579,8 +647,7 @@ const CatalogManagement = () => {
       const catId = cat._id || cat.id;
       return catId !== editingId && !childIds.includes(catId);
     });
-  };
-  // Helper function to format category names for the dropdown with proper indentation
+  };  // Helper function to format category names for the dropdown with proper indentation
   const formatCategoryNameForDropdown = (category) => {
     // Calculate depth by counting parents
     let depth = 0;
@@ -598,6 +665,426 @@ const CatalogManagement = () => {
     // Add indentation based on depth
     const indent = "—".repeat(depth);
     return depth > 0 ? `${indent} ${category.name}` : category.name;
+  };
+
+  // Helper function to sort categories hierarchically
+  const sortCategoriesHierarchically = (categoriesToSort) => {
+    const sorted = [];
+    const processed = new Set();
+
+    // Helper function to add category and its children recursively
+    const addCategoryAndChildren = (category) => {
+      if (processed.has(category._id || category.id)) return;
+      
+      processed.add(category._id || category.id);
+      sorted.push(category);
+
+      // Find and add children
+      const children = categoriesToSort
+        .filter((cat) => {
+          const parentId = cat.parent || cat.parentId;
+          return parentId === (category._id || category.id);
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      children.forEach(addCategoryAndChildren);
+    };
+
+    // First add all top-level categories
+    const topLevel = categoriesToSort
+      .filter((cat) => !cat.parent && !cat.parentId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    topLevel.forEach(addCategoryAndChildren);
+
+    // Add any remaining categories that might not have been processed
+    categoriesToSort.forEach((cat) => {
+      if (!processed.has(cat._id || cat.id)) {
+        addCategoryAndChildren(cat);
+      }
+    });
+
+    return sorted;
+  };
+
+  // Helper function to fix category hierarchy based on actual API data structure
+  const fixCategoryHierarchy = (categories) => {
+    console.log("=== FIXING CATEGORY HIERARCHY ===");
+    
+    // Create a map for quick lookup
+    const categoryMap = new Map();
+    categories.forEach(cat => {
+      categoryMap.set(cat._id || cat.id, cat);
+    });
+
+    console.log("Category map:", Array.from(categoryMap.entries()));
+
+    // Process each category to ensure parent relationship is correct
+    const fixedCategories = categories.map(category => {
+      const fixed = { ...category };
+      
+      // Handle different parent field formats
+      let parentId = category.parent || category.parentId;
+      
+      if (parentId) {
+        // If parent is an object with _id, extract the ID
+        if (typeof parentId === 'object' && parentId._id) {
+          parentId = parentId._id;
+          fixed.parent = parentId;
+        }
+        
+        // Try to find the actual parent category
+        const parentCategory = categoryMap.get(parentId);
+        
+        console.log(`Category ${category.name} parent lookup:`, {
+          originalParent: category.parent,
+          parentId: parentId,
+          foundParent: parentCategory?.name || 'NOT FOUND',
+          allParents: Array.from(categoryMap.keys())
+        });
+        
+        // If parent is found, ensure the relationship is clear
+        if (parentCategory) {
+          fixed.parentCategory = parentCategory;
+          fixed.parent = parentId; // Ensure it's stored as ID string
+        } else {
+          console.warn(`Parent category ${parentId} not found for ${category.name}`);
+          // Maybe the parent ID is invalid, treat as top level
+          delete fixed.parent;
+          delete fixed.parentId;
+        }
+      }
+      
+      return fixed;
+    });
+
+    console.log("Fixed categories:", fixedCategories);
+    return fixedCategories;
+  };
+
+  // Helper function to organize categories into parent-child structure
+  const organizeCategories = () => {
+    const parentCategories = [];
+    const childCategories = [];
+
+    filteredCategories.forEach(category => {
+      const parentId = category.parent || category.parentId;
+      if (!parentId) {
+        parentCategories.push(category);
+      } else {
+        childCategories.push(category);
+      }
+    });    // Calculate total products for parent categories
+    const parentCategoriesWithTotals = parentCategories.map(parent => {
+      const children = childCategories.filter(child => {
+        const childParentId = child.parent || child.parentId;
+        return childParentId === parent._id || childParentId === parent.id;
+      });      // Debug: Log the parent data to understand what backend returns
+      console.log(`=== DEBUG PARENT CATEGORY: ${parent.name} ===`);
+      console.log('Parent data:', {
+        id: parent._id || parent.id,
+        productCount: parent.productCount,
+        directProductCount: parent.directProductCount,
+        children: children.map(c => ({ name: c.name, productCount: c.productCount }))
+      });
+
+      // Calculate children products count
+      const childrenProductCount = children.reduce((sum, child) => {
+        return sum + (child.productCount || 0);
+      }, 0);
+
+      // Determine direct product count
+      // If backend provides directProductCount, use it
+      // If not, check if productCount seems to be total (by comparing with children sum)
+      let directProductCount;
+      let totalProductCount;
+
+      if (parent.directProductCount !== undefined) {
+        // Backend explicitly provides direct count
+        directProductCount = parent.directProductCount;
+        totalProductCount = directProductCount + childrenProductCount;
+      } else if (parent.productCount !== undefined) {
+        // Backend only provides productCount - need to determine if it's direct or total
+        const backendProductCount = parent.productCount;
+        
+        if (childrenProductCount === 0) {
+          // No children, so productCount is direct
+          directProductCount = backendProductCount;
+          totalProductCount = backendProductCount;
+        } else {
+          // Has children - check if productCount seems like total
+          if (backendProductCount > childrenProductCount) {
+            // productCount > children sum, likely total, calculate direct
+            directProductCount = backendProductCount - childrenProductCount;
+            totalProductCount = backendProductCount;
+          } else {
+            // productCount <= children sum, likely direct
+            directProductCount = backendProductCount;
+            totalProductCount = directProductCount + childrenProductCount;
+          }
+        }
+      } else {
+        // No product count from backend
+        directProductCount = 0;
+        totalProductCount = childrenProductCount;
+      }
+
+      console.log('Calculated:', {
+        directProductCount,
+        childrenProductCount,
+        totalProductCount
+      });
+
+      return {
+        ...parent,
+        children: children,
+        totalProductCount: totalProductCount,
+        directProductCount: directProductCount
+      };
+    });
+
+    console.log("=== ORGANIZED CATEGORIES ===");
+    console.log("Parent categories:", parentCategoriesWithTotals);
+    console.log("Orphan children:", childCategories.filter(child => {
+      const childParentId = child.parent || child.parentId;
+      return !parentCategories.some(parent => 
+        parent._id === childParentId || parent.id === childParentId
+      );
+    }));
+
+    return {
+      parentCategories: parentCategoriesWithTotals,
+      orphanChildren: childCategories.filter(child => {
+        const childParentId = child.parent || child.parentId;
+        return !parentCategories.some(parent => 
+          parent._id === childParentId || parent.id === childParentId
+        );
+      })
+    };
+  };
+
+  // State for dropdown management
+  const [expandedCategories, setExpandedCategories] = useState(new Set());
+
+  const toggleCategoryExpansion = (categoryId) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  // Functions to handle expand/collapse all
+  const expandAllCategories = () => {
+    const { parentCategories } = organizeCategories();
+    const allParentIds = parentCategories
+      .filter(parent => parent.children && parent.children.length > 0)
+      .map(parent => parent._id || parent.id);
+    setExpandedCategories(new Set(allParentIds));
+  };
+
+  const collapseAllCategories = () => {
+    setExpandedCategories(new Set());
+  };
+  // Function to render category row
+  const renderCategoryRow = (category, isChild = false, parentId = null) => {
+    return (
+      <tr
+        key={category._id || category.id}
+        className={`hover:bg-gray-50 transition-colors duration-150 ${
+          isChild ? 'category-child-row category-dropdown-animation' : ''
+        }`}
+      >
+        <td className="py-4 px-4">
+          <div className={`flex items-center ${isChild ? 'pl-8' : ''}`}>
+            <FaLayerGroup className={`mr-2 ${isChild ? 'text-blue-500' : 'text-amber-500'}`} />
+            <span className={isChild ? 'category-child-name' : 'font-medium'}>
+              {category.name}
+            </span>
+          </div>
+        </td>
+        <td className="py-4 px-4">
+          {isChild ? (
+            <span className="flex items-center text-blue-600">
+              <FaLayerGroup className="text-gray-400 mr-1" />
+              {/* Find parent name */}
+              {categories.find(c => c._id === parentId || c.id === parentId)?.name || 'Unknown'}
+            </span>
+          ) : (
+            <span className="text-gray-500 italic">
+              None (Top Level)
+            </span>
+          )}
+        </td>
+        <td className="py-4 px-4">
+          {category.description &&
+          category.description.length > 50
+            ? `${category.description.substring(0, 50)}...`
+            : category.description || (
+                <span className="text-gray-400 italic">
+                  No description
+                </span>
+              )}
+        </td>        <td className="py-4 px-4">
+          <div className="flex items-center">
+            <span className={
+              isChild 
+                ? 'category-product-count-child' 
+                : 'category-product-count-parent'
+            }>
+              {isChild 
+                ? (category.productCount || 0)
+                : (category.totalProductCount || category.productCount || 0)
+              }
+            </span>
+            {!isChild && category.directProductCount !== undefined && (
+              <span className="ml-2 text-xs text-gray-500">
+                ({category.directProductCount} direct)
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="py-4 px-4">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handleEditCategory(category)}
+              className="text-blue-500 hover:text-blue-700 transition-colors"
+              title="Edit category"
+            >
+              <FaEdit />
+            </button>
+            <button
+              onClick={() =>
+                handleDeleteCategory(category._id || category.id)
+              }
+              className="text-red-500 hover:text-red-700 transition-colors"
+              title="Delete category"
+            >
+              <FaTrash />
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  // Function to render categories with dropdown structure
+  const renderCategoriesWithDropdown = () => {
+    const { parentCategories, orphanChildren } = organizeCategories();
+    const rows = [];
+
+    // Render parent categories with their children
+    parentCategories.forEach(parent => {
+      const isExpanded = expandedCategories.has(parent._id || parent.id);
+      const hasChildren = parent.children && parent.children.length > 0;      // Parent category row
+      rows.push(
+        <tr
+          key={parent._id || parent.id}
+          className="category-parent-row hover:bg-gradient-to-r hover:from-amber-100 hover:to-yellow-100 transition-all duration-200"
+        >
+          <td className="py-4 px-4">
+            <div className="flex items-center">
+              {hasChildren && (
+                <button
+                  onClick={() => toggleCategoryExpansion(parent._id || parent.id)}
+                  className="category-expand-button mr-2"
+                  title={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                  {isExpanded ? (
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              )}
+              <FaLayerGroup className="text-amber-500 mr-2" />
+              <span className="category-parent-name">{parent.name}</span>
+              {hasChildren && (
+                <span className="category-subcategory-badge">
+                  {parent.children.length} subcategories
+                </span>
+              )}
+            </div>
+          </td>
+          <td className="py-4 px-4">
+            <span className="text-gray-500 italic font-medium">
+              None (Top Level)
+            </span>
+          </td>
+          <td className="py-4 px-4">
+            {parent.description &&
+            parent.description.length > 50
+              ? `${parent.description.substring(0, 50)}...`
+              : parent.description || (
+                  <span className="text-gray-400 italic">
+                    No description
+                  </span>
+                )}
+          </td>          <td className="py-4 px-4">
+            <div className="flex items-center">
+              <span className="category-product-count-parent">
+                {parent.totalProductCount || parent.productCount || 0}
+              </span>
+              {parent.directProductCount !== undefined && (
+                <span className="ml-2 text-xs text-gray-500">
+                  ({parent.directProductCount} direct)
+                </span>
+              )}
+            </div>
+          </td>
+          <td className="py-4 px-4">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleEditCategory(parent)}
+                className="text-blue-500 hover:text-blue-700 transition-colors"
+                title="Edit category"
+              >
+                <FaEdit />
+              </button>
+              <button
+                onClick={() =>
+                  handleDeleteCategory(parent._id || parent.id)
+                }
+                className="text-red-500 hover:text-red-700 transition-colors"
+                title="Delete category"
+              >
+                <FaTrash />
+              </button>
+            </div>
+          </td>
+        </tr>
+      );
+
+      // Children rows (if expanded)
+      if (isExpanded && hasChildren) {
+        parent.children.forEach(child => {
+          rows.push(renderCategoryRow(child, true, parent._id || parent.id));
+        });
+      }
+    });
+
+    // Render orphan children (categories without valid parents)
+    if (orphanChildren.length > 0) {
+      rows.push(
+        <tr key="orphan-header" className="bg-red-50">
+          <td colSpan="5" className="py-2 px-4 text-center text-red-600 font-medium text-sm">
+            ⚠️ Categories with missing or invalid parent references
+          </td>
+        </tr>
+      );
+      
+      orphanChildren.forEach(child => {
+        rows.push(renderCategoryRow(child, false));
+      });
+    }
+
+    return rows;
   };
 
   // ========== RENDERING ==========
@@ -1094,9 +1581,7 @@ const CatalogManagement = () => {
             </table>
           </div>
         </div>
-      )}
-
-      {/* Categories Section */}
+      )}      {/* Categories Section */}
       {activeSection === "categories" && (
         <div className="categories-section">
           <div className="flex justify-between items-center mb-4">
@@ -1115,21 +1600,40 @@ const CatalogManagement = () => {
                 />
               </div>
             </div>
-            <button
-              className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-md flex items-center"
-              onClick={() => {
-                setEditingCategory(null);
-                setCategoryFormData({
-                  name: "",
-                  description: "",
-                  slug: "",
-                  parent: "",
-                });
-                setShowCategoryForm(true);
-              }}
-            >
-              <FaPlus className="mr-2" /> Add Category
-            </button>
+            <div className="flex items-center space-x-3">
+              {/* Expand/Collapse All Buttons */}
+              <div className="flex space-x-2">
+                <button
+                  onClick={expandAllCategories}
+                  className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                  title="Expand all parent categories"
+                >
+                  Expand All
+                </button>
+                <button
+                  onClick={collapseAllCategories}
+                  className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  title="Collapse all parent categories"
+                >
+                  Collapse All
+                </button>
+              </div>
+              <button
+                className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-md flex items-center"
+                onClick={() => {
+                  setEditingCategory(null);
+                  setCategoryFormData({
+                    name: "",
+                    description: "",
+                    slug: "",
+                    parent: "",
+                  });
+                  setShowCategoryForm(true);
+                }}
+              >
+                <FaPlus className="mr-2" /> Add Category
+              </button>
+            </div>
           </div>{" "}
           {/* Category Form Modal */}
           {showCategoryForm && (
@@ -1247,15 +1751,8 @@ const CatalogManagement = () => {
                       value={categoryFormData.parent}
                       onChange={handleCategoryInputChange}
                       className="w-full p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="">None (Top Level Category)</option>
-                      {getPotentialParentCategories()
-                        .sort((a, b) => {
-                          // Sort by hierarchy - top level first, then by name
-                          if (!a.parentId && b.parentId) return -1;
-                          if (a.parentId && !b.parentId) return 1;
-                          return a.name.localeCompare(b.name);
-                        })
+                    >                      <option value="">None (Top Level Category)</option>
+                      {sortCategoriesHierarchically(getPotentialParentCategories())
                         .map((category) => (
                           <option
                             key={category._id || category.id}
@@ -1309,17 +1806,13 @@ const CatalogManagement = () => {
                 </form>
               </div>
             </div>
-          )}
-          {/* Categories Table */}
+          )}          {/* Categories Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-md">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
-                  </th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Slug
                   </th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Parent Category
@@ -1338,72 +1831,17 @@ const CatalogManagement = () => {
               <tbody className="divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-500">
+                    <td colSpan="5" className="py-10 text-center text-gray-500">
                       Loading categories...
                     </td>
                   </tr>
                 ) : filteredCategories.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-500">
+                    <td colSpan="5" className="py-10 text-center text-gray-500">
                       No categories found.
                     </td>
-                  </tr>
-                ) : (
-                  filteredCategories.map((category) => (
-                    <tr
-                      key={category._id || category.id}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="py-4 px-4">{category.name}</td>
-                      <td className="py-4 px-4">{category.slug}</td>{" "}
-                      <td className="py-4 px-4">
-                        {category.parent || category.parentId ? (
-                          <span className="flex items-center">
-                            <FaLayerGroup className="text-gray-400 mr-1" />
-                            {categories.find(
-                              (c) =>
-                                c._id ===
-                                  (category.parent || category.parentId) ||
-                                c.id === (category.parent || category.parentId)
-                            )?.name || "Unknown"}
-                          </span>
-                        ) : (
-                          <span className="text-gray-500">
-                            None (Top Level)
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4">
-                        {category.description &&
-                        category.description.length > 50
-                          ? `${category.description.substring(0, 50)}...`
-                          : category.description || "No description"}
-                      </td>
-                      <td className="py-4 px-4">
-                        {category.productCount || 0}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEditCategory(category)}
-                            className="text-blue-500 hover:text-blue-700"
-                            title="Edit category"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleDeleteCategory(category._id || category.id)
-                            }
-                            className="text-red-500 hover:text-red-700"
-                            title="Delete category"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  </tr>                ) : (
+                  renderCategoriesWithDropdown()
                 )}
               </tbody>
             </table>

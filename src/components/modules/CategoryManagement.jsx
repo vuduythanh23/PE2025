@@ -22,6 +22,17 @@ const CategoryManagement = ({ onDataChange }) => {
   const [errors, setErrors] = useState({});
   const { handleAsyncOperation } = useLoading();
 
+  // Debug log for categories state
+  console.log("=== CATEGORY MANAGEMENT STATE ===");
+  console.log("Categories in state:", categories);
+  console.log("Categories length:", categories.length);
+  console.log("Loading state:", loading);
+  if (categories.length > 0) {
+    console.log("Sample category:", categories[0]);
+    console.log("Has isMainCategory field:", 'isMainCategory' in categories[0]);
+    console.log("Has parentCategoryName field:", 'parentCategoryName' in categories[0]);
+  }
+
   // Add ESC key handler to close modal
   useEffect(() => {
     const handleEscape = (e) => {
@@ -40,58 +51,27 @@ const CategoryManagement = ({ onDataChange }) => {
   useEffect(() => {
     fetchCategories();
   }, []);
-
-  // Function to fetch all categories
+  // Function to fetch all categories with hierarchical structure
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      // Fetch both categories and products to calculate product counts
+      
+      // Fetch all categories and products
       const [categoriesData, productsData] = await Promise.all([
         handleAsyncOperation(() => getCategories(), "Fetching categories"),
-        handleAsyncOperation(
-          () => getProducts(),
-          "Fetching products for counts"
-        ),
+        handleAsyncOperation(() => getProducts(), "Fetching products for counts"),
       ]);
 
       // Validate and normalize categories data
-      const categoriesArray = Array.isArray(categoriesData)
-        ? categoriesData
-        : [];
-
-      // Process products to count by category
-      const productsByCategory = {};
-      if (Array.isArray(productsData)) {
-        productsData.forEach((product) => {
-          if (product && product.category) {
-            // Extract category ID based on whether it's an object or string
-            const categoryId =
-              typeof product.category === "object"
-                ? product.category._id || product.category.id
-                : product.category;
-
-            if (categoryId) {
-              // Initialize counter if needed
-              if (!productsByCategory[categoryId]) {
-                productsByCategory[categoryId] = 0;
-              }
-              // Increment the counter
-              productsByCategory[categoryId]++;
-            }
-          }
-        });
-      }
-
-      // Add product count to each category
-      const categoriesWithCounts = categoriesArray.map((category) => {
-        const categoryId = category._id || category.id;
-        return {
-          ...category,
-          productCount: productsByCategory[categoryId] || 0,
-        };
-      });
-
-      setCategories(categoriesWithCounts);
+      const categoriesArray = Array.isArray(categoriesData) ? categoriesData : [];
+      const productsArray = Array.isArray(productsData) ? productsData : [];      // Build hierarchical structure and calculate product counts
+      const processedCategories = buildHierarchicalCategories(categoriesArray, productsArray);
+      
+      console.log("=== FINAL RESULT ===");
+      console.log("Processed categories to display:", processedCategories);
+      console.log("First category example:", processedCategories[0]);
+      
+      setCategories(processedCategories);
     } catch (err) {
       console.error("Error fetching categories:", err);
       Swal.fire({
@@ -102,6 +82,103 @@ const CategoryManagement = ({ onDataChange }) => {
     } finally {
       setLoading(false);
     }
+  };
+  // Function to build hierarchical categories with product counts
+  const buildHierarchicalCategories = (categories, products) => {
+    console.log("Raw categories data:", categories);
+    console.log("Raw products data:", products);
+
+    // Count products by category
+    const productsByCategory = {};
+    products.forEach((product) => {
+      if (product && product.category) {
+        const categoryId = typeof product.category === "object" 
+          ? product.category._id || product.category.id
+          : product.category;
+        
+        if (categoryId) {
+          productsByCategory[categoryId] = (productsByCategory[categoryId] || 0) + 1;
+        }
+      }
+    });
+
+    console.log("Products by category:", productsByCategory);    // Process all categories and determine hierarchy
+    const processedCategories = categories.map(category => {
+      const categoryId = category._id;
+      const productCount = productsByCategory[categoryId] || 0;
+      
+      console.log(`Processing category: ${category.name}`, {
+        type: category.type,
+        parent: category.parent,
+        parentCategory: category.parentCategory
+      });
+      
+      // Determine if this is a main category or subcategory
+      // Based on schema: check 'type' field and 'parent' field
+      let isMainCategory = true;
+      let parentCategoryName = "None (Top Level)";
+      
+      // Check type field first
+      if (category.type === 'sub') {
+        isMainCategory = false;
+        
+        // Find parent category if it exists
+        if (category.parent && category.parent !== null) {
+          const parentCategory = categories.find(cat => {
+            const parentId = typeof category.parent === 'object' 
+              ? category.parent._id 
+              : category.parent;
+            return cat._id === parentId;
+          });
+          
+          parentCategoryName = parentCategory ? parentCategory.name : "Unknown Parent";
+        } else {
+          parentCategoryName = "Unknown Parent";
+        }
+      } else {
+        // Default to main category (type === 'main' or no type)
+        isMainCategory = true;
+        parentCategoryName = "None (Top Level)";
+      }
+
+      return {
+        ...category,
+        productCount: productCount,
+        parentCategoryName: parentCategoryName,
+        isMainCategory: isMainCategory,
+      };
+    });    // Now calculate total product counts for main categories (including their subcategories)
+    const finalCategories = processedCategories.map(category => {
+      if (category.isMainCategory) {
+        // Find all subcategories of this main category
+        const subcategories = processedCategories.filter(cat => 
+          !cat.isMainCategory && 
+          cat.parentCategoryName === category.name
+        );
+        
+        // Calculate total products (own + subcategories)
+        let totalProducts = productsByCategory[category._id] || 0;
+        subcategories.forEach(sub => {
+          totalProducts += productsByCategory[sub._id] || 0;
+        });
+
+        return {
+          ...category,
+          productCount: totalProducts,
+          ownProductCount: productsByCategory[category._id] || 0,
+        };
+      } else {
+        // For subcategories, just return their own product count
+        return {
+          ...category,
+          productCount: productsByCategory[category._id] || 0,
+          ownProductCount: productsByCategory[category._id] || 0,
+        };
+      }
+    });
+
+    console.log("Final processed categories:", finalCategories);
+    return finalCategories;
   };
 
   // Function to generate slug from name
@@ -408,15 +485,14 @@ const CategoryManagement = ({ onDataChange }) => {
           <p className="mt-2 text-gray-600">Loading categories...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-md shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="bg-white rounded-md shadow overflow-hidden">          <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Slug
+                  Parent Category
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
@@ -425,18 +501,14 @@ const CategoryManagement = ({ onDataChange }) => {
                   Products
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            </thead>            <tbody className="bg-white divide-y divide-gray-200">
               {categories.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="5"
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No categories found
@@ -444,15 +516,33 @@ const CategoryManagement = ({ onDataChange }) => {
                 </tr>
               ) : (
                 categories.map((category) => (
-                  <tr key={category._id} className="hover:bg-gray-50">
+                  <tr key={category._id} className={`hover:bg-gray-50 ${category.isMainCategory ? 'bg-blue-50' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {category.name}
+                      <div className={`text-sm font-medium ${category.isMainCategory ? 'text-blue-900' : 'text-gray-900 ml-4'}`}>
+                        {category.isMainCategory ? (
+                          <>
+                            <span className="inline-flex items-center">
+                              <svg className="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010 2h1.586l-2.293 2.293a1 1 0 001.414 1.414L15 8.414V10a1 1 0 002 0V6a1 1 0 00-1-1h-4z" clipRule="evenodd" />
+                              </svg>
+                              {category.name}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="inline-flex items-center">
+                              <svg className="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                              </svg>
+                              {category.name}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
-                        {category.slug}
+                      <div className={`text-sm ${category.isMainCategory ? 'text-blue-700 font-medium' : 'text-gray-600'}`}>
+                        {category.parentCategoryName}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -462,30 +552,26 @@ const CategoryManagement = ({ onDataChange }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          category.isMainCategory 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
                           {category.productCount || 0}
+                          {category.isMainCategory && category.productCount > 0 ? ' (total)' : ''}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {category.createdAt
-                          ? new Date(category.createdAt).toLocaleDateString()
-                          : "-"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleEdit(category)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-blue-600 hover:text-blue-900 mr-4 transition-colors"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() =>
-                          handleDelete(category._id, category.name)
-                        }
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDelete(category._id, category.name)}
+                        className="text-red-600 hover:text-red-900 transition-colors"
                       >
                         Delete
                       </button>

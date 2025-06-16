@@ -6,6 +6,10 @@ import {
   validateEmail,
   validatePhone,
   validatePassword,
+  validateAddress,
+  validateCity,
+  validateState,
+  validatePostalCode,
 } from "../utils";
 import Header from "../components/layout/Header";
 import ProfileForm from "../styles/components/ProfileForm";
@@ -15,14 +19,16 @@ import Swal from "sweetalert2";
 
 const UserProfile = () => {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
-  const [user, setUser] = useState({
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');  const [user, setUser] = useState({
     _id: "",
     username: "",
     email: "",
     firstName: "",
     lastName: "",
     address: "",
+    city: "",
+    state: "",
+    postalCode: "",
     phoneNumber: "",
     password: "",
   });
@@ -51,9 +57,7 @@ const UserProfile = () => {
     };
 
     fetchUser();
-  }, [handleAsyncOperation]);
-
-  const validateField = (name, value) => {
+  }, [handleAsyncOperation]);  const validateField = (name, value) => {
     switch (name) {
       case "email":
         return validateEmail(value);
@@ -61,6 +65,14 @@ const UserProfile = () => {
         return validatePhone(value);
       case "password":
         return value ? validatePassword(value) : ""; // Only validate if password is being changed
+      case "address":
+        return validateAddress(value);
+      case "city":
+        return validateCity(value);
+      case "state":
+        return validateState(value);
+      case "postalCode":
+        return validatePostalCode(value);
       default:
         return "";
     }

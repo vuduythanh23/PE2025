@@ -168,3 +168,102 @@ export const validateNumberRange = (value, min = 0, max = Infinity, fieldName = 
   
   return "";
 };
+
+/**
+ * Validate address
+ * @param {string} address - Address to validate
+ * @param {number} minLength - Minimum address length (default: 10)
+ * @returns {string} Error message or empty string if valid
+ */
+export const validateAddress = (address, minLength = 10) => {
+  if (!address || address.trim() === "") {
+    return "Delivery address is required.";
+  }
+  
+  if (address.trim().length < minLength) {
+    return `Address must be at least ${minLength} characters long.`;
+  }
+  
+  // Basic validation for address completeness
+  const addressLower = address.toLowerCase();
+  const hasNumbers = /\d/.test(address);
+  
+  if (!hasNumbers) {
+    return "Please include street number or building number in your address.";
+  }
+  
+  return "";
+};
+
+/**
+ * Validate city name
+ * @param {string} city - City to validate
+ * @returns {string} Error message or empty string if valid
+ */
+export const validateCity = (city) => {
+  if (!city || city.trim() === "") {
+    return "City is required.";
+  }
+  
+  if (city.trim().length < 2) {
+    return "City name must be at least 2 characters long.";
+  }
+  
+  // Allow letters, spaces, hyphens, apostrophes
+  const cityRegex = /^[a-zA-Z\s\-']+$/;
+  if (!cityRegex.test(city.trim())) {
+    return "City name can only contain letters, spaces, hyphens, and apostrophes.";
+  }
+  
+  return "";
+};
+
+/**
+ * Validate state/province
+ * @param {string} state - State to validate
+ * @returns {string} Error message or empty string if valid
+ */
+export const validateState = (state) => {
+  if (!state || state.trim() === "") {
+    return "State/Province is required.";
+  }
+  
+  if (state.trim().length < 2) {
+    return "State/Province must be at least 2 characters long.";
+  }
+  
+  // Allow letters, spaces, hyphens, apostrophes
+  const stateRegex = /^[a-zA-Z\s\-']+$/;
+  if (!stateRegex.test(state.trim())) {
+    return "State/Province can only contain letters, spaces, hyphens, and apostrophes.";
+  }
+  
+  return "";
+};
+
+/**
+ * Validate postal code
+ * @param {string} postalCode - Postal code to validate
+ * @returns {string} Error message or empty string if valid
+ */
+export const validatePostalCode = (postalCode) => {
+  if (!postalCode || postalCode.trim() === "") {
+    return "Postal code is required.";
+  }
+  
+  // Remove spaces and convert to uppercase
+  const cleaned = postalCode.replace(/\s/g, "").toUpperCase();
+  
+  // Basic pattern for various postal code formats
+  // US: 12345 or 12345-1234
+  // Canada: A1A 1A1 or A1A1A1
+  // UK: SW1A 1AA or similar
+  // General: alphanumeric, 3-10 characters
+  const postalRegex = /^[A-Z0-9\-]{3,10}$/;
+  
+  if (!postalRegex.test(cleaned)) {
+    return "Please enter a valid postal code.";
+  }
+  
+  return "";
+};

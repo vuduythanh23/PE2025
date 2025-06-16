@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/layout/Header";
 import OrderManagement from "../components/modules/OrderManagement";
 import UserManagement from "../components/modules/UserManagement";
@@ -15,7 +16,8 @@ const AdminDebug = import.meta.env.DEV
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("users"); // 'users', 'orders', or 'catalog'
   const [adminAccessConfirmed, setAdminAccessConfirmed] = useState(false);
-
+  const [accessCheckCompleted, setAccessCheckCompleted] = useState(false);
+  const navigate = useNavigate();
   // Check admin access on mount
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -30,19 +32,29 @@ export default function Admin() {
           import.meta.env.VITE_ALWAYS_ADMIN === "true"
         ) {
           setAdminAccessConfirmed(true);
+          setAccessCheckCompleted(true);
           return;
         }
-      } // Use our new utility to check and refresh admin status
+      } 
+      
+      // Use our new utility to check and refresh admin status
       const adminStatus = await checkAndRefreshAdminStatus();
       console.log(
         "Admin status check in Admin page after refresh:",
         adminStatus
       );
       setAdminAccessConfirmed(adminStatus);
+      setAccessCheckCompleted(true);
+      
+      // Redirect to login if not admin (except in dev mode)
+      if (!adminStatus && !import.meta.env.DEV) {
+        console.log("Access denied: Redirecting to login...");
+        navigate("/login?redirect=/admin");
+      }
     };
 
     checkAdminAccess();
-  }, []);
+  }, [navigate]);
   // Enable admin mode for development testing
   const enableAdminMode = async () => {
     if (!import.meta.env.DEV) return;
@@ -65,12 +77,29 @@ export default function Admin() {
     // Force reload to apply changes
     window.location.reload();
   };
-
   return (
     <>
       <Header />{" "}
       <main className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-12">
+        {!accessCheckCompleted ? (
+          // Loading state while checking admin access
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Checking access permissions...</p>
+            </div>
+          </div>
+        ) : !adminAccessConfirmed && !import.meta.env.DEV ? (
+          // Access denied message (should not show in production as user will be redirected)
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+              <p className="text-gray-600">You do not have permission to access this page.</p>
+            </div>
+          </div>
+        ) : (
+          // Admin dashboard content
+          <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
             <h1 className="text-3xl font-semibold text-gray-800 mb-4">
               Admin Dashboard
@@ -147,14 +176,14 @@ export default function Admin() {
             {activeTab === "users" ? (
               <UserManagement />
             ) : activeTab === "orders" ? (
-              <OrderManagement />
-            ) : activeTab === "catalog" ? (
+              <OrderManagement />            ) : activeTab === "catalog" ? (
               <CatalogManagement />
             ) : (
               <UserManagement />
             )}
           </div>
         </div>
+        )}
       </main>
     </>
   );

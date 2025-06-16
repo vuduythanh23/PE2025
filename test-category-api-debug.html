@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category API Debug Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .success {
+            background: #10b981;
+        }
+        .error {
+            background: #ef4444;
+        }
+        .warning {
+            background: #f59e0b;
+        }
+        .result {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .category-analysis {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .parent-issue {
+            background: #fecaca;
+            border: 1px solid #ef4444;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Category API Debug Tool</h1>
+    
+    <div class="container">
+        <h2>API Status Check</h2>
+        <button class="btn" onclick="testCategoriesAPI()">Test Categories API</button>
+        <button class="btn" onclick="testProductsAPI()">Test Products API</button>
+        <button class="btn success" onclick="analyzeHierarchy()">Analyze Category Hierarchy</button>
+        <button class="btn warning" onclick="findParentIssues()">Find Parent Issues</button>
+        <div id="apiStatus" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>Category Hierarchy Analysis</h2>
+        <div id="hierarchyAnalysis" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>Product Count Analysis</h2>
+        <div id="productAnalysis" class="result"></div>
+    </div>
+
+    <script>
+        let categoriesData = [];
+        let productsData = [];
+
+        // API Base URL - Update this to match your backend
+        const API_BASE = 'https://shoe-store-backend-api-88692812562.us-central1.run.app/api';
+        
+        async function testCategoriesAPI() {
+            const statusDiv = document.getElementById('apiStatus');
+            statusDiv.textContent = 'Testing Categories API...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                categoriesData = await response.json();
+                
+                statusDiv.innerHTML = `
+✅ Categories API Success!
+📊 Found ${categoriesData.length} categories
+
+Raw Data Sample:
+${JSON.stringify(categoriesData.slice(0, 2), null, 2)}
+
+Structure Analysis:
+${categoriesData.map((cat, i) => `
+Category ${i + 1}: ${cat.name}
+- ID: ${cat._id}
+- Parent: ${cat.parent || 'null'} (type: ${typeof cat.parent})
+- ParentId: ${cat.parentId || 'null'}
+- Type: ${cat.type || 'null'}
+- Slug: ${cat.slug || 'null'}
+`).join('')}
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Categories API Failed: ${error.message}`;
+            }
+        }
+
+        async function testProductsAPI() {
+            const statusDiv = document.getElementById('apiStatus');
+            statusDiv.textContent = 'Testing Products API...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/products`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                productsData = await response.json();
+                
+                statusDiv.innerHTML = `
+✅ Products API Success!
+📊 Found ${productsData.length} products
+
+Sample Product Category Structure:
+${productsData.slice(0, 3).map(product => `
+Product: ${product.name}
+- Category: ${JSON.stringify(product.category)}
+- Category Type: ${typeof product.category}
+`).join('')}
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Products API Failed: ${error.message}`;
+            }
+        }
+
+        async function analyzeHierarchy() {
+            if (categoriesData.length === 0) {
+                await testCategoriesAPI();
+            }
+            
+            const analysisDiv = document.getElementById('hierarchyAnalysis');
+            
+            // Create category map for quick lookup
+            const categoryMap = new Map();
+            categoriesData.forEach(cat => {
+                categoryMap.set(cat._id, cat);
+            });
+            
+            // Analyze parent-child relationships
+            let topLevelCategories = [];
+            let childCategories = [];
+            let orphanCategories = [];
+            
+            categoriesData.forEach(category => {
+                const parentId = category.parent || category.parentId;
+                
+                if (!parentId) {
+                    topLevelCategories.push(category);
+                } else {
+                    const parentExists = categoryMap.has(parentId);
+                    if (parentExists) {
+                        childCategories.push({
+                            ...category,
+                            parentName: categoryMap.get(parentId).name
+                        });
+                    } else {
+                        orphanCategories.push({
+                            ...category,
+                            missingParentId: parentId
+                        });
+                    }
+                }
+            });
+            
+            analysisDiv.innerHTML = `
+📊 HIERARCHY ANALYSIS RESULTS:
+
+🌟 TOP LEVEL CATEGORIES (${topLevelCategories.length}):
+${topLevelCategories.map(cat => `- ${cat.name} (${cat._id})`).join('\n')}
+
+👶 CHILD CATEGORIES (${childCategories.length}):
+${childCategories.map(cat => `- ${cat.name} → Parent: ${cat.parentName} (${cat.parent || cat.parentId})`).join('\n')}
+
+⚠️ ORPHAN CATEGORIES (${orphanCategories.length}):
+${orphanCategories.map(cat => `- ${cat.name} → Missing Parent: ${cat.missingParentId}`).join('\n')}
+
+📋 DETAILED BREAKDOWN:
+            `;
+            
+            // Create hierarchy tree
+            const createHierarchyTree = (parentId = null, depth = 0) => {
+                const children = categoriesData.filter(cat => {
+                    const catParentId = cat.parent || cat.parentId;
+                    return catParentId === parentId;
+                });
+                
+                return children.map(child => {
+                    const indent = '  '.repeat(depth);
+                    const childTree = createHierarchyTree(child._id, depth + 1);
+                    return `${indent}${child.name} (${child._id})${childTree.length > 0 ? '\n' + childTree.join('\n') : ''}`;
+                });
+            };
+            
+            const hierarchyTree = createHierarchyTree();
+            
+            if (hierarchyTree.length > 0) {
+                analysisDiv.innerHTML += `
+🌳 HIERARCHY TREE:
+${hierarchyTree.join('\n')}
+                `;
+            }
+        }
+
+        async function findParentIssues() {
+            if (categoriesData.length === 0) {
+                await testCategoriesAPI();
+            }
+            
+            const analysisDiv = document.getElementById('hierarchyAnalysis');
+            
+            const issues = [];
+            const categoryMap = new Map();
+            categoriesData.forEach(cat => categoryMap.set(cat._id, cat));
+            
+            categoriesData.forEach(category => {
+                const parentId = category.parent || category.parentId;
+                
+                if (parentId) {
+                    // Check if parent exists
+                    if (!categoryMap.has(parentId)) {
+                        issues.push({
+                            type: 'MISSING_PARENT',
+                            category: category.name,
+                            categoryId: category._id,
+                            parentId: parentId,
+                            message: `Parent ${parentId} does not exist`
+                        });
+                    }
+                    
+                    // Check if parent field format is consistent
+                    if (typeof parentId === 'object') {
+                        issues.push({
+                            type: 'OBJECT_PARENT',
+                            category: category.name,
+                            categoryId: category._id,
+                            parentId: parentId,
+                            message: 'Parent field is object instead of string ID'
+                        });
+                    }
+                }
+                
+                // Check for circular references
+                let currentId = category._id;
+                let visited = new Set();
+                while (currentId) {
+                    if (visited.has(currentId)) {
+                        issues.push({
+                            type: 'CIRCULAR_REFERENCE',
+                            category: category.name,
+                            categoryId: category._id,
+                            message: 'Circular reference detected in parent chain'
+                        });
+                        break;
+                    }
+                    visited.add(currentId);
+                    const currentCat = categoryMap.get(currentId);
+                    currentId = currentCat?.parent || currentCat?.parentId;
+                }
+            });
+            
+            analysisDiv.innerHTML = `
+🚨 PARENT RELATIONSHIP ISSUES (${issues.length}):
+
+${issues.map(issue => `
+⚠️ ${issue.type}: ${issue.category}
+   Category ID: ${issue.categoryId}
+   ${issue.parentId ? `Parent ID: ${JSON.stringify(issue.parentId)}` : ''}
+   Issue: ${issue.message}
+`).join('')}
+
+${issues.length === 0 ? '✅ No parent relationship issues found!' : ''}
+
+🔧 RECOMMENDED FIXES:
+${issues.filter(i => i.type === 'MISSING_PARENT').length > 0 ? '- Fix missing parent references in database' : ''}
+${issues.filter(i => i.type === 'OBJECT_PARENT').length > 0 ? '- Ensure parent field contains string IDs, not objects' : ''}
+${issues.filter(i => i.type === 'CIRCULAR_REFERENCE').length > 0 ? '- Fix circular parent references' : ''}
+            `;
+        }
+
+        // Auto-run basic tests on page load
+        window.onload = function() {
+            testCategoriesAPI();
+        };
+    </script>
+</body>
+</html>

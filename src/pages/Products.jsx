@@ -28,11 +28,11 @@ export default function Products() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [totalFilteredProducts, setTotalFilteredProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [categories, setCategories] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);  const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filtersLoading, setFiltersLoading] = useState(true);
+  const [selectedParentCategory, setSelectedParentCategory] = useState(""); // Track parent category
   const { handleAsyncOperation } = useLoading();
   // Active filters that trigger API calls
   const [activeProductFilters, setActiveProductFilters] = useState({
@@ -436,7 +436,6 @@ export default function Products() {
       behavior: "smooth",
     });
   };
-
   // Reset both temporary and active filters
   const handleResetFilters = () => {
     const resetFilters = {
@@ -448,6 +447,7 @@ export default function Products() {
     };
     setTempFilters(resetFilters);
     setActiveProductFilters(resetFilters);
+    setSelectedParentCategory(""); // Reset parent category selection
   };
 
   // Sort change applies immediately (doesn't wait for Apply button)
@@ -494,43 +494,44 @@ export default function Products() {
       <Header />
       <main className="bg-gradient-to-b from-luxury-forest/10 to-luxury-light/8 min-h-screen">
         <div className="container mx-auto px-4 py-12">
-          {" "}
-          {/* Category Quick Filter */}
+          {" "}          {/* Category Quick Filter */}
           <div className="text-center mb-16 py-8 bg-white/30 backdrop-blur-sm rounded-xl">
             <h1 className="text-4xl font-serif text-luxury-gold mb-8">
               Shop by Category
             </h1>
-            <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>
-            <CategoryQuickFilter />
+            <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>            <CategoryQuickFilter 
+              onParentCategorySelect={setSelectedParentCategory}
+              selectedParentCategory={selectedParentCategory}
+            />
           </div>
-          <div className="flex flex-col lg:flex-row gap-12">
-            {/* Filters Sidebar */}
-            <aside className="lg:w-1/4">
-              <div className="bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
-                {" "}
-                <h2 className="text-2xl font-serif text-luxury-dark mb-8">
-                  Filters
+            <div className="flex flex-col xl:flex-row gap-12">
+            {/* Filters Sidebar - back to left */}
+            <aside className="xl:w-80 lg:w-1/3">
+              <div className="bg-white/95 backdrop-blur-sm p-8 shadow-[0_12px_40px_rgb(0,0,0,0.15)] rounded-xl sticky top-4 max-h-[calc(100vh-2rem)] overflow-visible border border-luxury-gold/20">
+                <h2 className="text-2xl font-serif text-luxury-dark mb-8 text-center border-b border-luxury-gold/30 pb-4">
+                  Advanced Filters
                 </h2>
                 {filtersLoading ? (
                   <FilterSkeleton />
                 ) : (
-                  <ProductFilter
-                    categories={categories}
-                    brands={brands}
-                    selectedCategory={tempFilters.category}
-                    selectedBrand={tempFilters.brand}
-                    selectedPriceRange={tempFilters.priceRange}
-                    onFilterChange={handleTempFiltersChange}
-                    onApplyFilters={handleApplyFilters}
-                    onResetFilters={handleResetFilters}
-                    loading={loading}
-                  />
+                  <div className="overflow-y-auto max-h-[calc(100vh-10rem)]">
+                    <ProductFilter
+                      categories={categories}
+                      brands={brands}
+                      selectedCategory={tempFilters.category}
+                      selectedBrand={tempFilters.brand}
+                      selectedPriceRange={tempFilters.priceRange}
+                      selectedParentCategory={selectedParentCategory}
+                      onFilterChange={handleTempFiltersChange}
+                      onApplyFilters={handleApplyFilters}
+                      onResetFilters={handleResetFilters}
+                      loading={loading}
+                    />
+                  </div>
                 )}
               </div>
-            </aside>
-
-            {/* Products Grid */}
-            <div className="lg:w-3/4">
+            </aside>            {/* Products Grid */}
+            <div className="flex-1">
               {/* Sort and Results Count */}
               <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                 <div className="w-full sm:w-64">
@@ -664,8 +665,7 @@ export default function Products() {
                     >
                       Next
                     </button>
-                  </div>
-                )}
+                  </div>                )}
             </div>
           </div>
         </div>
