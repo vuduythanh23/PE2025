@@ -323,18 +323,34 @@ export async function getProductById(id) {
  * @throws {Error} If search fails
  */
 export async function getProductsBySearch(q) {
-  await rateLimiter.checkLimit("productSearch");
-  const res = await fetchWithTimeout(
-    `${ENDPOINTS.PRODUCTS}/search/suggestions?q=${encodeURIComponent(q)}`,
-    {
-      headers: BASE_HEADERS,
+  try {
+    await rateLimiter.checkLimit("productSearch");
+    const res = await fetchWithTimeout(
+      `${ENDPOINTS.PRODUCTS}/search/${encodeURIComponent(q)}`,
+      {
+        headers: BASE_HEADERS,
+      }
+    );
+    if (!res.ok) {
+      const error = await res.text();
+      throw new Error(`Search failed: ${error}`);
     }
-  );
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Search failed: ${error}`);
+    const data = await res.json();
+    
+    // Ensure we return an array
+    if (Array.isArray(data)) {
+      return data;
+    } else if (data && Array.isArray(data.products)) {
+      return data.products;
+    } else if (data && typeof data === 'object') {
+      return [data]; // Single product result
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Search API error:", error);
+    throw error;
   }
-  return res.json();
 }
 
 /**

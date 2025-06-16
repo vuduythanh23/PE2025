@@ -1,8 +1,10 @@
-import { formatCurrency, isAuthenticated, addItemToCart } from "../../utils";
-import { useCart } from "../../context/CartContext";
+import { formatCurrency, isAuthenticated } from "../../utils";
 import { useNotification } from "../../context/NotificationContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import Swal from "sweetalert2";
+import AddToCartModal from "./AddToCartModal";
+import { saveProductsState } from "../../utils/helpers/productsState";
 
 export default function ProductCard(props) {
   const {
@@ -18,25 +20,42 @@ export default function ProductCard(props) {
     stock = 0,
     averageRating = 0,
   } = props;
-  const { animateCart, updateCartItems } = useCart();
+  
   const { addNotification } = useNotification();
-  const navigate = useNavigate(); // Get the first valid image URL or use a fallback
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const [showAddToCartModal, setShowAddToCartModal] = useState(false);
+
+  // Get the first valid image URL or use a fallback
   const productImage =
     images && images.length > 0
       ? images[0]
       : props.imageUrl || "/images/placeholder-product.jpg";
-
   // Handle view more information - navigate to product detail page
   const handleViewMore = (e) => {
     e.stopPropagation();
+    
+    // Save current products page state before navigating
+    if (location.pathname === '/products') {
+      const currentState = {
+        category: searchParams.get('category') || '',
+        brand: searchParams.get('brand') || '',
+        priceRange: {
+          min: searchParams.get('minPrice') || '',
+          max: searchParams.get('maxPrice') || ''
+        },
+        searchQuery: searchParams.get('search') || '',
+        currentPage: parseInt(searchParams.get('page')) || 1,
+        sortBy: searchParams.get('sort') || '',
+      };
+      saveProductsState(currentState);
+    }
+    
     navigate(`/product/${_id}`);
-  };
-  const handleAddToCart = async () => {
-    console.log("🛒 Add to cart clicked for product:", name);
-
+  };const handleAddToCart = async () => {
     // First, check authentication status
     if (!isAuthenticated()) {
-      console.log("🔒 User not authenticated, showing login modal");
       const result = await Swal.fire({
         title: "Login Required",
         text: "You need to login before adding items to your cart",
@@ -56,128 +75,10 @@ export default function ProductCard(props) {
       return;
     }
 
-    console.log("✅ User authenticated, proceeding with add to cart");
-
-    try {
-      // Add product to cart using backend API
-      await addItemToCart({
-        productId: _id,
-        quantity: 1,
-        selectedSize: sizes?.[0]?.size || null, // Use first available size or null
-        selectedColor: colors?.[0]?.color || null, // Use first available color or null
-      });
-
-      console.log("✅ Product added to cart successfully via API");
-
-      // Update cart UI
-      updateCartItems();
-
-      // Add notification for logged in users
-      if (isAuthenticated()) {
-        console.log("📢 Adding notification");
-        addNotification(`${name} has been added to your cart!`, "success");
-      }
-
-      console.log("🎉 Showing success SweetAlert");
-      // Show success message with higher z-index
-      await Swal.fire({
-        title: "Added to Cart!",
-        text: "Product has been added to your cart",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-        backdrop: "rgba(0, 0, 0, 0.5)",
-        customClass: {
-          container: "z-[9999]",
-          popup: "z-[9999]",
-        },
-        position: "top-end",
-      });
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-
-      // Add error notification
-      if (isAuthenticated()) {
-        addNotification(
-          "Failed to add product to cart. Please try again.",
-          "error"
-        );
-      }
-
-      await Swal.fire({
-        title: "Error",
-        text: "Failed to add product to cart. Please try again.",
-        icon: "error",
-        customClass: {
-          container: "z-[9999]",
-          popup: "z-[9999]",
-        },
-      });
-    }
+    // Open the add to cart modal
+    setShowAddToCartModal(true);
   };
-  const handleBuyNow = async () => {
-    // First, check authentication status
-    if (!isAuthenticated()) {
-      const result = await Swal.fire({
-        title: "Login Required",
-        text: "You need to login before making a purchase",
-        icon: "info",
-        showCancelButton: true,
-        confirmButtonText: "Login",
-        cancelButtonText: "Cancel",
-        backdrop: "rgba(0, 0, 0, 0.7)",
-        customClass: {
-          container: "z-[9999]",
-          popup: "z-[9999]",
-        },
-      });
 
-      if (result.isConfirmed) {
-        navigate("/login?redirect=/products");
-      }
-      return;
-    }
-
-    try {
-      // Add product to cart using backend API
-      await addItemToCart({
-        productId: _id,
-        quantity: 1,
-        selectedSize: sizes?.[0]?.size || null,
-        selectedColor: colors?.[0]?.color || null,
-      });
-
-      // Update cart UI
-      updateCartItems();
-
-      // Show brief success message and redirect to cart
-      await Swal.fire({
-        title: "Added to Cart!",
-        text: "Redirecting to checkout...",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-        customClass: {
-          container: "z-[9999]",
-          popup: "z-[9999]",
-        },
-      });
-
-      // Navigate to cart or checkout
-      navigate("/checkout");
-    } catch (error) {
-      console.error("Error with buy now:", error);
-      await Swal.fire({
-        title: "Error",
-        text: "Failed to process purchase. Please try again.",
-        icon: "error",
-        customClass: {
-          container: "z-[9999]",
-          popup: "z-[9999]",
-        },
-      });
-    }
-  };
   return (
     <div className="group relative overflow-hidden transition-all duration-500 ease-out transform hover:-translate-y-2 hover:rotate-1 h-[600px] flex flex-col perspective-1000">
       {/* 3D Card Container */}
@@ -216,7 +117,7 @@ export default function ProductCard(props) {
           {/* Gradient overlay with 3D depth */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent h-24 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0" />
           {/* Reflection effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-t-lg pointer-events-none"></div>{" "}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-t-lg pointer-events-none"></div>
         </div>
 
         {/* Content Container with 3D effect */}
@@ -243,7 +144,7 @@ export default function ProductCard(props) {
 
           {/* Description Section */}
           <p className="text-luxury-dark/70 text-sm mb-4 line-clamp-2 flex-1 transition-colors duration-300 group-hover:text-luxury-dark">
-            {description}{" "}
+            {description}
           </p>
 
           {/* Price and Actions Section with 3D effects */}
@@ -256,23 +157,11 @@ export default function ProductCard(props) {
 
             <div className="flex gap-2">
               <button
-                onClick={handleBuyNow}
+                onClick={handleAddToCart}
                 className={`flex-1 py-3 px-3 transition-all duration-300 font-serif text-xs tracking-wider transform hover:scale-105 hover:-translate-y-1 shadow-md hover:shadow-lg ${
                   stock > 0
                     ? "bg-luxury-gold text-white hover:bg-luxury-dark hover:shadow-luxury-gold/30"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
-                disabled={stock === 0}
-              >
-                {stock > 0 ? "Buy Now" : "Out of Stock"}
-              </button>
-
-              <button
-                onClick={handleAddToCart}
-                className={`flex-1 py-3 px-3 transition-all duration-300 font-serif text-xs tracking-wider transform hover:scale-105 hover:-translate-y-1 shadow-md hover:shadow-lg ${
-                  stock > 0
-                    ? "border border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white hover:shadow-luxury-gold/30"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200"
                 }`}
                 disabled={stock === 0}
               >
@@ -288,7 +177,15 @@ export default function ProductCard(props) {
             </div>
           </div>
         </div>
-      </div>
+      </div>      {/* Add to Cart Modal */}
+      <AddToCartModal
+        isOpen={showAddToCartModal}
+        onClose={() => setShowAddToCartModal(false)}
+        product={props}
+        onSuccess={() => {
+          // Optional: Add any additional success handling
+        }}
+      />
     </div>
   );
 }

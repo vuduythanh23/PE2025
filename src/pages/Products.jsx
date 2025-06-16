@@ -1,18 +1,25 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { getCategories, getBrands, getProducts } from "../utils";
 import { getProductsWithFilters } from "../utils/api/products";
 import { FilterDebugger, DEBUG_FILTERS } from "../utils/helpers/filterDebug";
 import { doesProductMatchCategory } from "../utils/helpers";
+import { saveProductsState, getProductsState, updateProductsState } from "../utils/helpers/productsState";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";
 import ProductFilter from "../components/modules/ProductFilter";
 import ProductSort from "../components/modules/ProductSort";
 import FilterSkeleton from "../components/modules/FilterSkeleton";
+import CategoryQuickFilter from "../components/modules/CategoryQuickFilter";
 import { useLoading } from "../context/LoadingContext";
 import Swal from "sweetalert2";
 
 export default function Products() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
   // Remove allProducts state as we'll fetch from server each time
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [totalFilteredProducts, setTotalFilteredProducts] = useState(0);
@@ -40,10 +47,82 @@ export default function Products() {
   const [tempFilters, setTempFilters] = useState({
     category: "",
     brand: "",
-    priceRange: { min: null, max: null },
-    page: 1,
+    priceRange: { min: null, max: null },    page: 1,
     limit: 9,
   });
+
+  // Initialize state from URL params and saved state
+  useEffect(() => {
+    const initializeState = () => {
+      // Get state from URL params first
+      const category = searchParams.get('category') || '';
+      const brand = searchParams.get('brand') || '';
+      const search = searchParams.get('search') || '';
+      const minPrice = searchParams.get('minPrice') || '';
+      const maxPrice = searchParams.get('maxPrice') || '';
+      const sort = searchParams.get('sort') || '';
+      const page = parseInt(searchParams.get('page')) || 1;
+
+      // If URL has params, use them
+      if (category || brand || search || minPrice || maxPrice || sort || page > 1) {
+        setActiveProductFilters({
+          category,
+          brand,
+          priceRange: { min: minPrice || null, max: maxPrice || null },
+          searchQuery: search,
+          page,
+          limit: 9,
+        });
+        setCurrentPage(page);
+        if (sort) {
+          setSortSettings(prevSort => ({ ...prevSort, sortBy: sort }));
+        }
+      } else {
+        // If no URL params, try to restore from saved state
+        const savedState = getProductsState();
+        if (savedState) {
+          setActiveProductFilters({
+            category: savedState.category || '',
+            brand: savedState.brand || '',
+            priceRange: savedState.priceRange || { min: null, max: null },
+            searchQuery: savedState.searchQuery || '',
+            page: savedState.currentPage || 1,
+            limit: 9,
+          });
+          setCurrentPage(savedState.currentPage || 1);
+          if (savedState.sortBy) {
+            setSortSettings(prevSort => ({ ...prevSort, sortBy: savedState.sortBy }));
+          }
+        }
+      }
+    };
+
+    initializeState();
+  }, [searchParams]);
+
+  // Restore scroll position after state is loaded
+  useEffect(() => {
+    if (location.state?.restoreScrollPosition) {
+      const timer = setTimeout(() => {
+        window.scrollTo(0, location.state.restoreScrollPosition);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
+  // Save state whenever filters change
+  useEffect(() => {
+    const currentState = {
+      category: activeProductFilters.category,
+      brand: activeProductFilters.brand,
+      priceRange: activeProductFilters.priceRange,
+      searchQuery: activeProductFilters.searchQuery,
+      currentPage,
+      sortBy: sortSettings.sortBy,
+    };
+    updateProductsState(currentState);
+  }, [activeProductFilters, currentPage, sortSettings.sortBy]);
+
   // Fetch initial filter options (categories and brands)
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -394,17 +473,16 @@ export default function Products() {
     totalFilteredProducts
   );
 
-  return (
-    <>
+  return (    <>
       <Header />
-      <main className="bg-gradient-to-b from-luxury-forest/5 to-luxury-light/5 min-h-screen">
-        <div className="container mx-auto px-4 py-12">
-          {/* Page Title */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl font-serif text-luxury-gold mb-4">
-              Collection
+      <main className="bg-gradient-to-b from-luxury-forest/10 to-luxury-light/8 min-h-screen">
+        <div className="container mx-auto px-4 py-12">          {/* Category Quick Filter */}
+          <div className="text-center mb-16 py-8 bg-white/30 backdrop-blur-sm rounded-xl">
+            <h1 className="text-4xl font-serif text-luxury-gold mb-8">
+              Shop by Category
             </h1>
-            <div className="w-24 h-0.5 bg-luxury-gold mx-auto"></div>
+            <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>
+            <CategoryQuickFilter />
           </div>
 
           <div className="flex flex-col lg:flex-row gap-12">
