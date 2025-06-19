@@ -5,7 +5,8 @@ export default function FeaturesSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [statsAnimated, setStatsAnimated] = useState(false);
   const statsRef = useRef(null);
-  const sectionRef = useRef(null);const stats = [
+  const sectionRef = useRef(null);
+  const stats = [
     { number: 1000, suffix: "+", label: "Happy Customers", id: "stat-1" },
     { number: 100, suffix: "+", label: "Authentic Products", id: "stat-2" },
     { number: 10, suffix: "+", label: "Categories", id: "stat-3" },
@@ -93,7 +94,8 @@ export default function FeaturesSection() {
       description:
         "Our support team is always ready to assist you anytime, anywhere for the best shopping experience.",
     },
-  ];  useEffect(() => {
+  ];
+  useEffect(() => {
     let observer = null;
     let statsObserver = null;
 
@@ -104,17 +106,18 @@ export default function FeaturesSection() {
           setIsVisible(true);
         }
       });
-    };    // Stats section observer
+    }; // Stats section observer
     const handleStatsIntersection = (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting && !statsAnimated) {
           setStatsAnimated(true);
-          
+
           // Animate each stat with CountUp
           stats.forEach((stat, index) => {
             setTimeout(() => {
               const element = document.getElementById(stat.id);
-              if (element && element.isConnected) { // Check if element is still in DOM
+              if (element && element.isConnected) {
+                // Check if element is still in DOM
                 try {
                   const countUp = new CountUp(stat.id, stat.number, {
                     duration: 3,
@@ -127,7 +130,7 @@ export default function FeaturesSection() {
                     countUp.start();
                   }
                 } catch (error) {
-                  console.warn('CountUp animation failed:', error);
+                  console.warn("CountUp animation failed:", error);
                 }
               }
             }, index * 200);
@@ -138,12 +141,12 @@ export default function FeaturesSection() {
 
     // Create observers
     observer = new IntersectionObserver(handleSectionIntersection, {
-      threshold: 0.1
+      threshold: 0.1,
     });
 
     statsObserver = new IntersectionObserver(handleStatsIntersection, {
       threshold: 0.5,
-      rootMargin: '0px 0px -50px 0px'
+      rootMargin: "0px 0px -50px 0px",
     });
 
     // Observe elements
@@ -238,15 +241,18 @@ export default function FeaturesSection() {
               </div>
             </div>
           ))}
-        </div>        {/* Stats Section */}
+        </div>{" "}
+        {/* Stats Section */}
         <div
           ref={statsRef}
           className={`mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 transition-all duration-1000 delay-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
-        >          {stats.map((stat, index) => (
+        >
+          {" "}
+          {stats.map((stat, index) => (
             <div key={stat.label} className="text-center">
-              <div 
+              <div
                 id={stat.id}
                 className="text-3xl md:text-4xl font-bold text-luxury-gold mb-2 stat-number"
               >

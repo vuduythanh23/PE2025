@@ -179,7 +179,8 @@ export default function HeroSection() {
                 autoPlay
                 muted
                 loop
-                playsInline                onError={(e) => {
+                playsInline
+                onError={(e) => {
                   e.target.style.display = "none";
                   const fallbackImg = e.target.nextElementSibling;
                   if (fallbackImg) {
@@ -305,6 +306,7 @@ export default function HeroSection() {
           />
         </svg>
       </button>{" "}
-      {/* Removed scroll indicator since smooth scroll effects were removed */}    </section>
+      {/* Removed scroll indicator since smooth scroll effects were removed */}{" "}
+    </section>
   );
 }

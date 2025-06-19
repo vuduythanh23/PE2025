@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react";
+import nikeImg from "../../assets/img/nike.svg";
+import adidasImg from "../../assets/img/adidas.svg";
+import pumaImg from "../../assets/img/puma.svg";
+import newBalanceImg from "../../assets/img/new-balance.svg";
 
 export default function BrandShowcase() {
   const [isVisible, setIsVisible] = useState(false);
@@ -6,22 +10,22 @@ export default function BrandShowcase() {
   const brands = [
     {
       name: "Nike",
-      logo: "/src/assets/img/nike.svg",
+      logo: nikeImg,
       description: "Just Do It",
     },
     {
       name: "Adidas",
-      logo: "/src/assets/img/adidas.svg",
+      logo: adidasImg,
       description: "Impossible is Nothing",
     },
     {
       name: "Puma",
-      logo: "/src/assets/img/puma.svg",
+      logo: pumaImg,
       description: "Forever Faster",
     },
     {
       name: "New Balance",
-      logo: "/src/assets/img/new-balance.svg",
+      logo: newBalanceImg,
       description: "Fearlessly Independent",
     },
   ];
@@ -69,16 +73,23 @@ export default function BrandShowcase() {
               style={{ transitionDelay: `${index * 150}ms` }}
             >
               <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 group-hover:border-luxury-gold/30">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 mb-4 flex items-center justify-center">
+                <div className="flex flex-col items-center text-center">                  <div className="w-20 h-20 mb-4 flex items-center justify-center">
                     <img
                       src={brand.logo}
                       alt={brand.name}
                       className="max-w-full max-h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
                       onError={(e) => {
-                        e.target.src = `https://via.placeholder.com/80x80/d4af37/ffffff?text=${brand.name}`;
+                        // Create a simple text fallback instead of using external service
+                        e.target.style.display = 'none';
+                        const fallback = e.target.parentElement.querySelector('.brand-fallback');
+                        if (fallback) fallback.style.display = 'flex';
                       }}
-                    />
+                    />                    <div 
+                      className="brand-fallback w-full h-full bg-luxury-gold/10 rounded-lg flex items-center justify-center text-luxury-gold font-bold text-lg"
+                      style={{ display: 'none' }}
+                    >
+                      {brand.name.charAt(0)}
+                    </div>
                   </div>
                   <h3 className="text-xl font-serif text-gray-800 mb-2">
                     {brand.name}

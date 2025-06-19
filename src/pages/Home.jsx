@@ -15,22 +15,22 @@ export default function Home() {
       <main className="bg-white">
         {/* Hero Section với video/hình ảnh động */}
         <HeroSection />
-        
+
         {/* Brand Showcase */}
         <BrandShowcase />
-        
+
         {/* Featured Collection Section */}
         <FeaturedCollectionSection />
-        
+
         {/* Features Section */}
         <FeaturesSection />
-        
+
         {/* New Arrivals Section */}
         <NewArrivalsSection />
-        
+
         {/* Newsletter Section */}
         <NewsletterSection />
-        
+
         {/* Call to Action Section */}
         <div className="bg-gradient-to-r from-luxury-gold to-yellow-500 py-20">
           <div className="container mx-auto px-4 text-center">

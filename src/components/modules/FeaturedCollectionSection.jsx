@@ -16,12 +16,20 @@ export default function FeaturedCollectionSection() {
 
   // Format product data to ensure consistent structure
   const formatProductData = (productsData) => {
-    if (!productsData || !Array.isArray(productsData) || productsData.length === 0) {
+    if (
+      !productsData ||
+      !Array.isArray(productsData) ||
+      productsData.length === 0
+    ) {
       return [];
     }
 
     let productsToProcess = productsData;
-    if (Array.isArray(productsData) && productsData.length > 0 && Array.isArray(productsData[0])) {
+    if (
+      Array.isArray(productsData) &&
+      productsData.length > 0 &&
+      Array.isArray(productsData[0])
+    ) {
       productsToProcess = productsData.flat();
     }
 
@@ -41,12 +49,14 @@ export default function FeaturedCollectionSection() {
           description: product.description || "",
           price: product.price || 0,
           images: Array.isArray(product.images) ? product.images : [],
-          category: typeof product.category === "object" && product.category
-            ? product.category.name || ""
-            : product.category || "",
-          brand: typeof product.brand === "object" && product.brand
-            ? product.brand.name || ""
-            : product.brand || "",
+          category:
+            typeof product.category === "object" && product.category
+              ? product.category.name || ""
+              : product.category || "",
+          brand:
+            typeof product.brand === "object" && product.brand
+              ? product.brand.name || ""
+              : product.brand || "",
           colors: Array.isArray(product.colors) ? product.colors : [],
           sizes: Array.isArray(product.sizes) ? product.sizes : [],
           stock: product.stock || 0,
@@ -60,35 +70,40 @@ export default function FeaturedCollectionSection() {
     const fetchFeaturedProducts = async () => {
       try {
         setLoading(true);
-        
+
         // Lấy danh sách categories
         const categories = await getCategories();
-        
+
         // Lấy 2 categories đầu tiên cho Featured Collection
         const featuredCategories = categories.slice(0, 2);
-        
+
         let allFeaturedProducts = [];
-        
+
         // Lấy sản phẩm từ mỗi category
         for (const category of featuredCategories) {
           try {
-            const products = await getProducts({ 
+            const products = await getProducts({
               category: category._id,
               limit: 6, // Lấy tối đa 6 sản phẩm mỗi category
-              sortBy: "newest"
+              sortBy: "newest",
             });
-            
+
             const formattedProducts = formatProductData(products);
-            allFeaturedProducts = [...allFeaturedProducts, ...formattedProducts];
+            allFeaturedProducts = [
+              ...allFeaturedProducts,
+              ...formattedProducts,
+            ];
           } catch (err) {
-            console.error(`Error fetching products for category ${category.name}:`, err);
+            console.error(
+              `Error fetching products for category ${category.name}:`,
+              err
+            );
           }
         }
-        
+
         // Giới hạn tổng số sản phẩm và đảm bảo có ít nhất 9 sản phẩm để chia thành 3 slides
         const limitedProducts = allFeaturedProducts.slice(0, 12);
         setFeaturedProducts(limitedProducts);
-        
       } catch (err) {
         console.error("Error fetching featured products:", err);
         setError("Failed to load featured products");
@@ -123,7 +138,10 @@ export default function FeaturedCollectionSection() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-white rounded-2xl p-6 animate-pulse">
+              <div
+                key={index}
+                className="bg-white rounded-2xl p-6 animate-pulse"
+              >
                 <div className="w-full h-64 bg-gray-200 rounded-lg mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded mb-2"></div>
                 <div className="h-6 bg-gray-200 rounded"></div>
@@ -163,7 +181,8 @@ export default function FeaturedCollectionSection() {
             Featured Collection
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
-            Discover the most beloved shoes with unique designs and superior quality
+            Discover the most beloved shoes with unique designs and superior
+            quality
           </p>
           <div className="w-24 h-0.5 bg-luxury-gold mx-auto"></div>
         </div>
@@ -175,12 +194,12 @@ export default function FeaturedCollectionSection() {
             spaceBetween={30}
             slidesPerView={1}
             navigation={{
-              nextEl: '.featured-swiper-button-next',
-              prevEl: '.featured-swiper-button-prev',
+              nextEl: ".featured-swiper-button-next",
+              prevEl: ".featured-swiper-button-prev",
             }}
             pagination={{
               clickable: true,
-              el: '.featured-swiper-pagination',
+              el: ".featured-swiper-pagination",
             }}
             autoplay={{
               delay: 5000,
@@ -200,7 +219,9 @@ export default function FeaturedCollectionSection() {
                       {/* Product Image */}
                       <div className="relative h-64 overflow-hidden">
                         <img
-                          src={product.images?.[0] || "/placeholder-product.jpg"}
+                          src={
+                            product.images?.[0] || "/placeholder-product.jpg"
+                          }
                           alt={product.name}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
@@ -217,7 +238,8 @@ export default function FeaturedCollectionSection() {
                         </p>
                         <p className="text-2xl font-bold text-luxury-gold mb-6">
                           ${product.price}
-                        </p>                        {/* Action Button */}
+                        </p>{" "}
+                        {/* Action Button */}
                         <div className="mt-6">
                           <Link
                             to={`/product/${product._id}`}
@@ -242,13 +264,33 @@ export default function FeaturedCollectionSection() {
         {/* Custom Navigation */}
         <div className="flex justify-center mt-8 space-x-4">
           <button className="featured-swiper-button-prev w-12 h-12 bg-luxury-gold text-black rounded-full flex items-center justify-center hover:bg-white hover:text-luxury-gold border-2 border-luxury-gold transition-all duration-300">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
           <button className="featured-swiper-button-next w-12 h-12 bg-luxury-gold text-black rounded-full flex items-center justify-center hover:bg-white hover:text-luxury-gold border-2 border-luxury-gold transition-all duration-300">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
