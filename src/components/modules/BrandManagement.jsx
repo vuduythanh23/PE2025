@@ -48,7 +48,7 @@ const BrandManagement = ({ onDataChange }) => {
       // Fetch both brands and products to calculate product counts
       const [brandsData, productsData] = await Promise.all([
         handleAsyncOperation(() => getBrands(), "Fetching brands"),
-        handleAsyncOperation(() => getProducts(), "Fetching products for counts")
+        handleAsyncOperation(() => getProducts({}, true), "Fetching products for counts") // forceLoadAll = true cho admin
       ]);
       
       // Validate and normalize brands data

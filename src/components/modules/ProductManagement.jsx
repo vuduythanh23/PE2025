@@ -22,7 +22,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const data = await getProducts();
+      const data = await getProducts({}, true); // forceLoadAll = true cho admin
       setProducts(data);
       setError(null);
     } catch (err) {

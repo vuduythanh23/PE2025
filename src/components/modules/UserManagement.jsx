@@ -12,12 +12,16 @@ import { checkAndRefreshAdminStatus } from "../../utils/helpers/adminAuth.js";
 import Swal from "sweetalert2";
 import UserTable from "./UserTable";
 import UserEditModal from "./UserEditModal";
+import UserStatsOverview from "./UserStatsOverview";
+import ClientOnlyWrapper from "./ClientOnlyWrapper";
 import { useLoading } from "../../context/LoadingContext";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
   const { handleAsyncOperation } = useLoading();
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   useEffect(() => {
@@ -97,10 +101,9 @@ export default function UserManagement() {
       if (!data || !Array.isArray(data)) {
         console.error("Received invalid data format for users:", data);
         throw new Error("Received invalid data format from server");
-      }
-
-      console.log(`Fetched ${data.length} users successfully`);
+      }      console.log(`Fetched ${data.length} users successfully`);
       setUsers(data);
+      setFilteredUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
 
@@ -146,11 +149,16 @@ export default function UserManagement() {
         "Updating user"
       );
 
-      console.log("User update response:", updatedUser);
-
-      // If the API call succeeded, update the UI state
+      console.log("User update response:", updatedUser);      // If the API call succeeded, update the UI state
       setUsers(
         users.map((user) =>
+          user._id === userId ? { ...user, ...updateData } : user
+        )
+      );
+
+      // Update filtered users as well
+      setFilteredUsers(
+        filteredUsers.map((user) =>
           user._id === userId ? { ...user, ...updateData } : user
         )
       );
@@ -246,10 +254,9 @@ export default function UserManagement() {
         });
 
         console.log("Deleting user with ID:", userId);
-        await handleAsyncOperation(() => deleteUser(userId), "Deleting user");
-
-        // Update local state
+        await handleAsyncOperation(() => deleteUser(userId), "Deleting user");        // Update local state
         setUsers(users.filter((user) => user._id !== userId));
+        setFilteredUsers(filteredUsers.filter((user) => user._id !== userId));
 
         Swal.fire({
           title: "Deleted!",
@@ -316,11 +323,24 @@ export default function UserManagement() {
       await handleAsyncOperation(
         () => unlockUserAccount(userId),
         "Unlocking user account"
-      );
-
-      // Update the user status in the list
+      );      // Update the user status in the list
       setUsers(
         users.map((user) =>
+          user._id === userId
+            ? {
+                ...user,
+                isPermanentlyLocked: false,
+                lockUntil: null,
+                failedLoginAttempts: 0,
+                lastFailedAttemptAt: null,
+              }
+            : user
+        )
+      );
+
+      // Update filtered users as well
+      setFilteredUsers(
+        filteredUsers.map((user) =>
           user._id === userId
             ? {
                 ...user,
@@ -355,50 +375,152 @@ export default function UserManagement() {
         confirmButtonText: "OK",
       });
     }
-  };  return (
-    <div className="overflow-x-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-medium text-gray-700">User Accounts</h2>
-        <button
-          onClick={fetchUsers}
-          className="px-4 py-2 bg-amber-50 text-amber-800 text-sm font-medium hover:bg-amber-100 transition-colors rounded-md flex items-center"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          Refresh
-        </button>
+  };  // Filter functionality
+  const filterUsers = (filter) => {
+    setActiveFilter(filter);
+    let filtered = users;
+    
+    switch (filter) {
+      case 'admin':
+        filtered = users.filter(user => user.isAdmin);
+        break;
+      case 'user':
+        filtered = users.filter(user => !user.isAdmin);
+        break;
+      case 'active':
+        filtered = users.filter(user => 
+          !user.isPermanentlyLocked && 
+          (!user.lockUntil || new Date(user.lockUntil) <= new Date())
+        );
+        break;
+      case 'locked':
+        filtered = users.filter(user => 
+          user.isPermanentlyLocked || 
+          (user.lockUntil && new Date(user.lockUntil) > new Date())
+        );
+        break;
+      default:
+        filtered = users;
+    }
+    
+    setFilteredUsers(filtered);
+  };
+
+  // Effect to update filtered users when users change
+  useEffect(() => {
+    filterUsers(activeFilter);
+  }, [users]); // Re-filter when users array changes
+
+  // Statistics
+  const getStats = () => {
+    const totalUsers = users.length;
+    const adminCount = users.filter(user => user.isAdmin).length;
+    const userCount = users.filter(user => !user.isAdmin).length;
+    const activeCount = users.filter(user => 
+      !user.isPermanentlyLocked && 
+      (!user.lockUntil || new Date(user.lockUntil) <= new Date())
+    ).length;
+    const lockedCount = users.filter(user => 
+      user.isPermanentlyLocked || 
+      (user.lockUntil && new Date(user.lockUntil) > new Date())
+    ).length;
+
+    return { totalUsers, adminCount, userCount, activeCount, lockedCount };
+  };
+  const stats = getStats();
+  return (
+    <ClientOnlyWrapper fallback={
+      <div className="overflow-x-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-medium text-gray-700">User Management</h2>
+          <div className="px-4 py-2 bg-gray-50 text-gray-500 text-sm font-medium rounded-md">
+            Loading...
+          </div>
+        </div>
+        <div className="animate-pulse">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="p-4 bg-gray-200 rounded-lg h-20"></div>
+            ))}
+          </div>
+          <div className="bg-gray-200 rounded-lg h-64"></div>
+        </div>
       </div>
+    }>
+      <div className="overflow-x-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-medium text-gray-700">User Management</h2>
+          <button
+            onClick={fetchUsers}
+            className="px-4 py-2 bg-amber-50 text-amber-800 text-sm font-medium hover:bg-amber-100 transition-colors rounded-md flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Refresh
+          </button>
+        </div>
 
-      <UserTable
-        users={users}
-        editingUser={null} // No longer using inline editing
-        onEdit={handleEdit}
-        onSave={null} // No longer using inline save
-        onChange={null} // No longer using inline editing
-        onCancel={null} // No longer using inline cancel
-        onDelete={handleDelete}
-        onUnlock={handleUnlock}
-      />
+        {/* Statistics Cards */}
+        <UserStatsOverview stats={stats} />
 
-      {/* User Edit Modal */}
-      <UserEditModal
-        user={editingUser}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSave}
-      />
-    </div>
+        {/* Filter Tabs */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {[
+                { key: 'all', label: 'All Users', count: stats.totalUsers },
+                { key: 'admin', label: 'Administrators', count: stats.adminCount },
+                { key: 'user', label: 'Regular Users', count: stats.userCount },
+                { key: 'active', label: 'Active', count: stats.activeCount },
+                { key: 'locked', label: 'Locked', count: stats.lockedCount }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => filterUsers(tab.key)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    activeFilter === tab.key
+                      ? 'border-amber-500 text-amber-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        <UserTable
+          users={filteredUsers}
+          editingUser={null}
+          onEdit={handleEdit}
+          onSave={null}
+          onChange={null}
+          onCancel={null}
+          onDelete={handleDelete}
+          onUnlock={handleUnlock}
+        />
+
+        {/* User Edit Modal */}
+        <UserEditModal
+          user={editingUser}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSave}
+        />
+      </div>
+    </ClientOnlyWrapper>
   );
 }

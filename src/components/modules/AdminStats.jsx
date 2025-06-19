@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getProducts } from "../../utils/api/products";
+import { getProducts } from "../../utils/api/products"; // Revert lại getProducts
 import { getBrands } from "../../utils/api/brands";
 import { getCategories } from "../../utils/api/categories";
 import { getAllUsers } from "../../utils/api/users";
@@ -25,7 +25,10 @@ const AdminStats = () => {
     try {
       const [products, brands, categories, users, orders] =
         await Promise.allSettled([
-          handleAsyncOperation(() => getProducts(), "Fetching products"),
+          handleAsyncOperation(
+            () => getProducts({}, true),
+            "Fetching products"
+          ), // forceLoadAll = true cho admin
           handleAsyncOperation(() => getBrands(), "Fetching brands"),
           handleAsyncOperation(() => getCategories(), "Fetching categories"),
           handleAsyncOperation(() => getAllUsers(), "Fetching users"),

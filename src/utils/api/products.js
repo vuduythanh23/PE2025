@@ -9,12 +9,28 @@ import {
 /**
  * Fetches products with optional filters
  * @param {Object} filters - Query parameters for filtering products
+ * @param {boolean} forceLoadAll - If true, bypass the safety limit (use for admin pages)
  * @returns {Promise<Array>} Array of products
  * @throws {Error} If fetching fails or response is invalid
  */
-export async function getProducts(filters = {}) {
+export async function getProducts(filters = {}, forceLoadAll = false) {
   try {
-    console.log("Fetching products with filters:", filters);
+    // Nếu không có filter và không force load all, giới hạn kết quả để tránh performance issues
+    const isEmptyFilters = Object.keys(filters).length === 0;
+
+    if (isEmptyFilters && !forceLoadAll) {
+      console.warn(
+        "getProducts called without filters - limiting results for performance. Use forceLoadAll=true if you need all products."
+      );
+      filters = { limit: 20, sortBy: "newest" }; // Giới hạn 20 sản phẩm mới nhất
+    }
+
+    console.log(
+      "Fetching products with filters:",
+      filters,
+      "forceLoadAll:",
+      forceLoadAll
+    );
     await rateLimiter.checkLimit("getProducts");
     const qp = new URLSearchParams(filters);
     const url = `${ENDPOINTS.PRODUCTS}?${qp}`;
@@ -605,6 +621,58 @@ export async function getFilterOptions() {
     };
   } catch (error) {
     console.error("Error in getFilterOptions:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetches ALL products without any limits - use with caution!
+ * Only use this for admin pages or when explicitly needed
+ * @returns {Promise<Array>} Array of all products
+ * @throws {Error} If fetching fails or response is invalid
+ */
+export async function getAllProducts() {
+  try {
+    console.log("Fetching ALL products (admin function)");
+    await rateLimiter.checkLimit("getProducts"); // Sử dụng cùng key với getProducts
+    const url = `${ENDPOINTS.PRODUCTS}`;
+    console.log("Request URL:", url);
+
+    const res = await fetchWithTimeout(url, {
+      headers: BASE_HEADERS,
+    });
+
+    if (!res.ok) {
+      const error = await res.text();
+      console.error("Server response error:", error);
+      throw new Error(`Failed to fetch products: ${error}`);
+    }
+    const data = await res.json();
+    console.log("Received ALL products data:", data);
+
+    if (!Array.isArray(data)) {
+      console.error("Invalid data format:", data);
+      throw new Error("Invalid response format: expected array of products");
+    }
+
+    // Check if we have a nested array structure
+    let processedData = data;
+    if (data.length > 0 && Array.isArray(data[0])) {
+      console.log("Detected nested array structure, flattening response");
+      processedData = data.flat();
+    }
+
+    // Filter out null or undefined items
+    processedData = processedData.filter((item) => item != null);
+
+    console.log(
+      "After filtering nulls, ALL products count:",
+      processedData.length
+    );
+
+    return processedData;
+  } catch (error) {
+    console.error("Error in getAllProducts:", error);
     throw error;
   }
 }

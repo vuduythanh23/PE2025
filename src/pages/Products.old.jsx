@@ -1,7 +1,7 @@
 // filepath: c:\Users\LEGION\Desktop\PE2025\SNKRSS\PE2025\src\pages\Products.jsx
 import { useState, useEffect } from "react";
 import { getCategories, getBrands } from "../utils";
-import { getProductsWithFilters } from "../utils/api/products";
+import { getProductsWithFilters, getProducts } from "../utils/api/products";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/modules/ProductCard";
@@ -50,7 +50,11 @@ export default function Products() {
         const [categoriesData, brandsData, productsData] =
           await handleAsyncOperation(
             async () =>
-              Promise.all([getCategories(), getBrands(), getProducts()]),
+              Promise.all([
+                getCategories(),
+                getBrands(),
+                getProducts({}, true),
+              ]), // forceLoadAll = true
             "Failed to load products data"
           );
 
@@ -238,13 +242,15 @@ export default function Products() {
         default:
           // Assuming newer products have higher IDs
           return b._id.localeCompare(a._id);
-      }    });
+      }
+    });
 
     // Store total filtered results before pagination
     setTotalFilteredProducts(result.length);
 
     // Apply pagination
-    const startIndex = (activeProductFilters.page - 1) * activeProductFilters.limit;
+    const startIndex =
+      (activeProductFilters.page - 1) * activeProductFilters.limit;
     const endIndex = startIndex + activeProductFilters.limit;
     setFilteredProducts(result.slice(startIndex, endIndex));
   }, [allProducts, activeProductFilters, sortSettings]);
@@ -255,7 +261,7 @@ export default function Products() {
       ...prev,
       ...newFilters,
     }));
-  };  // Apply filters from temporary state to active filter state
+  }; // Apply filters from temporary state to active filter state
   const handleApplyFilters = () => {
     const filtersToApply = JSON.parse(JSON.stringify(tempFilters));
 
@@ -272,13 +278,13 @@ export default function Products() {
     filtersToApply.page = 1;
 
     setActiveProductFilters(filtersToApply);
-    
+
     // Scroll to top when applying new filters
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
-  };  // Reset both temporary and active filters
+  }; // Reset both temporary and active filters
   const handleResetFilters = () => {
     const resetFilters = {
       category: "",
@@ -289,7 +295,7 @@ export default function Products() {
     };
     setTempFilters(resetFilters);
     setActiveProductFilters(resetFilters);
-  };// Sort change applies immediately (doesn't wait for Apply button)
+  }; // Sort change applies immediately (doesn't wait for Apply button)
   const handleSortChange = (sortValue) => {
     setSortSettings({
       sortBy: sortValue,
@@ -299,11 +305,11 @@ export default function Products() {
       ...prev,
       page: 1,
     }));
-    
+
     // Scroll to top when changing sort
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
   };
   // Pagination handlers
@@ -312,19 +318,24 @@ export default function Products() {
       ...prev,
       page: newPage,
     }));
-    
+
     // Scroll to top of page when changing pages
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
   };
 
   // Calculate pagination info
-  const totalPages = Math.ceil(totalFilteredProducts / activeProductFilters.limit);
+  const totalPages = Math.ceil(
+    totalFilteredProducts / activeProductFilters.limit
+  );
   const currentPage = activeProductFilters.page;
   const startIndex = (currentPage - 1) * activeProductFilters.limit + 1;
-  const endIndex = Math.min(currentPage * activeProductFilters.limit, totalFilteredProducts);
+  const endIndex = Math.min(
+    currentPage * activeProductFilters.limit,
+    totalFilteredProducts
+  );
 
   return (
     <>
@@ -339,7 +350,9 @@ export default function Products() {
             <div className="w-24 h-0.5 bg-luxury-gold mx-auto"></div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-12">            {/* Filters Sidebar */}
+          <div className="flex flex-col lg:flex-row gap-12">
+            {" "}
+            {/* Filters Sidebar */}
             <aside className="lg:w-1/4">
               <div className="bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
                 <h2 className="text-2xl font-serif text-luxury-dark mb-8">
@@ -357,7 +370,6 @@ export default function Products() {
                 />
               </div>
             </aside>
-
             {/* Products Grid */}
             <div className="lg:w-3/4">
               {/* Sort and Results Count */}
@@ -367,8 +379,10 @@ export default function Products() {
                     sortBy={sortSettings.sortBy}
                     onSortChange={handleSortChange}
                   />
-                </div>                <p className="text-luxury-dark/70 font-serif">
-                  Showing {filteredProducts.length > 0 ? startIndex : 0} - {endIndex} of {totalFilteredProducts} products
+                </div>{" "}
+                <p className="text-luxury-dark/70 font-serif">
+                  Showing {filteredProducts.length > 0 ? startIndex : 0} -{" "}
+                  {endIndex} of {totalFilteredProducts} products
                 </p>
               </div>{" "}
               {filteredProducts.length === 0 && allProducts.length > 0 ? (
@@ -388,10 +402,10 @@ export default function Products() {
                   {filteredProducts.map((product) => (
                     <div key={product._id} className="group">
                       <ProductCard {...product} />
-                    </div>                  ))}
+                    </div>
+                  ))}
                 </div>
               )}
-
               {/* Pagination */}
               {totalFilteredProducts > activeProductFilters.limit && (
                 <div className="flex justify-center items-center mt-12 space-x-2">
@@ -401,8 +415,8 @@ export default function Products() {
                     disabled={currentPage === 1}
                     className={`px-4 py-2 border border-luxury-gold font-serif text-sm tracking-wider transition-colors ${
                       currentPage === 1
-                        ? 'text-luxury-gold/50 border-luxury-gold/50 cursor-not-allowed'
-                        : 'text-luxury-gold hover:bg-luxury-gold hover:text-white'
+                        ? "text-luxury-gold/50 border-luxury-gold/50 cursor-not-allowed"
+                        : "text-luxury-gold hover:bg-luxury-gold hover:text-white"
                     }`}
                   >
                     Previous
@@ -412,9 +426,9 @@ export default function Products() {
                   {Array.from({ length: totalPages }, (_, index) => {
                     const pageNumber = index + 1;
                     const isCurrentPage = pageNumber === currentPage;
-                    
+
                     // Show first page, last page, current page, and pages around current page
-                    const showPage = 
+                    const showPage =
                       pageNumber === 1 ||
                       pageNumber === totalPages ||
                       Math.abs(pageNumber - currentPage) <= 1;
@@ -423,14 +437,23 @@ export default function Products() {
                       // Show ellipsis for gaps
                       if (pageNumber === 2 && currentPage > 4) {
                         return (
-                          <span key={pageNumber} className="px-2 py-2 text-luxury-gold/50">
+                          <span
+                            key={pageNumber}
+                            className="px-2 py-2 text-luxury-gold/50"
+                          >
                             ...
                           </span>
                         );
                       }
-                      if (pageNumber === totalPages - 1 && currentPage < totalPages - 3) {
+                      if (
+                        pageNumber === totalPages - 1 &&
+                        currentPage < totalPages - 3
+                      ) {
                         return (
-                          <span key={pageNumber} className="px-2 py-2 text-luxury-gold/50">
+                          <span
+                            key={pageNumber}
+                            className="px-2 py-2 text-luxury-gold/50"
+                          >
                             ...
                           </span>
                         );
@@ -444,8 +467,8 @@ export default function Products() {
                         onClick={() => handlePageChange(pageNumber)}
                         className={`px-4 py-2 border font-serif text-sm tracking-wider transition-colors ${
                           isCurrentPage
-                            ? 'bg-luxury-gold text-white border-luxury-gold'
-                            : 'text-luxury-gold border-luxury-gold hover:bg-luxury-gold hover:text-white'
+                            ? "bg-luxury-gold text-white border-luxury-gold"
+                            : "text-luxury-gold border-luxury-gold hover:bg-luxury-gold hover:text-white"
                         }`}
                       >
                         {pageNumber}
@@ -459,8 +482,8 @@ export default function Products() {
                     disabled={currentPage === totalPages}
                     className={`px-4 py-2 border border-luxury-gold font-serif text-sm tracking-wider transition-colors ${
                       currentPage === totalPages
-                        ? 'text-luxury-gold/50 border-luxury-gold/50 cursor-not-allowed'
-                        : 'text-luxury-gold hover:bg-luxury-gold hover:text-white'
+                        ? "text-luxury-gold/50 border-luxury-gold/50 cursor-not-allowed"
+                        : "text-luxury-gold hover:bg-luxury-gold hover:text-white"
                     }`}
                   >
                     Next

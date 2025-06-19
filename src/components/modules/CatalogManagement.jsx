@@ -167,7 +167,7 @@ const CatalogManagement = () => {
     try {
       setLoading(true);
       const data = await handleAsyncOperation(
-        () => getProducts(),
+        () => getProducts({}, true), // forceLoadAll = true cho admin
         "Fetching products"
       );
       setProducts(Array.isArray(data) ? data : []);
@@ -231,7 +231,7 @@ const CatalogManagement = () => {
       const [brandsData, productsData] = await Promise.all([
         handleAsyncOperation(() => getBrands(), "Fetching brands"),
         handleAsyncOperation(
-          () => getProducts(),
+          () => getProducts({}, true), // forceLoadAll = true cho admin
           "Fetching products for counts"
         ),
       ]);
@@ -366,18 +366,17 @@ const CatalogManagement = () => {
       console.error("Error deleting brand:", err);
       Swal.fire("Error", "Failed to delete brand", "error");
     }
-  };  // ========== CATEGORY FUNCTIONS ==========
+  }; // ========== CATEGORY FUNCTIONS ==========
   const fetchCategories = async () => {
     try {
-      setLoading(true);
-      // Fetch both categories and products to calculate product counts
+      setLoading(true); // Fetch both categories and products to calculate product counts
       const [categoriesData, productsData] = await Promise.all([
         handleAsyncOperation(() => getCategories(), "Fetching categories"),
         handleAsyncOperation(
-          () => getProducts(),
+          () => getProducts({}, true), // forceLoadAll = true cho admin
           "Fetching products for counts"
         ),
-      ]);      // Validate and normalize categories data
+      ]); // Validate and normalize categories data
       const categoriesArray = Array.isArray(categoriesData)
         ? categoriesData
         : [];
@@ -385,10 +384,10 @@ const CatalogManagement = () => {
       console.log("=== DEBUGGING CATEGORY DATA ===");
       console.log("Raw categories data:", categoriesArray);
       console.log("Sample category structure:", categoriesArray[0]);
-      
+
       // Fix category hierarchy based on actual API data
       const fixedCategories = fixCategoryHierarchy(categoriesArray);
-      
+
       // Detailed analysis of each category
       fixedCategories.forEach((cat, index) => {
         console.log(`Category ${index + 1}: ${cat.name}`, {
@@ -398,7 +397,7 @@ const CatalogManagement = () => {
           parentId: cat.parentId,
           parentCategory: cat.parentCategory?.name,
           type: cat.type,
-          slug: cat.slug
+          slug: cat.slug,
         });
       });
 
@@ -425,7 +424,7 @@ const CatalogManagement = () => {
             }
           }
         });
-      }      // Helper function to get all child category IDs recursively
+      } // Helper function to get all child category IDs recursively
       const getAllChildCategoryIds = (parentId, categories) => {
         const childIds = [];
         const directChildren = categories.filter((cat) => {
@@ -446,12 +445,15 @@ const CatalogManagement = () => {
       // Calculate total product count for each category (including children)
       const categoriesWithCounts = fixedCategories.map((category) => {
         const categoryId = category._id || category.id;
-        
+
         // Get direct products of this category
         const directCount = directProductsByCategory[categoryId] || 0;
-          // Get all child category IDs
-        const childCategoryIds = getAllChildCategoryIds(categoryId, fixedCategories);
-        
+        // Get all child category IDs
+        const childCategoryIds = getAllChildCategoryIds(
+          categoryId,
+          fixedCategories
+        );
+
         // Sum up products from all child categories
         const childrenCount = childCategoryIds.reduce((sum, childId) => {
           return sum + (directProductsByCategory[childId] || 0);
@@ -465,7 +467,7 @@ const CatalogManagement = () => {
           childrenCount,
           totalCount,
           parentField: category.parent,
-          parentIdField: category.parentId
+          parentIdField: category.parentId,
         });
 
         return {
@@ -476,12 +478,12 @@ const CatalogManagement = () => {
       });
 
       console.log("=== FINAL PROCESSED CATEGORIES ===");
-      categoriesWithCounts.forEach(cat => {
+      categoriesWithCounts.forEach((cat) => {
         console.log(`${cat.name}:`, {
           id: cat._id,
           parent: cat.parent,
           productCount: cat.productCount,
-          directProductCount: cat.directProductCount
+          directProductCount: cat.directProductCount,
         });
       });
 
@@ -647,7 +649,7 @@ const CatalogManagement = () => {
       const catId = cat._id || cat.id;
       return catId !== editingId && !childIds.includes(catId);
     });
-  };  // Helper function to format category names for the dropdown with proper indentation
+  }; // Helper function to format category names for the dropdown with proper indentation
   const formatCategoryNameForDropdown = (category) => {
     // Calculate depth by counting parents
     let depth = 0;
@@ -675,7 +677,7 @@ const CatalogManagement = () => {
     // Helper function to add category and its children recursively
     const addCategoryAndChildren = (category) => {
       if (processed.has(category._id || category.id)) return;
-      
+
       processed.add(category._id || category.id);
       sorted.push(category);
 
@@ -710,51 +712,53 @@ const CatalogManagement = () => {
   // Helper function to fix category hierarchy based on actual API data structure
   const fixCategoryHierarchy = (categories) => {
     console.log("=== FIXING CATEGORY HIERARCHY ===");
-    
+
     // Create a map for quick lookup
     const categoryMap = new Map();
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       categoryMap.set(cat._id || cat.id, cat);
     });
 
     console.log("Category map:", Array.from(categoryMap.entries()));
 
     // Process each category to ensure parent relationship is correct
-    const fixedCategories = categories.map(category => {
+    const fixedCategories = categories.map((category) => {
       const fixed = { ...category };
-      
+
       // Handle different parent field formats
       let parentId = category.parent || category.parentId;
-      
+
       if (parentId) {
         // If parent is an object with _id, extract the ID
-        if (typeof parentId === 'object' && parentId._id) {
+        if (typeof parentId === "object" && parentId._id) {
           parentId = parentId._id;
           fixed.parent = parentId;
         }
-        
+
         // Try to find the actual parent category
         const parentCategory = categoryMap.get(parentId);
-        
+
         console.log(`Category ${category.name} parent lookup:`, {
           originalParent: category.parent,
           parentId: parentId,
-          foundParent: parentCategory?.name || 'NOT FOUND',
-          allParents: Array.from(categoryMap.keys())
+          foundParent: parentCategory?.name || "NOT FOUND",
+          allParents: Array.from(categoryMap.keys()),
         });
-        
+
         // If parent is found, ensure the relationship is clear
         if (parentCategory) {
           fixed.parentCategory = parentCategory;
           fixed.parent = parentId; // Ensure it's stored as ID string
         } else {
-          console.warn(`Parent category ${parentId} not found for ${category.name}`);
+          console.warn(
+            `Parent category ${parentId} not found for ${category.name}`
+          );
           // Maybe the parent ID is invalid, treat as top level
           delete fixed.parent;
           delete fixed.parentId;
         }
       }
-      
+
       return fixed;
     });
 
@@ -767,25 +771,28 @@ const CatalogManagement = () => {
     const parentCategories = [];
     const childCategories = [];
 
-    filteredCategories.forEach(category => {
+    filteredCategories.forEach((category) => {
       const parentId = category.parent || category.parentId;
       if (!parentId) {
         parentCategories.push(category);
       } else {
         childCategories.push(category);
       }
-    });    // Calculate total products for parent categories
-    const parentCategoriesWithTotals = parentCategories.map(parent => {
-      const children = childCategories.filter(child => {
+    }); // Calculate total products for parent categories
+    const parentCategoriesWithTotals = parentCategories.map((parent) => {
+      const children = childCategories.filter((child) => {
         const childParentId = child.parent || child.parentId;
         return childParentId === parent._id || childParentId === parent.id;
-      });      // Debug: Log the parent data to understand what backend returns
+      }); // Debug: Log the parent data to understand what backend returns
       console.log(`=== DEBUG PARENT CATEGORY: ${parent.name} ===`);
-      console.log('Parent data:', {
+      console.log("Parent data:", {
         id: parent._id || parent.id,
         productCount: parent.productCount,
         directProductCount: parent.directProductCount,
-        children: children.map(c => ({ name: c.name, productCount: c.productCount }))
+        children: children.map((c) => ({
+          name: c.name,
+          productCount: c.productCount,
+        })),
       });
 
       // Calculate children products count
@@ -806,7 +813,7 @@ const CatalogManagement = () => {
       } else if (parent.productCount !== undefined) {
         // Backend only provides productCount - need to determine if it's direct or total
         const backendProductCount = parent.productCount;
-        
+
         if (childrenProductCount === 0) {
           // No children, so productCount is direct
           directProductCount = backendProductCount;
@@ -829,37 +836,42 @@ const CatalogManagement = () => {
         totalProductCount = childrenProductCount;
       }
 
-      console.log('Calculated:', {
+      console.log("Calculated:", {
         directProductCount,
         childrenProductCount,
-        totalProductCount
+        totalProductCount,
       });
 
       return {
         ...parent,
         children: children,
         totalProductCount: totalProductCount,
-        directProductCount: directProductCount
+        directProductCount: directProductCount,
       };
     });
 
     console.log("=== ORGANIZED CATEGORIES ===");
     console.log("Parent categories:", parentCategoriesWithTotals);
-    console.log("Orphan children:", childCategories.filter(child => {
-      const childParentId = child.parent || child.parentId;
-      return !parentCategories.some(parent => 
-        parent._id === childParentId || parent.id === childParentId
-      );
-    }));
+    console.log(
+      "Orphan children:",
+      childCategories.filter((child) => {
+        const childParentId = child.parent || child.parentId;
+        return !parentCategories.some(
+          (parent) =>
+            parent._id === childParentId || parent.id === childParentId
+        );
+      })
+    );
 
     return {
       parentCategories: parentCategoriesWithTotals,
-      orphanChildren: childCategories.filter(child => {
+      orphanChildren: childCategories.filter((child) => {
         const childParentId = child.parent || child.parentId;
-        return !parentCategories.some(parent => 
-          parent._id === childParentId || parent.id === childParentId
+        return !parentCategories.some(
+          (parent) =>
+            parent._id === childParentId || parent.id === childParentId
         );
-      })
+      }),
     };
   };
 
@@ -880,8 +892,8 @@ const CatalogManagement = () => {
   const expandAllCategories = () => {
     const { parentCategories } = organizeCategories();
     const allParentIds = parentCategories
-      .filter(parent => parent.children && parent.children.length > 0)
-      .map(parent => parent._id || parent.id);
+      .filter((parent) => parent.children && parent.children.length > 0)
+      .map((parent) => parent._id || parent.id);
     setExpandedCategories(new Set(allParentIds));
   };
 
@@ -894,13 +906,15 @@ const CatalogManagement = () => {
       <tr
         key={category._id || category.id}
         className={`hover:bg-gray-50 transition-colors duration-150 ${
-          isChild ? 'category-child-row category-dropdown-animation' : ''
+          isChild ? "category-child-row category-dropdown-animation" : ""
         }`}
       >
         <td className="py-4 px-4">
-          <div className={`flex items-center ${isChild ? 'pl-8' : ''}`}>
-            <FaLayerGroup className={`mr-2 ${isChild ? 'text-blue-500' : 'text-amber-500'}`} />
-            <span className={isChild ? 'category-child-name' : 'font-medium'}>
+          <div className={`flex items-center ${isChild ? "pl-8" : ""}`}>
+            <FaLayerGroup
+              className={`mr-2 ${isChild ? "text-blue-500" : "text-amber-500"}`}
+            />
+            <span className={isChild ? "category-child-name" : "font-medium"}>
               {category.name}
             </span>
           </div>
@@ -910,34 +924,32 @@ const CatalogManagement = () => {
             <span className="flex items-center text-blue-600">
               <FaLayerGroup className="text-gray-400 mr-1" />
               {/* Find parent name */}
-              {categories.find(c => c._id === parentId || c.id === parentId)?.name || 'Unknown'}
+              {categories.find((c) => c._id === parentId || c.id === parentId)
+                ?.name || "Unknown"}
             </span>
           ) : (
-            <span className="text-gray-500 italic">
-              None (Top Level)
-            </span>
+            <span className="text-gray-500 italic">None (Top Level)</span>
           )}
         </td>
         <td className="py-4 px-4">
-          {category.description &&
-          category.description.length > 50
+          {category.description && category.description.length > 50
             ? `${category.description.substring(0, 50)}...`
             : category.description || (
-                <span className="text-gray-400 italic">
-                  No description
-                </span>
+                <span className="text-gray-400 italic">No description</span>
               )}
-        </td>        <td className="py-4 px-4">
+        </td>{" "}
+        <td className="py-4 px-4">
           <div className="flex items-center">
-            <span className={
-              isChild 
-                ? 'category-product-count-child' 
-                : 'category-product-count-parent'
-            }>
-              {isChild 
-                ? (category.productCount || 0)
-                : (category.totalProductCount || category.productCount || 0)
+            <span
+              className={
+                isChild
+                  ? "category-product-count-child"
+                  : "category-product-count-parent"
               }
+            >
+              {isChild
+                ? category.productCount || 0
+                : category.totalProductCount || category.productCount || 0}
             </span>
             {!isChild && category.directProductCount !== undefined && (
               <span className="ml-2 text-xs text-gray-500">
@@ -956,9 +968,7 @@ const CatalogManagement = () => {
               <FaEdit />
             </button>
             <button
-              onClick={() =>
-                handleDeleteCategory(category._id || category.id)
-              }
+              onClick={() => handleDeleteCategory(category._id || category.id)}
               className="text-red-500 hover:text-red-700 transition-colors"
               title="Delete category"
             >
@@ -976,9 +986,9 @@ const CatalogManagement = () => {
     const rows = [];
 
     // Render parent categories with their children
-    parentCategories.forEach(parent => {
+    parentCategories.forEach((parent) => {
       const isExpanded = expandedCategories.has(parent._id || parent.id);
-      const hasChildren = parent.children && parent.children.length > 0;      // Parent category row
+      const hasChildren = parent.children && parent.children.length > 0; // Parent category row
       rows.push(
         <tr
           key={parent._id || parent.id}
@@ -988,17 +998,39 @@ const CatalogManagement = () => {
             <div className="flex items-center">
               {hasChildren && (
                 <button
-                  onClick={() => toggleCategoryExpansion(parent._id || parent.id)}
+                  onClick={() =>
+                    toggleCategoryExpansion(parent._id || parent.id)
+                  }
                   className="category-expand-button mr-2"
-                  title={isExpanded ? 'Collapse' : 'Expand'}
+                  title={isExpanded ? "Collapse" : "Expand"}
                 >
                   {isExpanded ? (
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="w-4 h-4 text-amber-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   ) : (
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="w-4 h-4 text-amber-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   )}
                 </button>
@@ -1018,15 +1050,13 @@ const CatalogManagement = () => {
             </span>
           </td>
           <td className="py-4 px-4">
-            {parent.description &&
-            parent.description.length > 50
+            {parent.description && parent.description.length > 50
               ? `${parent.description.substring(0, 50)}...`
               : parent.description || (
-                  <span className="text-gray-400 italic">
-                    No description
-                  </span>
+                  <span className="text-gray-400 italic">No description</span>
                 )}
-          </td>          <td className="py-4 px-4">
+          </td>{" "}
+          <td className="py-4 px-4">
             <div className="flex items-center">
               <span className="category-product-count-parent">
                 {parent.totalProductCount || parent.productCount || 0}
@@ -1048,9 +1078,7 @@ const CatalogManagement = () => {
                 <FaEdit />
               </button>
               <button
-                onClick={() =>
-                  handleDeleteCategory(parent._id || parent.id)
-                }
+                onClick={() => handleDeleteCategory(parent._id || parent.id)}
                 className="text-red-500 hover:text-red-700 transition-colors"
                 title="Delete category"
               >
@@ -1063,7 +1091,7 @@ const CatalogManagement = () => {
 
       // Children rows (if expanded)
       if (isExpanded && hasChildren) {
-        parent.children.forEach(child => {
+        parent.children.forEach((child) => {
           rows.push(renderCategoryRow(child, true, parent._id || parent.id));
         });
       }
@@ -1073,13 +1101,16 @@ const CatalogManagement = () => {
     if (orphanChildren.length > 0) {
       rows.push(
         <tr key="orphan-header" className="bg-red-50">
-          <td colSpan="5" className="py-2 px-4 text-center text-red-600 font-medium text-sm">
+          <td
+            colSpan="5"
+            className="py-2 px-4 text-center text-red-600 font-medium text-sm"
+          >
             ⚠️ Categories with missing or invalid parent references
           </td>
         </tr>
       );
-      
-      orphanChildren.forEach(child => {
+
+      orphanChildren.forEach((child) => {
         rows.push(renderCategoryRow(child, false));
       });
     }
@@ -1126,14 +1157,12 @@ const CatalogManagement = () => {
           <FaLayerGroup className="text-lg" /> Category Management
         </button>
       </div>
-
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
           {error}
         </div>
       )}
-
       {/* Products Section */}
       {activeSection === "products" && (
         <div className="products-section">
@@ -1295,7 +1324,6 @@ const CatalogManagement = () => {
           </div>
         </div>
       )}
-
       {/* Brands Section */}
       {activeSection === "brands" && (
         <div className="brands-section">
@@ -1581,7 +1609,8 @@ const CatalogManagement = () => {
             </table>
           </div>
         </div>
-      )}      {/* Categories Section */}
+      )}{" "}
+      {/* Categories Section */}
       {activeSection === "categories" && (
         <div className="categories-section">
           <div className="flex justify-between items-center mb-4">
@@ -1751,16 +1780,19 @@ const CatalogManagement = () => {
                       value={categoryFormData.parent}
                       onChange={handleCategoryInputChange}
                       className="w-full p-2 border border-gray-300 rounded-md"
-                    >                      <option value="">None (Top Level Category)</option>
-                      {sortCategoriesHierarchically(getPotentialParentCategories())
-                        .map((category) => (
-                          <option
-                            key={category._id || category.id}
-                            value={category._id || category.id}
-                          >
-                            {formatCategoryNameForDropdown(category)}
-                          </option>
-                        ))}
+                    >
+                      {" "}
+                      <option value="">None (Top Level Category)</option>
+                      {sortCategoriesHierarchically(
+                        getPotentialParentCategories()
+                      ).map((category) => (
+                        <option
+                          key={category._id || category.id}
+                          value={category._id || category.id}
+                        >
+                          {formatCategoryNameForDropdown(category)}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1806,7 +1838,8 @@ const CatalogManagement = () => {
                 </form>
               </div>
             </div>
-          )}          {/* Categories Table */}
+          )}{" "}
+          {/* Categories Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-md">
               <thead className="bg-gray-50">
@@ -1840,7 +1873,8 @@ const CatalogManagement = () => {
                     <td colSpan="5" className="py-10 text-center text-gray-500">
                       No categories found.
                     </td>
-                  </tr>                ) : (
+                  </tr>
+                ) : (
                   renderCategoriesWithDropdown()
                 )}
               </tbody>

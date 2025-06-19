@@ -28,7 +28,8 @@ export default function Products() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [totalFilteredProducts, setTotalFilteredProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);  const [categories, setCategories] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filtersLoading, setFiltersLoading] = useState(true);
@@ -207,12 +208,16 @@ export default function Products() {
             console.warn(
               "⚠️ getProductsWithFilters failed, falling back to getProducts:",
               error.message
+            ); // Fallback to original getProducts and apply filtering client-side
+            console.warn(
+              "⚠️ Using fallback - loading limited products to prevent performance issues"
             );
-
-            // Fallback to original getProducts and apply filtering client-side
-            const allProducts = await getProducts();
+            const allProducts = await getProducts({
+              limit: 50,
+              sortBy: "newest",
+            }); // Giới hạn 50 sản phẩm thay vì toàn bộ
             console.log(
-              "📦 Fallback: Received products from getProducts:",
+              "📦 Fallback: Received limited products from getProducts:",
               allProducts.length
             );
 
@@ -494,17 +499,19 @@ export default function Products() {
       <Header />
       <main className="bg-gradient-to-b from-luxury-forest/10 to-luxury-light/8 min-h-screen">
         <div className="container mx-auto px-4 py-12">
-          {" "}          {/* Category Quick Filter */}
+          {" "}
+          {/* Category Quick Filter */}
           <div className="text-center mb-16 py-8 bg-white/30 backdrop-blur-sm rounded-xl">
             <h1 className="text-4xl font-serif text-luxury-gold mb-8">
               Shop by Category
             </h1>
-            <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>            <CategoryQuickFilter 
+            <div className="w-24 h-0.5 bg-luxury-gold mx-auto mb-8"></div>{" "}
+            <CategoryQuickFilter
               onParentCategorySelect={setSelectedParentCategory}
               selectedParentCategory={selectedParentCategory}
             />
           </div>
-            <div className="flex flex-col xl:flex-row gap-12">
+          <div className="flex flex-col xl:flex-row gap-12">
             {/* Filters Sidebar - back to left */}
             <aside className="xl:w-80 lg:w-1/3">
               <div className="bg-white/95 backdrop-blur-sm p-8 shadow-[0_12px_40px_rgb(0,0,0,0.15)] rounded-xl sticky top-4 max-h-[calc(100vh-2rem)] overflow-visible border border-luxury-gold/20">
@@ -530,7 +537,8 @@ export default function Products() {
                   </div>
                 )}
               </div>
-            </aside>            {/* Products Grid */}
+            </aside>{" "}
+            {/* Products Grid */}
             <div className="flex-1">
               {/* Sort and Results Count */}
               <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
@@ -665,7 +673,8 @@ export default function Products() {
                     >
                       Next
                     </button>
-                  </div>                )}
+                  </div>
+                )}
             </div>
           </div>
         </div>

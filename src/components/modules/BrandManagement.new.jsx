@@ -49,7 +49,7 @@ const BrandManagement = ({ onDataChange }) => {
       const [brandsData, productsData] = await Promise.all([
         handleAsyncOperation(() => getBrands(), "Fetching brands"),
         handleAsyncOperation(
-          () => getProducts(),
+          () => getProducts({}, true), // forceLoadAll = true cho admin
           "Fetching products for counts"
         ),
       ]);

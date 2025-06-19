@@ -49,7 +49,7 @@ const CategoryManagement = ({ onDataChange }) => {
       const [categoriesData, productsData] = await Promise.all([
         handleAsyncOperation(() => getCategories(), "Fetching categories"),
         handleAsyncOperation(
-          () => getProducts(),
+          () => getProducts({}, true), // forceLoadAll = true cho admin
           "Fetching products for counts"
         ),
       ]);
