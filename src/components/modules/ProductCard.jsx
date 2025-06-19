@@ -123,10 +123,11 @@ export default function ProductCard(props) {
 
         {/* Content Container with 3D effect */}
         <div className="p-6 flex-1 flex flex-col relative transform transition-all duration-300 group-hover:translate-z-4">
+          {" "}
           {/* Header Section */}
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-serif text-luxury-dark truncate transition-colors duration-300 group-hover:text-luxury-gold">
+              <h3 className="text-xl font-serif text-luxury-dark transition-colors duration-300 group-hover:text-luxury-gold">
                 {name}
               </h3>
               <p className="text-sm text-luxury-gold font-medium mt-1 truncate transition-all duration-300 group-hover:font-semibold">
@@ -140,14 +141,8 @@ export default function ProductCard(props) {
                   {averageRating.toFixed(1)}
                 </span>
               </div>
-            )}
+            )}{" "}
           </div>
-
-          {/* Description Section */}
-          <p className="text-luxury-dark/70 text-sm mb-4 line-clamp-2 flex-1 transition-colors duration-300 group-hover:text-luxury-dark">
-            {description}
-          </p>
-
           {/* Price and Actions Section with 3D effects */}
           <div className="mt-auto space-y-4">
             <div className="text-center transform transition-all duration-300 group-hover:scale-105">

@@ -1,0 +1,192 @@
+/* Custom Swiper Styles */
+.product-slider {
+  padding: 0 0 50px 0;
+}
+
+.product-slider .swiper-pagination {
+  bottom: 0 !important;
+  position: relative !important;
+  margin-top: 2rem;
+}
+
+.product-slider .swiper-pagination-bullet {
+  width: 12px !important;
+  height: 12px !important;
+  background: #d1d5db !important;
+  opacity: 0.5 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  margin: 0 4px !important;
+}
+
+.product-slider .swiper-pagination-bullet-active {
+  background: #d4af37 !important;
+  opacity: 1 !important;
+  transform: scale(1.2) !important;
+}
+
+.product-slider .swiper-button-disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+}
+
+/* Hide default swiper navigation */
+.product-slider .swiper-button-next,
+.product-slider .swiper-button-prev {
+  display: none !important;
+}
+
+/* Animation for product cards */
+.product-card-animation {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-animation:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Featured Collection Section */
+.featured-collection-swiper {
+  padding: 0 0 50px 0;
+}
+
+.featured-collection-swiper .swiper-pagination {
+  bottom: 0 !important;
+  position: relative !important;
+  margin-top: 2rem;
+}
+
+.featured-collection-swiper .swiper-pagination-bullet {
+  width: 12px !important;
+  height: 12px !important;
+  background: #d1d5db !important;
+  opacity: 0.5 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  margin: 0 4px !important;
+}
+
+.featured-collection-swiper .swiper-pagination-bullet-active {
+  background: #d4af37 !important;
+  opacity: 1 !important;
+  transform: scale(1.2) !important;
+}
+
+/* Hide default swiper navigation for featured collection */
+.featured-collection-swiper .swiper-button-next,
+.featured-collection-swiper .swiper-button-prev {
+  display: none !important;
+}
+
+/* New Arrivals Section with Grid */
+.new-arrivals-swiper {
+  padding: 0 0 50px 0;
+}
+
+.new-arrivals-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.new-arrivals-swiper .swiper-slide {
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.new-arrivals-swiper .swiper-pagination {
+  bottom: 0 !important;
+  position: relative !important;
+  margin-top: 2rem;
+}
+
+.new-arrivals-swiper .swiper-pagination-bullet {
+  width: 12px !important;
+  height: 12px !important;
+  background: #d1d5db !important;
+  opacity: 0.5 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  margin: 0 4px !important;
+}
+
+.new-arrivals-swiper .swiper-pagination-bullet-active {
+  background: #d4af37 !important;
+  opacity: 1 !important;
+  transform: scale(1.2) !important;
+}
+
+/* Hide default swiper navigation for new arrivals */
+.new-arrivals-swiper .swiper-button-next,
+.new-arrivals-swiper .swiper-button-prev {
+  display: none !important;
+}
+
+/* Custom Navigation Buttons */
+.featured-swiper-button-next,
+.featured-swiper-button-prev,
+.arrivals-swiper-button-next,
+.arrivals-swiper-button-prev {
+  background: #d4af37 !important;
+  color: #000 !important;
+  border: 2px solid #d4af37 !important;
+  border-radius: 50% !important;
+  width: 48px !important;
+  height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+}
+
+.featured-swiper-button-next:hover,
+.featured-swiper-button-prev:hover,
+.arrivals-swiper-button-next:hover,
+.arrivals-swiper-button-prev:hover {
+  background: #fff !important;
+  color: #d4af37 !important;
+}
+
+.featured-swiper-button-next.swiper-button-disabled,
+.featured-swiper-button-prev.swiper-button-disabled,
+.arrivals-swiper-button-next.swiper-button-disabled,
+.arrivals-swiper-button-prev.swiper-button-disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+}
+
+/* Custom Pagination */
+.featured-swiper-pagination,
+.arrivals-swiper-pagination {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.featured-swiper-pagination .swiper-pagination-bullet,
+.arrivals-swiper-pagination .swiper-pagination-bullet {
+  width: 12px !important;
+  height: 12px !important;
+  background: #d1d5db !important;
+  opacity: 0.5 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+}
+
+.featured-swiper-pagination .swiper-pagination-bullet-active,
+.arrivals-swiper-pagination .swiper-pagination-bullet-active {
+  background: #d4af37 !important;
+  opacity: 1 !important;
+  transform: scale(1.2) !important;
+}
+
+/* Line clamp utility for product names */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}

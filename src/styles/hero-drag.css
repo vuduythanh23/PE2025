@@ -1,0 +1,176 @@
+/* Hero Section Drag Enhancements */
+.hero-drag-container {
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0); /* Force hardware acceleration */
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+.hero-drag-container:active {
+  cursor: grabbing !important;
+}
+
+/* Smooth transitions for drag effects */
+.hero-slide-container {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.hero-slide-container.dragging {
+  transition: none;
+}
+
+/* Visual feedback for drag direction */
+.drag-indicator {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeInScale 0.2s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Prevent image dragging and selection */
+.hero-drag-container img,
+.hero-drag-container video {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Enhanced navigation dots with drag state */
+.nav-dots {
+  pointer-events: auto;
+}
+
+.nav-dots button {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-dots button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.nav-dots button:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+/* Mobile touch improvements */
+@media (hover: none) and (pointer: coarse) {
+  .hero-drag-container {
+    cursor: default;
+  }
+
+  .hero-drag-container:active {
+    cursor: default;
+  }
+
+  /* Increase touch target size on mobile */
+  .nav-dots button {
+    padding: 8px;
+    margin: 0 2px;
+  }
+}
+
+/* Disable selection on hero content during interaction */
+.hero-content-no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Slide transitions for hero content changes (not scroll-related) */
+.hero-slide {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  /* Note: Slide transitions are handled by Tailwind classes in JSX */
+}
+
+/* Hero content animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Additional drag and interaction styles */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}
+
+.drag-container {
+  will-change: transform;
+}
+
+/* Enhanced text selection and dragging prevention */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Prevent image and video dragging */
+.hero-drag-container img,
+.hero-drag-container video {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}

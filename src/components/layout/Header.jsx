@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { isAuthenticated, logout } from "../../utils";
+import { isAuthenticated, logout, isAdmin } from "../../utils";
 import { useCart } from "../../context/CartContext";
 
 export default function Header() {
@@ -15,11 +15,17 @@ export default function Header() {
   return (
     <header className="bg-luxury-forest shadow-md px-6 py-4">
       <div className="container mx-auto flex justify-between items-center">
+        {" "}
         <Link
           to="/home"
-          className="text-2xl font-bold text-luxury-gold font-serif tracking-wider"
+          className="text-2xl font-bold text-luxury-gold font-serif tracking-wider flex items-center gap-3"
         >
           SNKRSS
+          {isAdmin() && (
+            <span className="bg-luxury-gold text-luxury-forest px-2 py-1 text-xs font-bold rounded-full animate-pulse">
+              ADMIN
+            </span>
+          )}
         </Link>
         <nav>
           <ul className="flex items-center gap-6">
@@ -144,9 +150,38 @@ export default function Header() {
                       <span className="absolute top-full mt-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity text-luxury-gold">
                         Cart
                       </span>
-                    </div>
+                    </div>{" "}
                   </button>
                 </li>
+                {/* Admin Dashboard Icon - Only show for admin users */}
+                {isAdmin() && (
+                  <li className="group relative">
+                    <Link
+                      to="/admin"
+                      className="text-luxury-gold hover:text-luxury-light"
+                    >
+                      <div className="flex flex-col items-center transition-transform group-hover:-translate-y-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                        <span className="absolute top-full mt-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                          Admin
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
+                )}
                 {/* Profile Icon */}
                 <li className="group relative">
                   <Link
@@ -204,7 +239,9 @@ export default function Header() {
                 </li>
               </>
             ) : (
-              <>                {/* Login Icon */}
+              <>
+                {" "}
+                {/* Login Icon */}
                 <li className="group relative">
                   <Link
                     to="/login"

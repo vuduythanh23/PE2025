@@ -24,12 +24,13 @@ import { isAuthenticated } from "./utils";
 function AppContent() {
   const { isCartOpen, closeCart } = useCart();
   const location = useLocation();
-  
+
   // Chỉ hiển thị BackendStatusIndicator trong trang admin
   const showBackendStatus = location.pathname === "/admin";
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-luxury-forest/10 to-luxury-light/5">
+      {" "}
       <Routes>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="/home" element={<Home />} />

@@ -30,8 +30,9 @@ export default function Login() {
 
       if (!response?.user) {
         throw new Error("Invalid response from server");
-      }      // Check if the logged-in user is an admin based on the response
-      const isAdmin = response.user.role === "admin" || response.user.isAdmin === true;
+      } // Check if the logged-in user is an admin based on the response
+      const isAdmin =
+        response.user.role === "admin" || response.user.isAdmin === true;
 
       // Store user role consistently
       sessionStorage.setItem("userRole", isAdmin ? "admin" : "user");
@@ -43,12 +44,17 @@ export default function Login() {
       console.log("Login redirect logic:", {
         userRole: response.user.role,
         isAdmin: isAdmin,
-        redirectPath: isAdmin ? "/admin" : "/products"
-      });
-
-      // Check if there's a redirect parameter in the URL
+        redirectPath: isAdmin ? "/admin" : "/products",
+      }); // Check if there's a redirect parameter in the URL
       const params = new URLSearchParams(window.location.search);
-      const redirectPath = params.get("redirect") || (isAdmin ? "/admin" : "/products");
+      let redirectPath = params.get("redirect");
+
+      // For admin users, always redirect to admin dashboard unless specifically redirected elsewhere
+      if (isAdmin && !redirectPath) {
+        redirectPath = "/admin";
+      } else if (!isAdmin && !redirectPath) {
+        redirectPath = "/products";
+      }
 
       await Swal.fire({
         title: isAdmin ? "Admin Login Successful!" : "Login Successful!",
@@ -105,7 +111,8 @@ export default function Login() {
   };
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />      <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Header />{" "}
+      <div className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <AuthCard
             type="login"
@@ -113,7 +120,7 @@ export default function Login() {
             loading={loading}
             fields={["email", "password"]}
           />
-          
+
           {/* Register new account button */}
           <div className="text-center mt-6">
             <Link
