@@ -107,14 +107,14 @@ export default function ProductFilter({
   // Helper function to get category name by ID
   const getCategoryNameById = (categoryId) => {
     if (!categoryId) return null;
-    const category = categories.find(cat => cat._id === categoryId);
+    const category = categories.find((cat) => cat._id === categoryId);
     return category ? category.name : null;
   };
 
   // Helper function to get brand name by ID
   const getBrandNameById = (brandId) => {
     if (!brandId) return null;
-    const brand = brands.find(b => (b._id || b.id) === brandId);
+    const brand = brands.find((b) => (b._id || b.id) === brandId);
     return brand ? brand.name : null;
   };
 
@@ -124,7 +124,13 @@ export default function ProductFilter({
     return priceRange.label;
   };
   // Check if any filters are applied (use applied filters, not temporary ones)
-  const hasAppliedFilters = selectedParentCategory || appliedCategory || appliedBrand || (appliedPriceRange && appliedPriceRange.min !== null && appliedPriceRange.max !== null);
+  const hasAppliedFilters =
+    selectedParentCategory ||
+    appliedCategory ||
+    appliedBrand ||
+    (appliedPriceRange &&
+      appliedPriceRange.min !== null &&
+      appliedPriceRange.max !== null);
 
   return (
     <div
@@ -143,33 +149,38 @@ export default function ProductFilter({
                 {selectedParentCategory}
               </span>
             )}
-            
+
             {/* Specific Category */}
             {appliedCategory && (
               <span className="inline-block bg-luxury-dark text-white px-3 py-1 rounded-full text-sm font-serif">
-                {getCategoryNameById(appliedCategory) || 'Category'}
+                {getCategoryNameById(appliedCategory) || "Category"}
               </span>
             )}
-            
+
             {/* Brand */}
             {appliedBrand && (
               <span className="inline-block bg-luxury-forest text-white px-3 py-1 rounded-full text-sm font-serif">
-                {getBrandNameById(appliedBrand) || 'Brand'}
+                {getBrandNameById(appliedBrand) || "Brand"}
               </span>
             )}
-            
+
             {/* Price Range */}
-            {appliedPriceRange && (appliedPriceRange.min !== null || appliedPriceRange.max !== null) && (
-              <span className="inline-block bg-luxury-light text-white px-3 py-1 rounded-full text-sm font-serif">
-                {appliedPriceRange.min !== null && appliedPriceRange.max !== null && appliedPriceRange.max !== Infinity
-                  ? `$${appliedPriceRange.min} - $${appliedPriceRange.max}`
-                  : appliedPriceRange.min !== null 
+            {appliedPriceRange &&
+              (appliedPriceRange.min !== null ||
+                appliedPriceRange.max !== null) && (
+                <span className="inline-block bg-luxury-light text-white px-3 py-1 rounded-full text-sm font-serif">
+                  {appliedPriceRange.min !== null &&
+                  appliedPriceRange.max !== null &&
+                  appliedPriceRange.max !== Infinity
+                    ? `$${appliedPriceRange.min} - $${appliedPriceRange.max}`
+                    : appliedPriceRange.min !== null
                     ? `Over $${appliedPriceRange.min}`
-                    : appliedPriceRange.max !== null && appliedPriceRange.max !== Infinity
-                      ? `Under $${appliedPriceRange.max}`
-                      : 'Price Range'}
-              </span>
-            )}
+                    : appliedPriceRange.max !== null &&
+                      appliedPriceRange.max !== Infinity
+                    ? `Under $${appliedPriceRange.max}`
+                    : "Price Range"}
+                </span>
+              )}
           </div>
         </div>
       )}

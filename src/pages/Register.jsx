@@ -38,7 +38,7 @@ export default function Register() {
     try {
       const { confirmPassword, ...registrationData } = formData;
       const response = await registerUser(registrationData);
-      
+
       // Hiển thị thông báo đăng ký thành công
       await Swal.fire({
         title: "Registration Successful!",
@@ -49,13 +49,16 @@ export default function Register() {
 
       // Tự động đăng nhập sau khi đăng ký thành công
       try {
-        const loginResponse = await loginUser(registrationData.email, registrationData.password);
-          if (loginResponse?.user) {
+        const loginResponse = await loginUser(
+          registrationData.email,
+          registrationData.password
+        );
+        if (loginResponse?.user) {
           // Lưu thông tin user vào sessionStorage
           const isAdmin = loginResponse.user.role === "admin";
           sessionStorage.setItem("userRole", isAdmin ? "admin" : "user");
           sessionStorage.setItem("user", JSON.stringify(loginResponse.user));
-          
+
           // Chuyển hướng tới trang phù hợp
           const redirectPath = isAdmin ? "/admin" : "/products";
           navigate(redirectPath);
@@ -65,7 +68,6 @@ export default function Register() {
         // Nếu auto-login thất bại, chuyển về trang login
         navigate("/login");
       }
-      
     } catch (error) {
       let errorMsg = error.message;
       try {
@@ -81,9 +83,7 @@ export default function Register() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formFields = [
+  };  const formFields = [
     { id: "username", label: "Username" },
     { id: "email", label: "Email Address" },
     { id: "password", label: "Password" },
@@ -97,7 +97,9 @@ export default function Register() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-160px)] flex flex-col md:flex-row">        {/* Registration form - appears on top on mobile, left side on desktop */}
+      <div className="min-h-[calc(100vh-160px)] flex flex-col md:flex-row">
+        {" "}
+        {/* Registration form - appears on top on mobile, left side on desktop */}
         <div className="w-full md:w-1/2 p-8">
           <AuthCard
             type="register"
@@ -105,7 +107,7 @@ export default function Register() {
             loading={loading}
             fields={formFields}
           />
-          
+
           {/* Back to Login link */}
           <div className="text-center mt-6">
             <Link
@@ -116,7 +118,6 @@ export default function Register() {
             </Link>
           </div>
         </div>
-
         {/* Brand logos - appears below on mobile, right side on desktop */}
         <div className="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center">
           <div className="grid grid-cols-2 gap-8 max-w-md">

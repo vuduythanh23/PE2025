@@ -521,7 +521,9 @@ export default function Products() {
                 {filtersLoading ? (
                   <FilterSkeleton />
                 ) : (
-                  <div className="overflow-y-auto max-h-[calc(100vh-10rem)]">                    <ProductFilter
+                  <div className="overflow-y-auto max-h-[calc(100vh-10rem)]">
+                    {" "}
+                    <ProductFilter
                       categories={categories}
                       brands={brands}
                       selectedCategory={tempFilters.category}

@@ -7,8 +7,9 @@ export default function HeroSection() {
   const [dragStart, setDragStart] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true); // Removed scrollY and opacity states for scroll effects
-  const containerRef = useRef(null);  const dragThreshold = 100; // Minimum drag distance to trigger slide change
-    const heroContent = [
+  const containerRef = useRef(null);
+  const dragThreshold = 100; // Minimum drag distance to trigger slide change
+  const heroContent = [
     {
       video: null,
       fallbackImage:
@@ -202,7 +203,8 @@ export default function HeroSection() {
                   <span className="block text-luxury-gold opacity-0 animate-[slideInUp_1s_ease-out_0.8s_forwards]">
                     {slide.title.split(" ").slice(-2).join(" ")}
                   </span>
-                </h1>                <p className="text-xl md:text-2xl text-white/90 mb-8 font-light max-w-2xl mx-auto opacity-0 animate-[fadeInUp_1s_ease-out_1.1s_forwards]">
+                </h1>{" "}
+                <p className="text-xl md:text-2xl text-white/90 mb-8 font-light max-w-2xl mx-auto opacity-0 animate-[fadeInUp_1s_ease-out_1.1s_forwards]">
                   {slide.subtitle}
                 </p>
               </div>
