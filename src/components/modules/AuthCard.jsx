@@ -27,7 +27,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         if (!value.includes("@")) return "Email should contain @";
         if (!value.toLowerCase().endsWith("@gmail.com"))
           return "Email should end with @gmail.com";
-        return "";      case "password":
+        return "";
+      case "password":
         if (!value) return "Password is required";
         return validatePassword(value);
       case "confirmPassword":
@@ -45,7 +46,7 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         }
         return validateRequired(value, name);
     }
-  };  // Add real-time password validation
+  }; // Add real-time password validation
   useEffect(() => {
     if (type === "register" && formData.password && formData.confirmPassword) {
       const error = validatePasswordMatch(
@@ -100,7 +101,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
     setTouched((prev) => ({ ...prev, [name]: true }));
 
     // Validate on change for better user experience
-    const error = validateField(name, value);    setErrors((prev) => ({
+    const error = validateField(name, value);
+    setErrors((prev) => ({
       ...prev,
       [name]: error,
       ...(name === "password" && formData.confirmPassword
@@ -154,7 +156,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                 </label>
                 <input
                   id={fieldId}
-                  name={fieldId}                  type={
+                  name={fieldId}
+                  type={
                     fieldId === "password" || fieldId === "confirmPassword"
                       ? "password"
                       : "text"

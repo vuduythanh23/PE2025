@@ -83,7 +83,8 @@ export default function Register() {
     } finally {
       setLoading(false);
     }
-  };  const formFields = [
+  };
+  const formFields = [
     { id: "username", label: "Username" },
     { id: "email", label: "Email Address" },
     { id: "password", label: "Password" },
