@@ -153,8 +153,7 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                   className="block text-sm font-medium text-luxury-dark/70 mb-2 font-serif"
                 >
                   {fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)}
-                </label>
-                <input
+                </label>                <input
                   id={fieldId}
                   name={fieldId}
                   type={
@@ -166,6 +165,18 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                   onChange={handleChange}
                   className="w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm"
                   placeholder={`Enter your ${fieldLabel.toLowerCase()}`}
+                  autoComplete={
+                    fieldId === "password" 
+                      ? "current-password"
+                      : fieldId === "confirmPassword"
+                      ? "new-password"
+                      : fieldId === "email"
+                      ? "email"
+                      : "off"
+                  }
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
                 />
                 {touched[fieldId] && errors[fieldId] && (
                   <p className="mt-1 text-sm text-red-500">{errors[fieldId]}</p>
