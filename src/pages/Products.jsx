@@ -521,14 +521,16 @@ export default function Products() {
                 {filtersLoading ? (
                   <FilterSkeleton />
                 ) : (
-                  <div className="overflow-y-auto max-h-[calc(100vh-10rem)]">
-                    <ProductFilter
+                  <div className="overflow-y-auto max-h-[calc(100vh-10rem)]">                    <ProductFilter
                       categories={categories}
                       brands={brands}
                       selectedCategory={tempFilters.category}
                       selectedBrand={tempFilters.brand}
                       selectedPriceRange={tempFilters.priceRange}
                       selectedParentCategory={selectedParentCategory}
+                      appliedCategory={activeProductFilters.category}
+                      appliedBrand={activeProductFilters.brand}
+                      appliedPriceRange={activeProductFilters.priceRange}
                       onFilterChange={handleTempFiltersChange}
                       onApplyFilters={handleApplyFilters}
                       onResetFilters={handleResetFilters}
