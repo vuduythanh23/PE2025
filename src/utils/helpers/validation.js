@@ -43,7 +43,7 @@ export const validatePassword = (password, minLength = 6) => {
   }
   
   if (password.length < minLength) {
-    return `Password must be at least ${minLength} characters long.`;
+    return "Password does not meet security requirements.";
   }
   
   return "";

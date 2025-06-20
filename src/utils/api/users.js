@@ -113,10 +113,8 @@ export const adminUpdateUser = async (userId, userData) => {
       !userData.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
     ) {
       throw new Error("Please provide a valid email address");
-    }
-
-    if (userData.password && userData.password.length < 6) {
-      throw new Error("Password must be at least 6 characters long");
+    }    if (userData.password && userData.password.length < 6) {
+      throw new Error("Password does not meet security requirements");
     }
 
     // Get token directly from storage

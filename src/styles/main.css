@@ -337,3 +337,152 @@
 .category-product-count-child {
   @apply bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium;
 }
+
+/* Simple password field styling - remove spell check only */
+.password-input-no-suggestions {
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+  background-image: none !important;
+}
+
+/* Additional CSS to completely disable browser suggestions */
+input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
+input::-webkit-caps-lock-indicator {
+  display: none !important;
+}
+
+input::-webkit-reveal {
+  display: none !important;
+}
+
+input::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+}
+
+/* Force disable all text decorations and suggestions */
+input[type="password"],
+input[name="password"],
+input[name="confirmPassword"] {
+  -webkit-text-decoration-line: none !important;
+  text-decoration-line: none !important;
+  -webkit-text-decoration: none !important;
+  text-decoration: none !important;
+  -webkit-text-decoration-style: none !important;
+  text-decoration-style: none !important;
+  -webkit-text-decoration-color: transparent !important;
+  text-decoration-color: transparent !important;
+  -webkit-text-underline-offset: 0 !important;
+  text-underline-offset: 0 !important;
+  -webkit-text-decoration-thickness: 0 !important;
+  text-decoration-thickness: 0 !important;
+}
+
+/* Disable spell check and suggestions specifically for password fields */
+.password-input-no-suggestions {
+  -webkit-text-security: disc !important;
+  text-security: disc !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  -webkit-text-decoration-line: none !important;
+  text-decoration-line: none !important;
+  -webkit-text-decoration: none !important;
+  text-decoration: none !important;
+}
+
+/* Password field styling - keep all borders intact */
+.password-input-no-suggestions {
+  /* Only remove spell-check decorations, keep all borders */
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  text-decoration-style: none !important;
+  text-decoration-color: transparent !important;
+  -webkit-text-decoration: none !important;
+  -webkit-text-decoration-line: none !important;
+  
+  /* Remove only browser suggestion indicators */
+  background-image: none !important;
+  text-shadow: none !important;
+  
+  /* Disable spell check features only */
+  -webkit-user-modify: read-write-plaintext-only !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Ensure borders are maintained */
+.password-input-no-suggestions:focus {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  /* Keep focus border styling */
+}
+
+/* Force override any inherited styles (keep borders) */
+input[type="password"]:focus,
+input[name="password"]:focus,
+input[name="confirmPassword"]:focus,
+.password-input-no-suggestions:focus {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  background-image: none !important;
+}
+
+/* Remove any pseudo-element decorations */
+input[type="password"]::before,
+input[type="password"]::after,
+input[name="password"]::before,
+input[name="password"]::after,
+input[name="confirmPassword"]::before,
+input[name="confirmPassword"]::after,
+.password-input-no-suggestions::before,
+.password-input-no-suggestions::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Nuclear option - remove only spell-check decorations */
+* input[type="password"],
+* input[name="password"],
+* input[name="confirmPassword"],
+* .password-input-no-suggestions {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  -webkit-text-decoration: none !important;
+  -webkit-text-decoration-line: none !important;
+}
+
+/* Override any framework or library styles */
+.password-input-no-suggestions[style*="text-decoration"] {
+  text-decoration: none !important;
+}
+
+/* Tailwind and other CSS framework overrides */
+input.password-input-no-suggestions,
+input[type="password"].password-input-no-suggestions {
+  text-decoration: none !important;
+}
+
+/* Force override with additional class (keep regular borders) */
+.no-decoration-forced {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  background-image: none !important;
+  -webkit-text-decoration: none !important;
+  -webkit-text-decoration-line: none !important;
+}
+
+.no-decoration-forced:focus,
+.no-decoration-forced:active,
+.no-decoration-forced:hover {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+}

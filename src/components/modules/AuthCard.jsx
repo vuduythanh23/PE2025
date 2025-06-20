@@ -27,8 +27,12 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         if (!value.includes("@")) return "Email should contain @";
         if (!value.toLowerCase().endsWith("@gmail.com"))
           return "Email should end with @gmail.com";
-        return "";
-      case "password":
+        return "";      case "password":
+        // For login, only check if password is provided - no other validation
+        if (type === "login") {
+          return !value ? "Password is required" : "";
+        }
+        // For registration, validate password requirements
         if (!value) return "Password is required";
         return validatePassword(value);
       case "confirmPassword":
@@ -46,7 +50,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         }
         return validateRequired(value, name);
     }
-  }; // Add real-time password validation
+  };
+  // Add real-time password validation
   useEffect(() => {
     if (type === "register" && formData.password && formData.confirmPassword) {
       const error = validatePasswordMatch(
@@ -59,53 +64,88 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         setErrors((prev) => ({ ...prev, confirmPassword: "" }));
       }
     }
-  }, [formData.password, formData.confirmPassword, type]);
-  const validate = () => {
+  }, [formData.password, formData.confirmPassword, type]);  const validate = () => {
     const newErrors = {};
     const fieldIds = Array.isArray(fields)
       ? fields.map((f) => (typeof f === "object" ? f.id : f))
-      : fields;
-
-    fieldIds.forEach((field) => {
+      : fields;    fieldIds.forEach((field) => {
       const fieldId = typeof field === "object" ? field.id : field;
-      const error = validateField(fieldId, formData[fieldId]);
-      if (error) {
-        newErrors[fieldId] = error;
+      // For login passwords, only check if it's provided - no format validation
+      if (fieldId === "password" && type === "login") {
+        if (!formData[fieldId]) {
+          newErrors[fieldId] = "Password is required";
+        }
+      } else {
+        const error = validateField(fieldId, formData[fieldId]);
+        if (error) {
+          newErrors[fieldId] = error;
+        }
       }
     });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
 
-    // Trim whitespace from email
-    if (formData.email) {
-      setFormData((prev) => ({
-        ...prev,
-        email: prev.email.trim(),
-      }));
+    // Trim whitespace from email first
+    const trimmedEmail = formData.email ? formData.email.trim() : "";
+    
+    // Update formData with trimmed email
+    const updatedFormData = {
+      ...formData,
+      email: trimmedEmail
+    };
+    
+    setFormData(updatedFormData);
+
+    // Validate email specifically for login
+    const emailErrors = {};
+    
+    if (!trimmedEmail) {
+      emailErrors.email = "Email is required";
+    } else if (!trimmedEmail.includes("@")) {
+      emailErrors.email = "Email should contain @";
+    } else if (!trimmedEmail.toLowerCase().endsWith("@gmail.com")) {
+      emailErrors.email = "Email should end with @gmail.com";
     }
 
+    // Validate password
+    if (!formData.password) {
+      emailErrors.password = "Password is required";
+    }
+
+    // Show errors if any
+    if (Object.keys(emailErrors).length > 0) {
+      setErrors(emailErrors);
+      return;
+    }
+
+    // Final validation check
     if (validate()) {
-      onSubmit(formData);
+      onSubmit(updatedFormData);
     }
   };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setTouched((prev) => ({ ...prev, [name]: true }));
 
-    // Validate on change for better user experience
+    // For login forms, don't show real-time validation for password field
+    if (type === "login" && name === "password") {
+      // Clear any existing password errors
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+      return;
+    }
+
+    // Validate on change for better user experience (except login password)
     const error = validateField(name, value);
     setErrors((prev) => ({
       ...prev,
       [name]: error,
-      ...(name === "password" && formData.confirmPassword
+      ...(name === "password" && formData.confirmPassword && type !== "login"
         ? {
             confirmPassword: validatePasswordMatch(
               value,
@@ -162,8 +202,11 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                       : "text"
                   }
                   value={formData[fieldId] || ""}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm"
+                  onChange={handleChange}                  className={`w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm ${
+                    fieldId === "password" || fieldId === "confirmPassword" 
+                      ? "password-input-no-suggestions" 
+                      : ""
+                  }`}
                   placeholder={`Enter your ${fieldLabel.toLowerCase()}`}
                   autoComplete={
                     fieldId === "password" 
@@ -174,9 +217,24 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                       ? "email"
                       : "off"
                   }
-                  spellCheck={false}
+                  spellCheck="false"
                   autoCorrect="off"
-                  autoCapitalize="off"
+                  autoCapitalize="none"
+                  data-gramm="false"
+                  data-gramm_editor="false"
+                  data-enable-grammarly="false"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  data-ms-editor="false"
+                  translate="no"                  style={{
+                    textDecoration: 'none !important',
+                    textDecorationLine: 'none !important',
+                    outline: 'none !important',
+                    boxShadow: 'none !important',
+                    backgroundImage: 'none !important',
+                    textUnderlineOffset: '0 !important',
+                    textDecorationThickness: '0 !important'
+                  }}
                 />
                 {touched[fieldId] && errors[fieldId] && (
                   <p className="mt-1 text-sm text-red-500">{errors[fieldId]}</p>
