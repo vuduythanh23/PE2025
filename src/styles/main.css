@@ -409,11 +409,11 @@ input[name="confirmPassword"] {
   text-decoration-color: transparent !important;
   -webkit-text-decoration: none !important;
   -webkit-text-decoration-line: none !important;
-  
+
   /* Remove only browser suggestion indicators */
   background-image: none !important;
   text-shadow: none !important;
-  
+
   /* Disable spell check features only */
   -webkit-user-modify: read-write-plaintext-only !important;
   -webkit-tap-highlight-color: transparent !important;

@@ -22,12 +22,12 @@ export const validateEmail = (email) => {
   if (!email) {
     return "Email is required.";
   }
-  
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.trim())) {
     return "Please enter a valid email address.";
   }
-  
+
   return "";
 };
 
@@ -41,11 +41,11 @@ export const validatePassword = (password, minLength = 6) => {
   if (!password) {
     return "Password is required.";
   }
-  
+
   if (password.length < minLength) {
     return "Password does not meet security requirements.";
   }
-  
+
   return "";
 };
 
@@ -71,12 +71,12 @@ export const validatePhone = (phoneNumber) => {
   if (!phoneNumber) {
     return "Phone number is required.";
   }
-  
+
   const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
   if (!phoneRegex.test(phoneNumber.trim())) {
     return "Please enter a valid phone number.";
   }
-  
+
   return "";
 };
 
@@ -89,37 +89,37 @@ export const validateCreditCard = (cardNumber) => {
   if (!cardNumber) {
     return "Credit card number is required.";
   }
-  
+
   // Remove spaces and dashes
   const cleaned = cardNumber.replace(/[\s\-]/g, "");
-  
+
   // Check if it's all digits and has reasonable length
   if (!/^\d{13,19}$/.test(cleaned)) {
     return "Please enter a valid credit card number.";
   }
-  
+
   // Luhn algorithm check
   let sum = 0;
   let isEven = false;
-  
+
   for (let i = cleaned.length - 1; i >= 0; i--) {
     let digit = parseInt(cleaned[i]);
-    
+
     if (isEven) {
       digit *= 2;
       if (digit > 9) {
         digit -= 9;
       }
     }
-    
+
     sum += digit;
     isEven = !isEven;
   }
-  
+
   if (sum % 10 !== 0) {
     return "Please enter a valid credit card number.";
   }
-  
+
   return "";
 };
 
@@ -132,7 +132,7 @@ export const validateUrl = (url) => {
   if (!url) {
     return "URL is required.";
   }
-  
+
   try {
     new URL(url);
     return "";
@@ -149,23 +149,28 @@ export const validateUrl = (url) => {
  * @param {string} fieldName - Name of the field (default: "Value")
  * @returns {string} Error message or empty string if valid
  */
-export const validateNumberRange = (value, min = 0, max = Infinity, fieldName = "Value") => {
+export const validateNumberRange = (
+  value,
+  min = 0,
+  max = Infinity,
+  fieldName = "Value"
+) => {
   if (value === null || value === undefined || value === "") {
     return `${fieldName} is required.`;
   }
-  
+
   const num = Number(value);
   if (isNaN(num)) {
     return `${fieldName} must be a valid number.`;
   }
-  
+
   if (num < min || num > max) {
     if (max === Infinity) {
       return `${fieldName} must be at least ${min}.`;
     }
     return `${fieldName} must be between ${min} and ${max}.`;
   }
-  
+
   return "";
 };
 
@@ -179,19 +184,19 @@ export const validateAddress = (address, minLength = 10) => {
   if (!address || address.trim() === "") {
     return "Delivery address is required.";
   }
-  
+
   if (address.trim().length < minLength) {
     return `Address must be at least ${minLength} characters long.`;
   }
-  
+
   // Basic validation for address completeness
   const addressLower = address.toLowerCase();
   const hasNumbers = /\d/.test(address);
-  
+
   if (!hasNumbers) {
     return "Please include street number or building number in your address.";
   }
-  
+
   return "";
 };
 
@@ -204,17 +209,17 @@ export const validateCity = (city) => {
   if (!city || city.trim() === "") {
     return "City is required.";
   }
-  
+
   if (city.trim().length < 2) {
     return "City name must be at least 2 characters long.";
   }
-  
+
   // Allow letters, spaces, hyphens, apostrophes
   const cityRegex = /^[a-zA-Z\s\-']+$/;
   if (!cityRegex.test(city.trim())) {
     return "City name can only contain letters, spaces, hyphens, and apostrophes.";
   }
-  
+
   return "";
 };
 
@@ -227,17 +232,17 @@ export const validateState = (state) => {
   if (!state || state.trim() === "") {
     return "State/Province is required.";
   }
-  
+
   if (state.trim().length < 2) {
     return "State/Province must be at least 2 characters long.";
   }
-  
+
   // Allow letters, spaces, hyphens, apostrophes
   const stateRegex = /^[a-zA-Z\s\-']+$/;
   if (!stateRegex.test(state.trim())) {
     return "State/Province can only contain letters, spaces, hyphens, and apostrophes.";
   }
-  
+
   return "";
 };
 
@@ -250,20 +255,20 @@ export const validatePostalCode = (postalCode) => {
   if (!postalCode || postalCode.trim() === "") {
     return "Postal code is required.";
   }
-  
+
   // Remove spaces and convert to uppercase
   const cleaned = postalCode.replace(/\s/g, "").toUpperCase();
-  
+
   // Basic pattern for various postal code formats
   // US: 12345 or 12345-1234
   // Canada: A1A 1A1 or A1A1A1
   // UK: SW1A 1AA or similar
   // General: alphanumeric, 3-10 characters
   const postalRegex = /^[A-Z0-9\-]{3,10}$/;
-  
+
   if (!postalRegex.test(cleaned)) {
     return "Please enter a valid postal code.";
   }
-  
+
   return "";
 };

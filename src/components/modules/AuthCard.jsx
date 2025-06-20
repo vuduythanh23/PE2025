@@ -27,7 +27,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         if (!value.includes("@")) return "Email should contain @";
         if (!value.toLowerCase().endsWith("@gmail.com"))
           return "Email should end with @gmail.com";
-        return "";      case "password":
+        return "";
+      case "password":
         // For login, only check if password is provided - no other validation
         if (type === "login") {
           return !value ? "Password is required" : "";
@@ -64,11 +65,13 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
         setErrors((prev) => ({ ...prev, confirmPassword: "" }));
       }
     }
-  }, [formData.password, formData.confirmPassword, type]);  const validate = () => {
+  }, [formData.password, formData.confirmPassword, type]);
+  const validate = () => {
     const newErrors = {};
     const fieldIds = Array.isArray(fields)
       ? fields.map((f) => (typeof f === "object" ? f.id : f))
-      : fields;    fieldIds.forEach((field) => {
+      : fields;
+    fieldIds.forEach((field) => {
       const fieldId = typeof field === "object" ? field.id : field;
       // For login passwords, only check if it's provided - no format validation
       if (fieldId === "password" && type === "login") {
@@ -92,18 +95,18 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
 
     // Trim whitespace from email first
     const trimmedEmail = formData.email ? formData.email.trim() : "";
-    
+
     // Update formData with trimmed email
     const updatedFormData = {
       ...formData,
-      email: trimmedEmail
+      email: trimmedEmail,
     };
-    
+
     setFormData(updatedFormData);
 
     // Validate email specifically for login
     const emailErrors = {};
-    
+
     if (!trimmedEmail) {
       emailErrors.email = "Email is required";
     } else if (!trimmedEmail.includes("@")) {
@@ -193,7 +196,8 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                   className="block text-sm font-medium text-luxury-dark/70 mb-2 font-serif"
                 >
                   {fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)}
-                </label>                <input
+                </label>{" "}
+                <input
                   id={fieldId}
                   name={fieldId}
                   type={
@@ -202,14 +206,15 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                       : "text"
                   }
                   value={formData[fieldId] || ""}
-                  onChange={handleChange}                  className={`w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm ${
-                    fieldId === "password" || fieldId === "confirmPassword" 
-                      ? "password-input-no-suggestions" 
+                  onChange={handleChange}
+                  className={`w-full p-3 rounded-lg border border-luxury-gold/30 bg-transparent text-luxury-dark/80 focus:outline-none focus:border-luxury-gold font-serif shadow-sm ${
+                    fieldId === "password" || fieldId === "confirmPassword"
+                      ? "password-input-no-suggestions"
                       : ""
                   }`}
                   placeholder={`Enter your ${fieldLabel.toLowerCase()}`}
                   autoComplete={
-                    fieldId === "password" 
+                    fieldId === "password"
                       ? "current-password"
                       : fieldId === "confirmPassword"
                       ? "new-password"
@@ -226,14 +231,15 @@ export default function AuthCard({ type, onSubmit, loading, fields = [] }) {
                   data-lpignore="true"
                   data-form-type="other"
                   data-ms-editor="false"
-                  translate="no"                  style={{
-                    textDecoration: 'none !important',
-                    textDecorationLine: 'none !important',
-                    outline: 'none !important',
-                    boxShadow: 'none !important',
-                    backgroundImage: 'none !important',
-                    textUnderlineOffset: '0 !important',
-                    textDecorationThickness: '0 !important'
+                  translate="no"
+                  style={{
+                    textDecoration: "none !important",
+                    textDecorationLine: "none !important",
+                    outline: "none !important",
+                    boxShadow: "none !important",
+                    backgroundImage: "none !important",
+                    textUnderlineOffset: "0 !important",
+                    textDecorationThickness: "0 !important",
                   }}
                 />
                 {touched[fieldId] && errors[fieldId] && (
