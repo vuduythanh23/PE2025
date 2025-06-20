@@ -15,6 +15,7 @@ const UserTable = ({ users, onEdit, onDelete, onUnlock }) => {
       user.failedLoginAttempts > 0
     );
   };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white border border-gray-200">
