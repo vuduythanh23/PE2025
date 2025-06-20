@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import "../../styles/hero-drag.css";
 
 export default function HeroSection() {
@@ -8,27 +7,21 @@ export default function HeroSection() {
   const [dragStart, setDragStart] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true); // Removed scrollY and opacity states for scroll effects
-  const containerRef = useRef(null);
-  const dragThreshold = 100; // Minimum drag distance to trigger slide change
-  const heroContent = [
+  const containerRef = useRef(null);  const dragThreshold = 100; // Minimum drag distance to trigger slide change
+    const heroContent = [
     {
-      video:
-        "https://player.vimeo.com/external/412031516.hd.mp4?s=2c0c6c5b9b96b7c8a0b0b0b0b0b0b0b0&profile_id=175&oauth2_token_id=57447761",
+      video: null,
       fallbackImage:
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80",
+        "https://images.unsplash.com/photo-1556906781-9a412961c28c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80",
       title: "Premium Sneaker Collection",
       subtitle: "Redefine your style with meticulously crafted footwear",
-      cta: "Explore Now",
-      ctaLink: "/products",
     },
     {
       video: null,
       fallbackImage:
-        "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80",
+        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80",
       title: "Premium Quality",
       subtitle: "Every detail perfected to deliver an exceptional experience",
-      cta: "View Collection",
-      ctaLink: "/products",
     },
     {
       video: null,
@@ -36,8 +29,6 @@ export default function HeroSection() {
         "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80",
       title: "Limited Edition",
       subtitle: "Own exclusive designs, crafted for the discerning few",
-      cta: "Shop Now",
-      ctaLink: "/products",
     },
   ];
   useEffect(() => {
@@ -211,33 +202,9 @@ export default function HeroSection() {
                   <span className="block text-luxury-gold opacity-0 animate-[slideInUp_1s_ease-out_0.8s_forwards]">
                     {slide.title.split(" ").slice(-2).join(" ")}
                   </span>
-                </h1>
-
-                <p className="text-xl md:text-2xl text-white/90 mb-8 font-light max-w-2xl mx-auto opacity-0 animate-[fadeInUp_1s_ease-out_1.1s_forwards]">
+                </h1>                <p className="text-xl md:text-2xl text-white/90 mb-8 font-light max-w-2xl mx-auto opacity-0 animate-[fadeInUp_1s_ease-out_1.1s_forwards]">
                   {slide.subtitle}
                 </p>
-
-                <div className="opacity-0 animate-[fadeInUp_1s_ease-out_1.4s_forwards]">
-                  <Link
-                    to={slide.ctaLink}
-                    className="inline-flex items-center px-8 py-4 bg-luxury-gold text-black font-serif text-lg tracking-wider hover:bg-white hover:text-luxury-gold transition-all duration-300 transform hover:scale-105 shadow-2xl"
-                  >
-                    {slide.cta}
-                    <svg
-                      className="ml-3 w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </Link>
-                </div>
               </div>
             </div>{" "}
           </div>
