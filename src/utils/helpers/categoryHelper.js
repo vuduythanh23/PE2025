@@ -13,26 +13,17 @@ export function getSubcategoryIds(categories, mainCategoryId) {
   if (!categories || !Array.isArray(categories) || !mainCategoryId) {
     return [mainCategoryId].filter(Boolean);
   }
-
   // Find the main category
   const mainCategory = categories.find(
     (cat) => cat._id.toString() === mainCategoryId.toString()
   );
 
   if (!mainCategory) {
-    console.log(`🚨 Main category ${mainCategoryId} not found`);
     return [mainCategoryId];
   }
 
-  console.log(
-    `🏷️ Processing category: ${mainCategory.name} (type: ${mainCategory.type}, parent: ${mainCategory.parent})`
-  );
-
   // If it's already a subcategory (has parent), return just its ID
   if (mainCategory.parent || mainCategory.type === "sub") {
-    console.log(
-      `📋 Subcategory detected, returning single ID: ${mainCategoryId}`
-    );
     return [mainCategoryId];
   }
 
@@ -40,15 +31,9 @@ export function getSubcategoryIds(categories, mainCategoryId) {
   const subcategoryIds = categories
     .filter((cat) => {
       // Check if this category has the main category as parent
-      const parentId = cat.parent?._id || cat.parent;
-      return parentId && parentId.toString() === mainCategoryId.toString();
+      const parentId = cat.parent?._id || cat.parent;      return parentId && parentId.toString() === mainCategoryId.toString();
     })
     .map((cat) => cat._id.toString());
-
-  console.log(
-    `📂 Main category ${mainCategory.name} has ${subcategoryIds.length} subcategories:`,
-    subcategoryIds
-  );
 
   // Return main category ID + all subcategory IDs
   return [mainCategoryId, ...subcategoryIds];
@@ -71,32 +56,21 @@ export function doesProductMatchCategory(
   }
 
   const productCategoryId =
-    typeof product.category === "object"
-      ? product.category._id
+    typeof product.category === "object"      ? product.category._id
       : product.category;
 
   if (!productCategoryId) {
-    console.log(`❌ Product ${product.name || "unnamed"} has no category`);
     return false;
   }
 
   // Get all relevant category IDs (main + subcategories)
   const relevantCategoryIds = getSubcategoryIds(categories, selectedCategoryId);
 
-  console.log(
-    `🔍 Checking product ${
-      product.name || "unnamed"
-    } (category: ${productCategoryId}) against categories: [${relevantCategoryIds.join(
-      ", "
-    )}]`
-  );
-
   // Check if product's category matches any of the relevant categories
   const matches = relevantCategoryIds.some(
     (catId) => catId.toString() === productCategoryId.toString()
   );
 
-  console.log(`✅ Product match result: ${matches}`);
   return matches;
 }
 

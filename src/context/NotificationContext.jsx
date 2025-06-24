@@ -106,15 +106,14 @@ export function NotificationProvider({ children }) {
           error.message?.includes("404") ||
           error.message?.includes("Not Found")
         ) {
-          // API endpoint doesn't exist, stop polling
-          console.warn("Orders API endpoint not available, stopping polling");
+          // API endpoint doesn't exist, stop polling          console.warn("Orders API endpoint not available, stopping polling");
           setIsPolling(false);
           return;
         }
 
         // Don't spam error notifications, just log for development
         if (process.env.NODE_ENV === "development") {
-          console.log("Order update check failed:", error.message);
+          // Order update check failed
         }
       }
     }; // Check for updates every 60 seconds (reduced frequency), but only when page is visible

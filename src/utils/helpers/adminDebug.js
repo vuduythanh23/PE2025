@@ -12,7 +12,6 @@ import { getUser, setAdmin } from "../storage/auth";
  */
 export const enableAdminMode = () => {
   if (import.meta.env.DEV) {
-    console.log("🔑 Enabling admin mode for debugging");
     sessionStorage.setItem("isAdmin", "true");
 
     // Update URL with the admin query parameter if not already present
@@ -41,12 +40,7 @@ export const checkAdminHeaders = async () => {
     (user.isAdmin === true ||
       user.role === "admin" ||
       user.userType === "admin");
-
   // Log current status
-  console.log("🔍 Admin Debug Information:");
-  console.log("- Admin in storage:", isAdminInStorage);
-  console.log("- Admin role in user object:", hasAdminRole);
-  console.log("- User object:", user);
 
   // Create headers that would be sent
   const headers = {};
@@ -55,8 +49,6 @@ export const checkAdminHeaders = async () => {
     headers["x-admin-role"] = "true";
     headers["x-admin-access"] = "true";
   }
-
-  console.log("- Headers that would be sent:", headers);
 
   return {
     isAdmin: isAdminInStorage || hasAdminRole,
@@ -70,19 +62,15 @@ export const checkAdminHeaders = async () => {
  */
 export const debugAdminStatus = (forceEnable = false) => {
   if (!import.meta.env.DEV) return;
-
   checkAdminHeaders();
 
   if (forceEnable) {
     setAdmin();
-    console.log("🔑 Admin status forcefully enabled");
   }
 };
 
 // Run debug automatically in development
 if (import.meta.env.DEV) {
-  console.log("🛠️ Admin debugging utilities loaded");
-
   // Auto-enable admin if URL contains admin=true or env var is set
   if (
     window.location.search.includes("admin=true") ||

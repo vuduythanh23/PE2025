@@ -9,7 +9,7 @@
  */
 
 const PRODUCTS_STATE_KEY = "productsPageState";
-const DEBUG = import.meta.env.DEV; // Only log in development
+const DEBUG = false; // Disabled logging
 
 export const saveProductsState = (state) => {
   try {

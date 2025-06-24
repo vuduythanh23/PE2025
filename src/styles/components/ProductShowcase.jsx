@@ -1,7 +1,6 @@
 import ProductCard from "../../components/modules/ProductCard";
 
 export default function ProductShowcase({ products }) {
-  console.log("Products received in showcase:", products);
   
   if (!Array.isArray(products) || products.length === 0) {
     console.warn("No products to display in showcase");

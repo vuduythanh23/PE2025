@@ -34,7 +34,7 @@ export async function getProducts(filters = {}, forceLoadAll = false) {
     await rateLimiter.checkLimit("getProducts");
     const qp = new URLSearchParams(filters);
     const url = `${ENDPOINTS.PRODUCTS}?${qp}`;
-    console.log("Request URL:", url);
+    
 
     const res = await fetchWithTimeout(url, {
       headers: BASE_HEADERS,
@@ -46,7 +46,7 @@ export async function getProducts(filters = {}, forceLoadAll = false) {
       throw new Error(`Failed to fetch products: ${error}`);
     }
     const data = await res.json();
-    console.log("Received products data:", data);
+    
 
     if (!Array.isArray(data)) {
       console.error("Invalid data format:", data);
@@ -57,14 +57,14 @@ export async function getProducts(filters = {}, forceLoadAll = false) {
     // This can happen in some API responses
     let processedData = data;
     if (data.length > 0 && Array.isArray(data[0])) {
-      console.log("Detected nested array structure, flattening response");
+      
       processedData = data.flat();
     }
 
     // Filter out null or undefined items
     processedData = processedData.filter((item) => item != null);
 
-    console.log("After filtering nulls, products count:", processedData.length);
+    
 
     // Additional detailed logging of the first product if available
     if (processedData.length > 0 && processedData[0]) {
@@ -81,7 +81,7 @@ export async function getProducts(filters = {}, forceLoadAll = false) {
             : "no image",
       });
     } else {
-      console.log("No products returned in array or first product is null");
+      
     }
 
     return processedData;
@@ -107,7 +107,7 @@ export async function getProducts(filters = {}, forceLoadAll = false) {
  */
 export async function getProductsWithFilters(params = {}) {
   try {
-    console.log("Fetching products with server-side filters:", params);
+    
     await rateLimiter.checkLimit("getProductsWithFilters");
 
     let fetchUrl = ENDPOINTS.PRODUCTS;
@@ -131,18 +131,18 @@ export async function getProductsWithFilters(params = {}) {
         fetchUrl = `${ENDPOINTS.PRODUCTS}/category/${encodeURIComponent(
           params.category
         )}`;
-        console.log("Using category endpoint:", fetchUrl);
+        
       }
     } else if (params.brand && params.brand !== "") {
       // Use brand-specific endpoint
       fetchUrl = `${ENDPOINTS.PRODUCTS}/brand/${encodeURIComponent(
         params.brand
       )}`;
-      console.log("Using brand endpoint:", fetchUrl);
+      
     } else {
       // Use general products endpoint
       fetchUrl = ENDPOINTS.PRODUCTS;
-      console.log("Using general products endpoint:", fetchUrl);
+      
     }
 
     const res = await fetchWithTimeout(fetchUrl, {
@@ -155,7 +155,7 @@ export async function getProductsWithFilters(params = {}) {
       throw new Error(`Failed to fetch products: ${error}`);
     }
     const data = await res.json();
-    console.log("Received filtered products data:", data);
+    
 
     // Handle both array response, nested array, and object response
     if (Array.isArray(data)) {
@@ -164,7 +164,7 @@ export async function getProductsWithFilters(params = {}) {
       // Check if we have a nested array structure (e.g. [[{product}], [{product}]])
       // This can happen in some API responses
       if (products.length > 0 && Array.isArray(products[0])) {
-        console.log("Detected nested array structure, flattening response");
+        
         products = products.flat().filter((item) => item != null);
       }
     } else if (data && Array.isArray(data.products)) {
@@ -174,11 +174,11 @@ export async function getProductsWithFilters(params = {}) {
       throw new Error("Invalid response format: expected array of products");
     }
 
-    console.log(`📦 Processed ${products.length} products from API response`); // Client-side filtering for cases where server endpoint doesn't handle all filters
+     // Client-side filtering for cases where server endpoint doesn't handle all filters
     let filteredProducts = [...products];
 
-    console.log(`🔍 Starting filtering process:`);
-    console.log(`  - Initial products: ${filteredProducts.length}`);
+    
+    
     console.log(`  - Filters:`, {
       category: params.category,
       brand: params.brand,
@@ -196,7 +196,7 @@ export async function getProductsWithFilters(params = {}) {
         const matches =
           productBrand && productBrand.toString() === params.brand.toString();
         if (!matches && productBrand) {
-          console.log(`  Brand mismatch: ${productBrand} !== ${params.brand}`);
+          
         }
         return matches;
       });
@@ -291,12 +291,12 @@ export async function getProductsWithFilters(params = {}) {
     const endIndex = startIndex + limit;
     const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-    console.log(`🔍 Filter Summary:`);
-    console.log(`  - Original products: ${products.length}`);
-    console.log(`  - After filtering: ${totalProducts}`);
-    console.log(`  - Page ${page}/${totalPages} (${limit} per page)`);
-    console.log(`  - Showing: ${paginatedProducts.length} products`);
-    console.log(`  - Index range: ${startIndex}-${endIndex}`);
+    
+    
+    
+    
+    
+    
 
     return {
       products: paginatedProducts,
@@ -483,7 +483,7 @@ export async function getComingSoon() {
  */
 export async function createProduct(data) {
   try {
-    console.log("Creating product with data:", JSON.stringify(data, null, 2));
+    
     const res = await fetch(`${ENDPOINTS.PRODUCTS}`, {
       method: "POST",
       headers: getAuthHeaders(),
@@ -512,8 +512,8 @@ export async function createProduct(data) {
  */
 export async function updateProduct(id, updates) {
   try {
-    console.log(`[API] Updating product with ID: ${id}`);
-    console.log(`[API] Update payload:`, JSON.stringify(updates, null, 2));
+    
+    
 
     // Ensure ID is valid
     if (!id) {
@@ -522,11 +522,11 @@ export async function updateProduct(id, updates) {
 
     // Endpoint construction
     const endpoint = `${ENDPOINTS.PRODUCTS}/${id}`;
-    console.log(`[API] Sending request to: ${endpoint}`);
+    
 
     // Get authorization headers
     const headers = getAuthHeaders();
-    console.log("[API] Request headers:", headers);
+    
 
     // Send request
     const res = await fetch(endpoint, {
@@ -536,7 +536,7 @@ export async function updateProduct(id, updates) {
     });
 
     // Log response status
-    console.log(`[API] Response status: ${res.status} ${res.statusText}`);
+    
 
     // Handle error responses
     if (!res.ok) {
@@ -562,7 +562,7 @@ export async function updateProduct(id, updates) {
 
     // Parse successful response
     const data = await res.json();
-    console.log("[API] Product updated successfully:", data);
+    
     return data;
   } catch (error) {
     console.error("[API] Error in updateProduct:", error);
@@ -598,7 +598,7 @@ export async function deleteProduct(id) {
  */
 export async function getFilterOptions() {
   try {
-    console.log("Fetching filter options with product counts");
+    
     await rateLimiter.checkLimit("getFilterOptions");
 
     const res = await fetchWithTimeout(`${ENDPOINTS.PRODUCTS}/filter-options`, {
@@ -612,7 +612,7 @@ export async function getFilterOptions() {
     }
 
     const data = await res.json();
-    console.log("Received filter options:", data);
+    
 
     return {
       categories: Array.isArray(data.categories) ? data.categories : [],
@@ -633,10 +633,10 @@ export async function getFilterOptions() {
  */
 export async function getAllProducts() {
   try {
-    console.log("Fetching ALL products (admin function)");
+    
     await rateLimiter.checkLimit("getProducts"); // Sử dụng cùng key với getProducts
     const url = `${ENDPOINTS.PRODUCTS}`;
-    console.log("Request URL:", url);
+    
 
     const res = await fetchWithTimeout(url, {
       headers: BASE_HEADERS,
@@ -648,7 +648,7 @@ export async function getAllProducts() {
       throw new Error(`Failed to fetch products: ${error}`);
     }
     const data = await res.json();
-    console.log("Received ALL products data:", data);
+    
 
     if (!Array.isArray(data)) {
       console.error("Invalid data format:", data);
@@ -658,7 +658,7 @@ export async function getAllProducts() {
     // Check if we have a nested array structure
     let processedData = data;
     if (data.length > 0 && Array.isArray(data[0])) {
-      console.log("Detected nested array structure, flattening response");
+      
       processedData = data.flat();
     }
 

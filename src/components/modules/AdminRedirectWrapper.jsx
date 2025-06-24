@@ -25,16 +25,11 @@ export default function AdminRedirectWrapper({ children }) {
         const isFromAdmin = previousLocation.current?.startsWith("/admin");
         const isDirectAccess =
           !previousLocation.current ||
-          previousLocation.current === location.pathname;
-
-        // Only redirect on direct access or non-admin navigation
+          previousLocation.current === location.pathname;        // Only redirect on direct access or non-admin navigation
         if (
           !isFromAdmin &&
           (isDirectAccess || !previousLocation.current?.startsWith("/admin"))
         ) {
-          console.log(
-            "Admin user detected on regular page via direct access, redirecting to admin dashboard"
-          );
           navigate("/admin", { replace: true });
           return;
         }

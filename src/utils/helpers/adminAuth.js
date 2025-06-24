@@ -14,16 +14,13 @@ import { setAdmin, isAdmin } from "../storage/auth";
  */
 export const refreshAdminStatus = async () => {
   try {
-    console.log("Refreshing admin authentication status...");
     // First check if we already have admin status
     if (isAdmin()) {
-      console.log("User already has admin status");
       return true;
     }
 
     // Otherwise, fetch the current user to verify admin status
     const userData = await getCurrentUser();
-    console.log("Admin refresh - user data:", userData);
 
     // Check if the user has admin privileges
     const hasAdminPrivileges =
@@ -33,7 +30,6 @@ export const refreshAdminStatus = async () => {
         userData.userType === "admin");
 
     if (hasAdminPrivileges) {
-      console.log("Setting admin status to true based on user data");
       setAdmin();
       return true;
     }
@@ -55,11 +51,7 @@ export const checkAndRefreshAdminStatus = async (force = false) => {
   if (
     import.meta.env.DEV &&
     (window.location.search.includes("admin=true") ||
-      import.meta.env.VITE_ALWAYS_ADMIN === "true")
-  ) {
-    console.log(
-      "Development mode with admin flag detected - setting admin status"
-    );
+      import.meta.env.VITE_ALWAYS_ADMIN === "true")  ) {
     setAdmin();
     return true;
   }
@@ -69,7 +61,6 @@ export const checkAndRefreshAdminStatus = async (force = false) => {
 
   // If we're already an admin and not forcing a refresh, just return true
   if (currentAdminStatus && !force) {
-    console.log("User already has admin status, no refresh needed");
     return true;
   }
 

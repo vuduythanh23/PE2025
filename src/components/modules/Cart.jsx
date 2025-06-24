@@ -99,29 +99,18 @@ export default function Cart({ isOpen, onClose }) {
       // Validate inputs
       if (!productId) {
         throw new Error("Product ID is required");
-      }
-
-      if (!newQuantity || newQuantity < 1) {
+      }      if (!newQuantity || newQuantity < 1) {
         throw new Error("Quantity must be at least 1");
       }
-
-      console.log("Attempting to update quantity:", {
-        productId,
-        size,
-        color,
-        newQuantity,
-      });
 
       await updateItemQuantity({
         productId: productId,
         quantity: parseInt(newQuantity), // Ensure it's a number
         selectedSize: size,
-        selectedColor: color,
-      });
+        selectedColor: color,      });
 
       updateCartItems();
 
-      console.log("Quantity updated successfully");
     } catch (error) {
       console.error("Error updating quantity:", error);
 

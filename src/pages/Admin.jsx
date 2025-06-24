@@ -36,19 +36,13 @@ export default function Admin() {
           return;
         }
       } 
-      
-      // Use our new utility to check and refresh admin status
+        // Use our new utility to check and refresh admin status
       const adminStatus = await checkAndRefreshAdminStatus();
-      console.log(
-        "Admin status check in Admin page after refresh:",
-        adminStatus
-      );
       setAdminAccessConfirmed(adminStatus);
       setAccessCheckCompleted(true);
       
       // Redirect to login if not admin (except in dev mode)
       if (!adminStatus && !import.meta.env.DEV) {
-        console.log("Access denied: Redirecting to login...");
         navigate("/login?redirect=/admin");
       }
     };

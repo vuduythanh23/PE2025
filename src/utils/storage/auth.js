@@ -38,11 +38,9 @@ export const removeUser = () => {
 export const isAdmin = () => {
   // First check session storage
   const adminStatus = sessionStorage.getItem(ADMIN_KEY) === "true";
-  console.log("Admin status from sessionStorage:", adminStatus);
 
   // Then check user object
   const user = getUser();
-  console.log("User object:", user);
 
   // Check if user has admin privileges in the user object
   const hasAdminRole =
@@ -50,47 +48,32 @@ export const isAdmin = () => {
     (user.isAdmin === true ||
       user.role === "admin" ||
       user.userType === "admin");
-  console.log("Admin role from user object:", hasAdminRole);
 
   // Make sure both storage and user object agree
   const isActuallyAdmin = adminStatus || hasAdminRole;
 
   // If there's a mismatch, fix it
   if (hasAdminRole && !adminStatus) {
-    console.log("Fixing admin status in session storage (setting to true)");
     sessionStorage.setItem(ADMIN_KEY, "true");
   }
 
   // Force set admin status if running in development and admin flag is present
   if (import.meta.env.DEV && window.location.search.includes("admin=true")) {
-    console.log(
-      "Development mode with admin flag detected - forcing admin status"
-    );
     sessionStorage.setItem(ADMIN_KEY, "true");
     return true;
   }
 
   // Force set admin status if specified in environment variable (for testing)
   if (import.meta.env.VITE_ALWAYS_ADMIN === "true") {
-    console.log("VITE_ALWAYS_ADMIN is true - forcing admin status");
     sessionStorage.setItem(ADMIN_KEY, "true");
     return true;
   }
 
-  console.log(
-    "Admin status check:",
-    isActuallyAdmin,
-    "storage:",
-    adminStatus,
-    "user object:",
-    hasAdminRole
-  );
   return isActuallyAdmin;
 };
 
 export const setAdmin = () => {
   sessionStorage.setItem(ADMIN_KEY, "true");
-  console.log("Admin status set to true");
 };
 
 export const removeAdmin = () => {

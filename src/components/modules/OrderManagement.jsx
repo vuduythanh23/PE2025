@@ -157,7 +157,8 @@ export default function OrderManagement() {
         title: "Error",
         text: error.message || "Failed to update order status",
         icon: "error",
-      });    }
+      });
+    }
   };
 
   const getStatusColor = (status) => {
@@ -405,7 +406,8 @@ export default function OrderManagement() {
                             className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded text-xs"
                           >
                             Cancel
-                          </button>                        )}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -495,7 +497,8 @@ export default function OrderManagement() {
                   {" "}
                   <h4 className="font-medium text-gray-900 mb-3">
                     Customer Information
-                  </h4>                  <div className="space-y-2 text-sm">
+                  </h4>{" "}
+                  <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Username:</span>
                       <span>{selectedOrder.user?.username || "N/A"}</span>

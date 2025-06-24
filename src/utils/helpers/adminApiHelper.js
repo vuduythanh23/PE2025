@@ -18,7 +18,6 @@ export const getAdminHeaders = () => {
   
 export const adminUpdateUserApi = async (userId, userData) => {
   const headers = getAdminHeaders();  
-  console.log(`Updating user ${userId} as admin`);  
   
   // Try both endpoints  
   try {  
@@ -27,7 +26,7 @@ export const adminUpdateUserApi = async (userId, userData) => {
       method: "PATCH",  
       headers: headers,  
       body: JSON.stringify(userData)  
-    });  
+    });
   
     if (adminResponse.ok) {  
       return await adminResponse.json();  

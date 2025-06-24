@@ -427,7 +427,8 @@ const ProductForm = ({ product, onClose, onSuccess }) => {
     return isValid;
   };
 
-  // Handle form submission  const handleSubmit = async (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
       return;

@@ -126,30 +126,23 @@ export function getAuthHeaders() {
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       console.warn("Token expired, clearing session");
       sessionStorage.removeItem("token");
-      return BASE_HEADERS;
-    } // Add admin flag to headers if applicable
+      return BASE_HEADERS;    } // Add admin flag to headers if applicable
     const isAdmin = sessionStorage.getItem("isAdmin") === "true";
-    console.log("Admin status from session storage:", isAdmin);
 
     const user = sessionStorage.getItem("user");
     let hasAdminRole = false;
-    let userData = null;
-
-    // Double check from user object
+    let userData = null;    // Double check from user object
     if (user) {
       try {
         userData = JSON.parse(user);
-        console.log("User data for admin check:", userData);
 
         hasAdminRole =
           userData.isAdmin === true ||
           userData.role === "admin" ||
           userData.userType === "admin";
-        console.log("Admin role from user data:", hasAdminRole);
 
         // Update sessionStorage if needed
         if (hasAdminRole && !isAdmin) {
-          console.log("Fixing admin status in session storage");
           sessionStorage.setItem("isAdmin", "true");
         }
       } catch (e) {
@@ -165,13 +158,10 @@ export function getAuthHeaders() {
       isAdmin ||
       hasAdminRole ||
       (import.meta.env.DEV && window.location.search.includes("admin=true")) ||
-      import.meta.env.VITE_ALWAYS_ADMIN === "true";
-
-    if (shouldAddAdminHeader) {
+      import.meta.env.VITE_ALWAYS_ADMIN === "true";    if (shouldAddAdminHeader) {
       headers["x-admin-auth"] = "true";
       headers["x-admin-role"] = "true"; // Add additional header for compatibility
       headers["x-admin-access"] = "true"; // Another potential header for compatibility
-      console.log("Adding admin headers to request:", headers);
     }
 
     return headers;

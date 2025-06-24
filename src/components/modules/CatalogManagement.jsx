@@ -379,11 +379,7 @@ const CatalogManagement = () => {
       ]); // Validate and normalize categories data
       const categoriesArray = Array.isArray(categoriesData)
         ? categoriesData
-        : [];
-
-      console.log("=== DEBUGGING CATEGORY DATA ===");
-      console.log("Raw categories data:", categoriesArray);
-      console.log("Sample category structure:", categoriesArray[0]);
+        : [];      // Debug section - removed console.log statements
 
       // Fix category hierarchy based on actual API data
       const fixedCategories = fixCategoryHierarchy(categoriesArray);
@@ -401,7 +397,7 @@ const CatalogManagement = () => {
         });
       });
 
-      console.log("Debug - Products data:", productsData);
+      // Products data - debug removed
 
       // Process products to count by category
       const directProductsByCategory = {};
@@ -477,7 +473,7 @@ const CatalogManagement = () => {
         };
       });
 
-      console.log("=== FINAL PROCESSED CATEGORIES ===");
+      // Final processed categories - debug removed
       categoriesWithCounts.forEach((cat) => {
         console.log(`${cat.name}:`, {
           id: cat._id,
@@ -711,7 +707,7 @@ const CatalogManagement = () => {
 
   // Helper function to fix category hierarchy based on actual API data structure
   const fixCategoryHierarchy = (categories) => {
-    console.log("=== FIXING CATEGORY HIERARCHY ===");
+    // Fixing category hierarchy - debug removed
 
     // Create a map for quick lookup
     const categoryMap = new Map();
@@ -719,7 +715,7 @@ const CatalogManagement = () => {
       categoryMap.set(cat._id || cat.id, cat);
     });
 
-    console.log("Category map:", Array.from(categoryMap.entries()));
+    // Category map - debug removed
 
     // Process each category to ensure parent relationship is correct
     const fixedCategories = categories.map((category) => {

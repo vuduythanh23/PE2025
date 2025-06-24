@@ -29,7 +29,7 @@ export async function getAllUsers() {
   headers["x-admin-auth"] = "true";
   headers["x-admin-access"] = "true";
 
-  console.log("Fetching all users with headers:", headers);
+  
 
   const res = await fetch(`${ENDPOINTS.USERS}`, {
     headers: headers,
@@ -128,7 +128,7 @@ export const adminUpdateUser = async (userId, userData) => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const isUserAdmin = user?.isAdmin === true || user?.role === "admin";
 
-    console.log("Current user admin status:", isUserAdmin, "User data:", user);
+    
 
     // Force set admin status if needed
     if (isUserAdmin) {
@@ -143,12 +143,12 @@ export const adminUpdateUser = async (userId, userData) => {
       "x-admin-access": "true", // Additional header for compatibility
     };
 
-    console.log("Admin update headers:", headers);
-    console.log("Updating user with data:", userData);
+    
+    
 
     // Sử dụng endpoint admin đặc biệt để tránh trùng lặp với route updateUser thông thường
     const adminEndpoint = `${ENDPOINTS.USERS}/admin/${userId}`;
-    console.log("Using admin endpoint:", adminEndpoint);
+    
 
     // Sử dụng endpoint admin với route phù hợp
     const response = await fetch(adminEndpoint, {
@@ -157,7 +157,7 @@ export const adminUpdateUser = async (userId, userData) => {
       body: JSON.stringify(userData),
     });
 
-    console.log("Admin update response status:", response.status);
+    
 
     if (!response.ok) {
       let errorMessage = "Failed to update user";
@@ -198,14 +198,14 @@ export const unlockUserAccount = async (userId) => {
       "x-admin-role": "true",
     };
 
-    console.log("Admin unlock headers:", headers);
+    
 
     const response = await fetch(`${ENDPOINTS.USERS}/${userId}/unlock`, {
       method: "POST",
       headers: headers,
     });
 
-    console.log("Unlock response status:", response.status);
+    
 
     if (!response.ok) {
       let errorMessage = "Failed to unlock user account";
@@ -245,7 +245,7 @@ export async function deleteUser(id) {
     "x-admin-role": "true",
   };
 
-  console.log("Admin delete headers:", headers);
+  
 
   const res = await fetchWithTimeout(
     `${ENDPOINTS.USERS}/${encodeURIComponent(id)}`,
@@ -255,7 +255,7 @@ export async function deleteUser(id) {
     }
   );
 
-  console.log("Delete response status:", res.status);
+  
 
   if (!res.ok) {
     let errorMessage = "Failed to delete user";

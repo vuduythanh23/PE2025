@@ -191,12 +191,9 @@ export default function Products() {
 
         if (
           activeProductFilters.priceRange.max !== null &&
-          activeProductFilters.priceRange.max !== Infinity
-        ) {
+          activeProductFilters.priceRange.max !== Infinity        ) {
           apiParams.maxPrice = activeProductFilters.priceRange.max;
         }
-
-        console.log("🚀 Fetching products with params:", apiParams);
 
         if (DEBUG_FILTERS) {
           FilterDebugger.logApiCall(apiParams, "getProductsWithFilters");
@@ -214,12 +211,7 @@ export default function Products() {
             );
             const allProducts = await getProducts({
               limit: 50,
-              sortBy: "newest",
-            }); // Giới hạn 50 sản phẩm thay vì toàn bộ
-            console.log(
-              "📦 Fallback: Received limited products from getProducts:",
-              allProducts.length
-            );
+              sortBy: "newest",            }); // Giới hạn 50 sản phẩm thay vì toàn bộ
 
             // Apply client-side filtering
             let filteredProducts = Array.isArray(allProducts)
@@ -289,15 +281,10 @@ export default function Products() {
             const page = Math.max(1, apiParams.page || 1);
             const limit = Math.max(1, apiParams.limit || 9);
             const totalPages = Math.ceil(totalProducts / limit);
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
+            const startIndex = (page - 1) * limit;            const endIndex = startIndex + limit;
             const paginatedProducts = filteredProducts.slice(
               startIndex,
               endIndex
-            );
-
-            console.log(
-              `📊 Fallback results: ${paginatedProducts.length}/${totalProducts} products, page ${page}/${totalPages}`
             );
 
             return {
@@ -310,8 +297,6 @@ export default function Products() {
             };
           }
         }, "Failed to load products");
-
-        console.log("Received products result:", result);
 
         if (DEBUG_FILTERS) {
           FilterDebugger.logApiResponse(result);

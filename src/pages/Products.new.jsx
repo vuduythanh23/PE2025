@@ -89,19 +89,14 @@ export default function Products() {
 
         if (
           activeProductFilters.priceRange.max !== null &&
-          activeProductFilters.priceRange.max !== Infinity
-        ) {
+          activeProductFilters.priceRange.max !== Infinity        ) {
           apiParams.maxPrice = activeProductFilters.priceRange.max;
         }
-
-        console.log("Fetching products with params:", apiParams);
 
         const result = await handleAsyncOperation(
           async () => getProductsWithFilters(apiParams),
           "Failed to load products"
         );
-
-        console.log("Received products result:", result);
 
         // Format products for display
         const formattedProducts = result.products.map((product) => {

@@ -14,8 +14,6 @@ import { getAuthHeaders } from "../api/base";
  */
 export async function uploadFiles(files, type = "product") {
   try {
-    console.log(`Starting upload of ${files.length} files with type: ${type}`);
-
     if (!files || files.length === 0) {
       console.warn("No files provided to uploadFiles function");
       return [];
@@ -26,17 +24,6 @@ export async function uploadFiles(files, type = "product") {
     // Convert FileList to array if needed
     const filesArray = Array.from(files);
 
-    console.log(`Preparing ${filesArray.length} files for upload`);
-
-    // Add file info for debugging
-    filesArray.forEach((file, index) => {
-      console.log(`File ${index + 1}:`, {
-        name: file.name,
-        type: file.type,
-        size: `${(file.size / 1024).toFixed(2)}KB`,
-      });
-    });
-
     // Append each file to FormData
     filesArray.forEach((file) => {
       formData.append("files", file);
@@ -45,12 +32,8 @@ export async function uploadFiles(files, type = "product") {
     // Add file type
     formData.append("type", type);
 
-    // Log the endpoint we're uploading to
-    console.log(`Uploading to endpoint: ${ENDPOINTS.UPLOAD}`);
-
     // Get auth headers for the request
     const headers = getAuthHeaders(true);
-    console.log("Upload request headers:", headers);
 
     // Upload the files
     const response = await fetch(`${ENDPOINTS.UPLOAD}`, {
@@ -58,10 +41,6 @@ export async function uploadFiles(files, type = "product") {
       headers,
       body: formData,
     });
-
-    console.log(
-      `Upload response status: ${response.status} ${response.statusText}`
-    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -76,10 +55,6 @@ export async function uploadFiles(files, type = "product") {
       throw new Error("Upload succeeded but received invalid response format");
     }
 
-    console.log(
-      `Upload successful! Received ${result.urls.length} URLs:`,
-      result.urls
-    );
     return result.urls;
   } catch (error) {
     console.error("File upload error:", error);

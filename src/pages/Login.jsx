@@ -32,20 +32,14 @@ export default function Login() {
         throw new Error("Invalid response from server");
       } // Check if the logged-in user is an admin based on the response
       const isAdmin =
-        response.user.role === "admin" || response.user.isAdmin === true;
-
-      // Store user role consistently
+        response.user.role === "admin" || response.user.isAdmin === true;      // Store user role consistently
       sessionStorage.setItem("userRole", isAdmin ? "admin" : "user");
       sessionStorage.setItem("user", JSON.stringify(response.user));
       if (isAdmin) {
         sessionStorage.setItem("isAdmin", "true");
       }
 
-      console.log("Login redirect logic:", {
-        userRole: response.user.role,
-        isAdmin: isAdmin,
-        redirectPath: isAdmin ? "/admin" : "/products",
-      }); // Check if there's a redirect parameter in the URL
+      // Check if there's a redirect parameter in the URL
       const params = new URLSearchParams(window.location.search);
       let redirectPath = params.get("redirect");
 

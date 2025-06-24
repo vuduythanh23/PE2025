@@ -81,16 +81,10 @@ export async function updateItemQuantity(updateData) {
 
     // Ensure the payload matches what backend expects
     const payload = {
-      productId: updateData.productId,
-      newQuantity: updateData.quantity, // Backend expects 'newQuantity' field
+      productId: updateData.productId,      newQuantity: updateData.quantity, // Backend expects 'newQuantity' field
       selectedSize: updateData.selectedSize,
       selectedColor: updateData.selectedColor,
     };
-
-    console.log(
-      "Updating cart item quantity with payload (fallback):",
-      payload
-    );
 
     const res = await fetchWithTimeout(`${ENDPOINTS.CARTS}/items`, {
       method: "PUT",

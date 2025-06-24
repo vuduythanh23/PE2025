@@ -10,11 +10,9 @@ const LOCK_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
  * @returns {Promise<Object>} User data with auth token
  * @throws {Error} If authentication fails
  */
-export async function loginUser(email, password) {
-  try {
+export async function loginUser(email, password) {  try {
     await rateLimiter.checkLimit("login");
 
-    console.log("Attempting login with:", { email });
     const res = await fetch(`${ENDPOINTS.USERS}/login`, {
       method: "POST",
       headers: {
@@ -22,12 +20,9 @@ export async function loginUser(email, password) {
         Accept: "application/json",
       },
       body: JSON.stringify({ email, password }),
-    });
-
-    let data;
+    });    let data;
     try {
       const responseText = await res.text();
-      console.log("Response status:", res.status);
       data = JSON.parse(responseText);
     } catch (e) {
       console.error("Failed to parse response:", e);
@@ -57,18 +52,9 @@ export async function loginUser(email, password) {
           );
         }
         throw new Error("Invalid email or password");
-      }
-      console.error("Login error response:", data);
+      }      console.error("Login error response:", data);
       throw new Error(data?.message || "Authentication failed");
     }
-    console.log("Login successful, data:", data);
-    console.log("User data:", data.user);
-    console.log(
-      "Admin check - role:",
-      data.user.role,
-      "isAdmin:",
-      data.user.isAdmin
-    );
 
     if (data.token) {
       // Clear any existing session data first
@@ -76,21 +62,14 @@ export async function loginUser(email, password) {
 
       // Store new session data
       sessionStorage.setItem("token", data.token);
-      sessionStorage.setItem("user", JSON.stringify(data.user));
-
-      // Check for admin status in multiple fields to be safe
+      sessionStorage.setItem("user", JSON.stringify(data.user));      // Check for admin status in multiple fields to be safe
       if (data.user.role === "admin" || data.user.isAdmin === true) {
-        console.log("Setting admin status to true for user:", data.user.email);
         sessionStorage.setItem("isAdmin", "true");
       } else {
-        console.log("User is not an admin");
+        // User is not an admin
       }
 
       // Double-check that it was set correctly
-      console.log(
-        "Admin status after login:",
-        sessionStorage.getItem("isAdmin")
-      );
     } else {
       throw new Error("No authentication token received");
     }

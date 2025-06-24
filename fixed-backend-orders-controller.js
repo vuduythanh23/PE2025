@@ -51,8 +51,7 @@ const updateOrderStatusController = async (req, res) => {
 
     // Prepare update data
     const updateData = {
-      orderStatus: newOrderStatus,
-    };
+      orderStatus: newOrderStatus,    };
 
     // 🎯 AUTO-UPDATE PAYMENT STATUS TO "PAID" WHEN ORDER IS CONFIRMED
     if (
@@ -61,9 +60,6 @@ const updateOrderStatusController = async (req, res) => {
       )
     ) {
       updateData.paymentStatus = "paid";
-      console.log(
-        `💳 Backend: Auto-updating payment status to 'paid' for order ${orderId} (status: ${newOrderStatus})`
-      );
     }
 
     // Update the order
