@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   getAllOrders,
   updateOrderStatus,
-  deleteOrder,
   formatCurrency,
   formatDate,
 } from "../../utils";
@@ -158,35 +157,7 @@ export default function OrderManagement() {
         title: "Error",
         text: error.message || "Failed to update order status",
         icon: "error",
-      });
-    }
-  };
-
-  const handleDeleteOrder = async (orderId) => {
-    try {
-      const result = await Swal.fire({
-        title: "Are you sure?",
-        text: "You won't be able to revert this!",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Yes, delete it!",
-      });
-
-      if (result.isConfirmed) {
-        await deleteOrder(orderId);
-        setOrders(orders.filter((order) => order._id !== orderId));
-
-        Swal.fire("Deleted!", "Order has been deleted.", "success");
-      }
-    } catch (error) {
-      Swal.fire({
-        title: "Error",
-        text: error.message || "Failed to delete order",
-        icon: "error",
-      });
-    }
+      });    }
   };
 
   const getStatusColor = (status) => {
@@ -434,14 +405,7 @@ export default function OrderManagement() {
                             className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded text-xs"
                           >
                             Cancel
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteOrder(order._id)}
-                          className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded text-xs"
-                        >
-                          Delete
-                        </button>
+                          </button>                        )}
                       </div>
                     </td>
                   </tr>
@@ -531,8 +495,7 @@ export default function OrderManagement() {
                   {" "}
                   <h4 className="font-medium text-gray-900 mb-3">
                     Customer Information
-                  </h4>
-                  <div className="space-y-2 text-sm">
+                  </h4>                  <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Username:</span>
                       <span>{selectedOrder.user?.username || "N/A"}</span>
@@ -540,6 +503,10 @@ export default function OrderManagement() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Email:</span>
                       <span>{selectedOrder.user?.email || "Unknown"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Phone Number:</span>
+                      <span>{selectedOrder.user?.phoneNumber || "N/A"}</span>
                     </div>
                   </div>
                 </div>
